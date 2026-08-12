@@ -90,6 +90,8 @@ describe("difftastic engine through the two-file loader", () => {
 
       // Engine field reports difftastic produced this file's metadata.
       expect(file.engine).toBe("difftastic");
+      // The resolved novelty style has to survive the trip to the renderer.
+      expect(file.noveltyStyle).toBe("highlight");
 
       // Hunks are the difftastic-mapped shape: one merged hunk spanning the
       // modified pair run, the context run, and the trailing addition run.
@@ -135,6 +137,13 @@ describe("difftastic engine through the two-file loader", () => {
       expect(findHunkIndexForLine(file, "old", 2)).toBe(0);
       // A line past the new file stays uncovered.
       expect(findHunkIndexForLine(file, "new", 12)).toBe(-1);
+
+      // An explicit style has to reach the file too, not just the default.
+      resetDifftVersionCacheForTests();
+      const recolorBootstrap = await loadAppBootstrap(
+        diffInput({ engine: "difftastic", difftPath: stub, novelty: "recolor" }),
+      );
+      expect(recolorBootstrap.changeset.files[0]!.noveltyStyle).toBe("recolor");
 
       // Fallback path: a failing stub keeps the Pierre baseline intact.
       resetDifftVersionCacheForTests();
