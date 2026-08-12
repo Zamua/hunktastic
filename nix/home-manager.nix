@@ -54,10 +54,20 @@ in
       default = false;
       description = "Whether to link the hunk-review skill under ~/.claude/skills.";
     };
+
+    installDifftastic = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Whether to install difftastic alongside hunk. The difftastic engine
+        runs `difft` as a subprocess, so without it on PATH that engine falls
+        back to line diffs. Disable when difftastic comes from elsewhere.
+      '';
+    };
   };
 
   config = mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+    home.packages = [ cfg.package ] ++ lib.optional cfg.installDifftastic pkgs.difftastic;
 
     xdg.configFile."hunk/config.toml" = mkIf (cfg.settings != { }) {
       source = tomlFormat.generate "hunk-config.toml" cfg.settings;
