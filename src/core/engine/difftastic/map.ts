@@ -80,6 +80,11 @@ function stripEol(line: string): string {
   return line.endsWith("\n") ? line.slice(0, -1) : line;
 }
 
+/** Comparison key for aligned non-novel lines: token equality, whitespace-blind. */
+function stripWhitespace(line: string): string {
+  return line.replace(/\s+/g, "");
+}
+
 function emptyNovelty(deletionCount: number, additionCount: number): DiffLineNoveltySpans {
   return {
     additionLines: Array.from<ColumnSpan[] | undefined>({ length: additionCount }),
@@ -292,7 +297,13 @@ export function mapDifftasticFile(
         noveltySpans.additionLines[row.rhs] = rhsSpans.get(row.rhs) ?? [];
       } else {
         row.kind = "context";
-        if (stripEol(deletionLines[row.lhs] ?? "") !== stripEol(additionLines[row.rhs] ?? "")) {
+        // difftastic aligns reformatted lines as non-novel (whitespace is not a
+        // token), so context texts may legally differ in whitespace only; each
+        // side renders its own text from the full-file flat arrays.
+        if (
+          stripWhitespace(deletionLines[row.lhs] ?? "") !==
+          stripWhitespace(additionLines[row.rhs] ?? "")
+        ) {
           return fallback(
             "context-mismatch",
             `old line ${row.lhs} and new line ${row.rhs} differ without a chunk entry`,

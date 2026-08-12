@@ -229,8 +229,14 @@ Classify each aligned row:
 - `[n, m]` where either side has a chunk entry with nonempty `changes` ->
   modified pair (maps to one deletion + one addition, explicitly paired).
 - `[n, m]` otherwise -> context row. Defensive check: old line n text must
-  equal new line m text; mismatch -> fallback (would indicate a chunk entry
-  the schema missed).
+  equal new line m text IGNORING WHITESPACE; mismatch -> fallback (would
+  indicate a chunk entry the schema missed). Whitespace-blind because
+  difftastic aligns reformatted/reindented lines as non-novel (whitespace is
+  not a token); each side renders its own text from the full-file flat
+  arrays, so split view shows the true per-side indentation. Cosmetic
+  caveat: collapsed-gap expansion reads one side's source text, so a
+  reindented line inside a collapsed region shows that side's indentation
+  for both columns until difftastic-aware expansion is added.
 
 A chunk entry where BOTH sides have empty `changes` (not observed; possible
 under the unstable schema) classifies as context.

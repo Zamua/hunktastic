@@ -680,6 +680,27 @@ describe("defensive validation", () => {
     expect(result.fallback).toBe("context-mismatch");
   });
 
+  test("reindented aligned lines are whitespace-blind context, not a mismatch", () => {
+    const { result } = mapFixture(
+      "reindent-0.69.0.json",
+      "reindent-before.js",
+      "reindent-after.js",
+    );
+    expect(result.hunks.length).toBe(1);
+    const hunk = result.hunks[0]!;
+    expect(hunk.additionLines).toBe(5);
+    expect(hunk.deletionLines).toBe(1);
+    expect(
+      hunk.hunkContent.map((c) =>
+        c.type === "context" ? `ctx:${c.lines}` : `chg:${c.deletions}d/${c.additions}a`,
+      ),
+    ).toEqual(["ctx:1", "chg:0d/1a", "ctx:1", "chg:1d/1a", "ctx:2", "chg:0d/3a", "ctx:3"]);
+    expect(result.noveltySpans.deletionLines.flatMap((v, i) => (v ? [i] : []))).toEqual([2]);
+    expect(result.noveltySpans.additionLines.flatMap((v, i) => (v ? [i] : []))).toEqual([
+      1, 3, 6, 7, 8,
+    ]);
+  });
+
   test("a chunk entry with empty changes on both sides classifies as context", () => {
     const result = mapDifftasticFile(
       difftasticFile({
