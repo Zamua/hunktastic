@@ -1,11 +1,11 @@
-# hunk
+# hunktastic
 
-Hunk is a review-first terminal diff viewer for agent-authored changesets, built on [OpenTUI](https://github.com/anomalyco/opentui) and [Pierre diffs](https://www.npmjs.com/package/@pierre/diffs).
+Semantic diffs that agents can notate.
 
-**[hunk.dev](https://hunk.dev)** · [Documentation](https://hunk.dev/docs/)
+hunktastic is a fork of [hunk](https://github.com/modem-dev/hunk), the review-first terminal diff viewer for agent-authored changesets built on [OpenTUI](https://github.com/anomalyco/opentui) and [Pierre diffs](https://www.npmjs.com/package/@pierre/diffs). The goal of the fork: pair hunk's agent annotation workflow with [difftastic](https://github.com/Wilfred/difftastic)-style structural diffs powered by tree-sitter.
 
-[![CI status](https://img.shields.io/github/actions/workflow/status/modem-dev/hunk/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/modem-dev/hunk/actions/workflows/ci.yml?branch=main)
-[![Latest release](https://img.shields.io/github/v/release/modem-dev/hunk?style=for-the-badge)](https://github.com/modem-dev/hunk/releases)
+Status: fresh fork. The structural diff engine is not integrated yet, so everything below is inherited hunk functionality and remains accurate. Credits are in [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md); upstream documentation lives at [hunk.dev](https://hunk.dev/docs/). The internal package and binary keep their upstream names (`hunkdiff`, `hunk`) until this fork diverges functionally, to keep upstream merges clean.
+
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
 - multi-file review stream with sidebar navigation
@@ -290,4 +290,4 @@ Sponsored by [Modem](https://modem.dev?utm_source=github&utm_medium=oss&utm_camp
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). hunktastic is a fork of [hunk](https://github.com/modem-dev/hunk) by Ben Vinegar and the Modem team; see [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md).
