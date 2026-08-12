@@ -31,7 +31,18 @@ function normalizeColumnSpans(columnSpans: ColumnSpan[], maxColumn: number): Col
 }
 
 /**
- * Recolor flattened render spans with an emphasis background over the given column ranges.
+ * Style applied to the emphasized column ranges. Absent fields inherit the underlying
+ * span's value, so a background-only emphasis keeps syntax foregrounds and a
+ * foreground emphasis (difftastic novel tokens) keeps the row background.
+ */
+export interface NoveltyEmphasis {
+  fg?: string;
+  bg?: string;
+  bold?: boolean;
+}
+
+/**
+ * Restyle flattened render spans with an emphasis style over the given column ranges.
  *
  * Columns are 0-based, end-exclusive string indexes into the concatenated span text.
  * Out-of-bounds columns are clamped and empty or inverted ranges dropped; when no range
@@ -42,7 +53,7 @@ function normalizeColumnSpans(columnSpans: ColumnSpan[], maxColumn: number): Col
 export function overlayNoveltySpans(
   spans: RenderSpan[],
   columnSpans: ColumnSpan[],
-  emphasisBg: string,
+  emphasis: NoveltyEmphasis,
 ): RenderSpan[] {
   if (spans.length === 0 || columnSpans.length === 0) {
     return spans;
@@ -59,14 +70,19 @@ export function overlayNoveltySpans(
   }
 
   const result: RenderSpan[] = [];
-  const push = (text: string, fg: string | undefined, bg: string | undefined) => {
+  const push = (
+    text: string,
+    fg: string | undefined,
+    bg: string | undefined,
+    bold: boolean | undefined,
+  ) => {
     if (text.length === 0) {
       return;
     }
 
     // Coalesce identical adjacent styling the same way the flattening pass does.
     const previous = result[result.length - 1];
-    if (previous && previous.fg === fg && previous.bg === bg) {
+    if (previous && previous.fg === fg && previous.bg === bg && previous.bold === bold) {
       previous.text += text;
       return;
     }
@@ -77,6 +93,9 @@ export function overlayNoveltySpans(
     }
     if (bg !== undefined) {
       next.bg = bg;
+    }
+    if (bold !== undefined) {
+      next.bold = bold;
     }
     result.push(next);
   };
@@ -96,17 +115,27 @@ export function overlayNoveltySpans(
       }
 
       if (!activeRange || activeRange[0] >= spanEnd) {
-        push(span.text.slice(cursor - spanStart), span.fg, span.bg);
+        push(span.text.slice(cursor - spanStart), span.fg, span.bg, span.bold);
         break;
       }
 
       if (activeRange[0] > cursor) {
-        push(span.text.slice(cursor - spanStart, activeRange[0] - spanStart), span.fg, span.bg);
+        push(
+          span.text.slice(cursor - spanStart, activeRange[0] - spanStart),
+          span.fg,
+          span.bg,
+          span.bold,
+        );
         cursor = activeRange[0];
       }
 
       const emphasisEnd = Math.min(activeRange[1], spanEnd);
-      push(span.text.slice(cursor - spanStart, emphasisEnd - spanStart), span.fg, emphasisBg);
+      push(
+        span.text.slice(cursor - spanStart, emphasisEnd - spanStart),
+        emphasis.fg ?? span.fg,
+        emphasis.bg ?? span.bg,
+        emphasis.bold ? true : span.bold,
+      );
       cursor = emphasisEnd;
     }
 

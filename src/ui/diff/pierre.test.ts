@@ -12,7 +12,11 @@ import {
   type RenderSpan,
 } from "./pierre";
 import { resolveSplitPaneWidths } from "./codeColumns";
-import { renderCodeOnlyPlannedRowText, renderDecoratedPlannedRowText } from "./renderRows";
+import {
+  measureRenderedRowHeight,
+  renderCodeOnlyPlannedRowText,
+  renderDecoratedPlannedRowText,
+} from "./renderRows";
 import { stackCellPalette } from "./rowStyle";
 import { buildReviewRenderPlan } from "./reviewRenderPlan";
 import { measureTextWidth } from "../lib/text";
@@ -25,10 +29,10 @@ function joinSpanText(spans: RenderSpan[]) {
   return spans.map((span) => span.text).join("");
 }
 
-/** Concatenate the text of spans carrying an emphasis background. */
+/** Concatenate the text of spans carrying difftastic novelty emphasis (bold foreground). */
 function emphasizedSpanText(spans: RenderSpan[]) {
   return spans
-    .filter((span) => span.bg !== undefined)
+    .filter((span) => span.bold === true)
     .map((span) => span.text)
     .join("");
 }
@@ -1183,11 +1187,147 @@ describe("Pierre diff rows", () => {
     expect(emphasizedSpanText(overlaid.right.spans)).toBe("42");
     expect(joinSpanText(overlaid.left.spans)).toBe("const answer = 41;");
     expect(joinSpanText(overlaid.right.spans)).toBe("const answer = 42;");
+    // Novel tokens take the sign foregrounds plus bold; the row background stays untouched.
+    expect(overlaid.left.spans.find((span) => span.bold)?.fg).toBe(theme.removedSignColor);
+    expect(overlaid.right.spans.find((span) => span.bold)?.fg).toBe(theme.addedSignColor);
+    expect(overlaid.left.spans.every((span) => span.bg === undefined)).toBe(true);
+    expect(overlaid.right.spans.every((span) => span.bg === undefined)).toBe(true);
     // Syntax colors survive the overlay split.
     expect(
       overlaid.right.spans.some(
         (span) => span.text.includes("const") && typeof span.fg === "string",
       ),
     ).toBe(true);
+  });
+
+  test("difftastic files drop +/- signs and mark every cell with the difftastic style", () => {
+    const file: DiffFile = { ...createDiffFile(), engine: "difftastic" };
+    const theme = resolveTheme("github-dark-default", null);
+
+    for (const row of buildSplitRows(file, null, theme)) {
+      if (row.type !== "split-line") {
+        continue;
+      }
+      for (const cell of [row.left, row.right]) {
+        expect(cell.sign).toBe(" ");
+        expect(cell.difftasticStyle).toBe(true);
+      }
+    }
+
+    for (const row of buildStackRows(file, null, theme)) {
+      if (row.type !== "stack-line") {
+        continue;
+      }
+      expect(row.cell.sign).toBe(" ");
+      expect(row.cell.difftasticStyle).toBe(true);
+    }
+  });
+
+  test("pierre files keep +/- signs and never carry the difftastic style", () => {
+    const file = createDiffFile();
+    const theme = resolveTheme("github-dark-default", null);
+    const cells = buildSplitRows(file, null, theme)
+      .filter((row): row is Extract<DiffRow, { type: "split-line" }> => row.type === "split-line")
+      .flatMap((row) => [row.left, row.right]);
+
+    expect(cells.every((cell) => cell.difftasticStyle === undefined)).toBe(true);
+    expect(cells.find((cell) => cell.kind === "deletion")?.sign).toBe("-");
+    expect(cells.find((cell) => cell.kind === "addition")?.sign).toBe("+");
+  });
+
+  test("difftastic styling is chrome-only: row plans and heights match the pierre engine", () => {
+    const pierreFile = createDiffFile();
+    const difftFile: DiffFile = { ...createDiffFile(), engine: "difftastic" };
+    const theme = resolveTheme("github-dark-default", null);
+    // Everything windowing depends on: row identity, kinds, line numbers, and text.
+    const rowPlan = (candidate: DiffFile) =>
+      [buildSplitRows(candidate, null, theme), buildStackRows(candidate, null, theme)].map((rows) =>
+        rows.map((row) => {
+          if (row.type === "split-line") {
+            return [
+              row.key,
+              row.left.kind,
+              row.left.lineNumber,
+              joinSpanText(row.left.spans),
+              row.right.kind,
+              row.right.lineNumber,
+              joinSpanText(row.right.spans),
+            ];
+          }
+          if (row.type === "stack-line") {
+            return [
+              row.key,
+              row.cell.kind,
+              row.cell.oldLineNumber,
+              row.cell.newLineNumber,
+              joinSpanText(row.cell.spans),
+            ];
+          }
+          return [row.type, row.key, row.text];
+        }),
+      );
+
+    expect(rowPlan(difftFile)).toEqual(rowPlan(pierreFile));
+
+    const rowHeights = (candidate: DiffFile, wrapLines: boolean) =>
+      [...buildSplitRows(candidate, null, theme), ...buildStackRows(candidate, null, theme)].map(
+        (row) => measureRenderedRowHeight(row, 40, 2, true, true, wrapLines, theme),
+      );
+
+    for (const wrapLines of [false, true]) {
+      expect(rowHeights(difftFile, wrapLines)).toEqual(rowHeights(pierreFile, wrapLines));
+    }
+  });
+
+  test("renders difftastic planned split rows without markers and with the absent-side dot", () => {
+    const file: DiffFile = { ...createDiffFile(), engine: "difftastic" };
+    const theme = resolveTheme("github-dark-default", null);
+    const rows = buildSplitRows(file, null, theme);
+    const plannedRows = buildReviewRenderPlan({ fileId: file.id, rows, showHunkHeaders: true });
+    const renderOptions = {
+      codeHorizontalOffset: 0,
+      lineNumberDigits: 1,
+      showHunkHeaders: true,
+      showLineNumbers: true,
+      theme,
+      width: 80,
+      wrapLines: false,
+    };
+    const renderedLine = (
+      predicate: (row: Extract<DiffRow, { type: "split-line" }>) => boolean,
+    ) => {
+      const plannedRow = plannedRows.find(
+        (row) => row.kind === "diff-row" && row.row.type === "split-line" && predicate(row.row),
+      );
+      if (!plannedRow || plannedRow.kind !== "diff-row") {
+        throw new Error("Expected a planned split diff row");
+      }
+      const [line] = renderDecoratedPlannedRowText(plannedRow, renderOptions);
+      if (!line) {
+        throw new Error("Expected a rendered split row");
+      }
+      return line;
+    };
+
+    const changedLine = renderedLine(
+      (row) => row.left.kind === "deletion" && row.right.kind === "addition",
+    );
+    expect(changedLine).toContain("export const answer = 41;");
+    expect(changedLine).toContain("export const answer = 42;");
+    expect(changedLine).not.toContain("+");
+    expect(changedLine).not.toContain("-");
+
+    // The absent left side renders difft's dim dot in the number cell.
+    const additionOnlyLine = renderedLine((row) => row.left.kind === "empty");
+    expect(additionOnlyLine).toContain("▌. ");
+    expect(additionOnlyLine).toContain("export const added = true;");
+    expect(additionOnlyLine).not.toContain("+");
+
+    // Context rows keep their per-side text and line numbers.
+    const contextLine = renderedLine(
+      (row) => row.left.kind === "context" && row.right.kind === "context",
+    );
+    expect(contextLine).toContain("export const stable = true;");
+    expect(contextLine).not.toContain("▌.");
   });
 });

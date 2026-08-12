@@ -111,12 +111,30 @@ export function splitRightRailColor(
   return selected ? color : dimRailColor(color, theme);
 }
 
+/**
+ * Neutral palette for difftastic changed rows: difft's native look keeps the normal
+ * row background and puts color on the novel tokens instead of the whole line.
+ */
+function difftasticChangedPalette(theme: AppTheme) {
+  return {
+    gutterBg: theme.lineNumberBg,
+    contentBg: theme.contextBg,
+    signColor: theme.muted,
+    numberColor: theme.lineNumberFg,
+  };
+}
+
 /** Pick split-view colors from the semantic diff cell kind. */
 export function splitCellPalette(
   kind: SplitLineCell["kind"],
   theme: AppTheme,
   moveKind?: SplitLineCell["moveKind"],
+  difftasticStyle = false,
 ) {
+  if (difftasticStyle && (kind === "addition" || kind === "deletion")) {
+    return difftasticChangedPalette(theme);
+  }
+
   if (kind === "addition") {
     return {
       gutterBg: moveKind ? theme.movedAddedBg : theme.addedBg,
@@ -157,7 +175,12 @@ export function stackCellPalette(
   kind: StackLineCell["kind"],
   theme: AppTheme,
   moveKind?: StackLineCell["moveKind"],
+  difftasticStyle = false,
 ) {
+  if (difftasticStyle && (kind === "addition" || kind === "deletion")) {
+    return difftasticChangedPalette(theme);
+  }
+
   if (kind === "addition") {
     return {
       gutterBg: moveKind ? theme.movedAddedBg : theme.addedBg,
@@ -185,8 +208,13 @@ export function stackCellPalette(
 }
 
 /** Format one optional line number for a fixed-width diff gutter. */
-export function diffLineNumberText(value: number | undefined, width: number) {
-  return value === undefined ? " ".repeat(width) : String(value).padStart(width, " ");
+export function diffLineNumberText(value: number | undefined, width: number, absentText = "") {
+  return value === undefined ? absentText.padStart(width, " ") : String(value).padStart(width, " ");
+}
+
+/** difft's dot convention: a row absent on one side shows "." in that side's number cell. */
+function absentLineNumberText(cell: { difftasticStyle?: true }) {
+  return cell.difftasticStyle ? "." : "";
 }
 
 /** Build the stack-view gutter text shared by the TUI and static pager renderers. */
@@ -199,8 +227,9 @@ export function stackGutterText(
     return `${cell.sign} `;
   }
 
-  const oldNumber = diffLineNumberText(cell.oldLineNumber, lineNumberDigits);
-  const newNumber = diffLineNumberText(cell.newLineNumber, lineNumberDigits);
+  const absentText = absentLineNumberText(cell);
+  const oldNumber = diffLineNumberText(cell.oldLineNumber, lineNumberDigits, absentText);
+  const newNumber = diffLineNumberText(cell.newLineNumber, lineNumberDigits, absentText);
   return `${oldNumber} ${newNumber} ${cell.sign}`;
 }
 
@@ -214,8 +243,6 @@ export function splitGutterText(
     return `${cell.sign} `;
   }
 
-  const number = cell.lineNumber
-    ? String(cell.lineNumber).padStart(lineNumberDigits, " ")
-    : " ".repeat(lineNumberDigits);
+  const number = diffLineNumberText(cell.lineNumber, lineNumberDigits, absentLineNumberText(cell));
   return `${number} ${cell.sign}`;
 }
