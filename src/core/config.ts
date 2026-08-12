@@ -19,19 +19,22 @@ import { DEFAULT_TAB_WIDTH, validateTabWidth } from "./tabWidth";
 import { findProjectRootCandidate } from "./projectRoot";
 import { createVcsCatalog, detectVcs } from "./vcs";
 import type { VcsCatalog } from "./vcs/types";
-import type {
-  CliInput,
-  CommonOptions,
-  CursorLine,
-  CustomSyntaxColorsConfig,
-  CustomSyntaxScopesConfig,
-  DiffEngineId,
-  ExtensionsConfig,
-  LayoutMode,
-  NamedCustomThemeConfig,
-  PersistedViewPreferences,
-  UserKeyBinding,
-  VcsMode,
+import {
+  DEFAULT_DIFF_ENGINE,
+  DEFAULT_NOVELTY_STYLE,
+  type CliInput,
+  type CommonOptions,
+  type CursorLine,
+  type CustomSyntaxColorsConfig,
+  type CustomSyntaxScopesConfig,
+  type DiffEngineId,
+  type NoveltyStyle,
+  type ExtensionsConfig,
+  type LayoutMode,
+  type NamedCustomThemeConfig,
+  type PersistedViewPreferences,
+  type UserKeyBinding,
+  type VcsMode,
 } from "./types";
 
 export const BUILT_IN_THEME_IDS = BUNDLED_SHIKI_THEME_IDS;
@@ -165,6 +168,11 @@ function normalizeDiffEngine(value: unknown): DiffEngineId | undefined {
   return value === "pierre" || value === "difftastic" ? value : undefined;
 }
 
+/** Accept only the novelty styles Hunk ships. */
+function normalizeNoveltyStyle(value: unknown): NoveltyStyle | undefined {
+  return value === "highlight" || value === "recolor" ? value : undefined;
+}
+
 /**
  * Accept any backend id a config layer names, provisionally.
  *
@@ -239,9 +247,18 @@ export const CONFIG_REFERENCE_OPTIONS: readonly ConfigReferenceOption[] = [
     property: "engine",
     type: "string",
     accepted: "`pierre` or `difftastic`",
-    runtimeDefault: "pierre",
+    runtimeDefault: "difftastic",
     description:
       "Select the diff engine. `difftastic` computes structural hunks and falls back to `pierre` per file when it cannot.",
+  },
+  {
+    key: "novelty",
+    property: "novelty",
+    type: "string",
+    accepted: "`highlight` or `recolor`",
+    runtimeDefault: "highlight",
+    description:
+      "Mark changed tokens on `difftastic` files. `highlight` keeps syntax colors and adds the word-diff background; `recolor` uses difftastic's own addition/deletion foreground instead.",
   },
   {
     key: "difft_path",
@@ -871,6 +888,8 @@ function normalizeConfigReferenceValue(property: keyof CommonOptions, value: unk
       return normalizeLayoutMode(value);
     case "engine":
       return normalizeDiffEngine(value);
+    case "novelty":
+      return normalizeNoveltyStyle(value);
     case "cursorLine":
       return normalizeCursorLine(value);
     case "vcs":
@@ -926,6 +945,7 @@ function mergeOptions(base: CommonOptions, overrides: CommonOptions): CommonOpti
     ...base,
     mode: overrides.mode ?? base.mode,
     engine: overrides.engine ?? base.engine,
+    novelty: overrides.novelty ?? base.novelty,
     difftPath: overrides.difftPath ?? base.difftPath,
     cursorLine: overrides.cursorLine ?? base.cursorLine,
     vcs: overrides.vcs ?? base.vcs,
@@ -1160,6 +1180,14 @@ export function resolveConfiguredCliInput(
       engineNotices.push(createInvalidEngineEnvNotice(envEngine));
     }
   }
+
+  const envNovelty = env.HUNK_NOVELTY;
+  if (envNovelty !== undefined && envNovelty !== "") {
+    const normalizedEnvNovelty = normalizeNoveltyStyle(envNovelty);
+    if (normalizedEnvNovelty) {
+      resolvedOptions = mergeOptions(resolvedOptions, { novelty: normalizedEnvNovelty });
+    }
+  }
   const envDifftPath = normalizeString(env.HUNK_DIFFT_PATH);
   if (envDifftPath) {
     resolvedOptions = mergeOptions(resolvedOptions, { difftPath: envDifftPath });
@@ -1177,7 +1205,8 @@ export function resolveConfiguredCliInput(
     theme: resolvedOptions.theme,
     vcs: resolvedOptions.vcs ?? vcsCatalog.defaultAdapterId,
     mode: resolvedOptions.mode ?? DEFAULT_VIEW_PREFERENCES.mode,
-    engine: resolvedOptions.engine ?? "pierre",
+    engine: resolvedOptions.engine ?? DEFAULT_DIFF_ENGINE,
+    novelty: resolvedOptions.novelty ?? DEFAULT_NOVELTY_STYLE,
     difftPath: resolvedOptions.difftPath ?? "difft",
     lineNumbers: resolvedOptions.lineNumbers ?? DEFAULT_VIEW_PREFERENCES.showLineNumbers,
     tabWidth: resolvedOptions.tabWidth ?? DEFAULT_TAB_WIDTH,

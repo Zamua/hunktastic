@@ -1337,7 +1337,7 @@ describe("extension configuration", () => {
 });
 
 describe("engine configuration", () => {
-  test("defaults to the pierre engine and the PATH difft binary", () => {
+  test("defaults to the difftastic engine and the PATH difft binary", () => {
     const home = createTempDir("hunk-config-home-");
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
@@ -1347,7 +1347,7 @@ describe("engine configuration", () => {
       env: { HOME: home },
     });
 
-    expect(resolved.input.options.engine).toBe("pierre");
+    expect(resolved.input.options.engine).toBe("difftastic");
     expect(resolved.input.options.difftPath).toBe("difft");
   });
 
@@ -1395,7 +1395,7 @@ describe("engine configuration", () => {
       env: { HOME: home, HUNK_ENGINE: "sparkles" },
     });
 
-    expect(resolved.input.options.engine).toBe("pierre");
+    expect(resolved.input.options.engine).toBe("difftastic");
     expect(resolved.startupNotices?.map((notice) => notice.message)).toEqual([
       'Ignored HUNK_ENGINE="sparkles". Valid engines: pierre, difftastic.',
     ]);
@@ -1413,7 +1413,7 @@ describe("engine configuration", () => {
       env: { HOME: home },
     });
 
-    expect(resolved.input.options.engine).toBe("pierre");
+    expect(resolved.input.options.engine).toBe("difftastic");
   });
 
   test("honors difft_path from user config and lets HUNK_DIFFT_PATH outrank it", () => {

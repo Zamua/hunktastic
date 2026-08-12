@@ -36,7 +36,17 @@ Select the diff engine. `difftastic` computes structural hunks and falls back to
 
 - **Type:** string
 - **Accepted:** `pierre` or `difftastic`
-- **Built-in default:** `pierre`
+- **Built-in default:** `difftastic`
+
+---
+
+**`novelty`**
+
+Mark changed tokens on `difftastic` files. `highlight` keeps syntax colors and adds the word-diff background; `recolor` uses difftastic's own addition/deletion foreground instead.
+
+- **Type:** string
+- **Accepted:** `highlight` or `recolor`
+- **Built-in default:** `highlight`
 
 ---
 

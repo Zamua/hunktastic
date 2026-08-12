@@ -1029,6 +1029,7 @@ describe("Pierre diff rows", () => {
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
+      noveltyStyle: "recolor",
       // difftastic columns index the raw source: "\tlet a = 2;" holds the literal at [9, 10].
       noveltySpans: {
         deletionLines: [[[9, 10]]],
@@ -1078,6 +1079,7 @@ describe("Pierre diff rows", () => {
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
+      noveltyStyle: "recolor",
       agent: null,
     };
     const theme = resolveTheme("github-dark-default", null);
@@ -1155,6 +1157,7 @@ describe("Pierre diff rows", () => {
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
+      noveltyStyle: "recolor",
       agent: null,
     };
     const theme = resolveTheme("github-dark-default", null);
@@ -1198,6 +1201,61 @@ describe("Pierre diff rows", () => {
         (span) => span.text.includes("const") && typeof span.fg === "string",
       ),
     ).toBe(true);
+  });
+
+  test("the default novelty style keeps syntax colors and marks changes with a background", async () => {
+    const metadata = parseDiffFromFile(
+      {
+        name: "example.ts",
+        contents: "const answer = 41;\n",
+        cacheKey: "novelty-highlight-before",
+      },
+      {
+        name: "example.ts",
+        contents: "const answer = 42;\n",
+        cacheKey: "novelty-highlight-after",
+      },
+      { context: 3 },
+    );
+    const file: DiffFile = {
+      id: "novelty-highlight",
+      path: "example.ts",
+      patch: "",
+      language: "typescript",
+      stats: { additions: 1, deletions: 1 },
+      metadata,
+      engine: "difftastic",
+      // No noveltyStyle: this pins what an engine-produced file renders by default.
+      noveltySpans: {
+        deletionLines: [[[15, 17]]],
+        additionLines: [[[15, 17]]],
+      },
+      agent: null,
+    };
+    const theme = resolveTheme("github-dark-default", null);
+    const highlighted = await loadHighlightedDiff(file, theme);
+    const row = buildSplitRows(file, highlighted, theme).find(
+      (candidate) =>
+        candidate.type === "split-line" &&
+        candidate.left.kind === "deletion" &&
+        candidate.right.kind === "addition",
+    );
+    if (!row || row.type !== "split-line") {
+      throw new Error("Expected a split change row");
+    }
+
+    for (const [cell, expected] of [
+      [row.left, "41"],
+      [row.right, "42"],
+    ] as const) {
+      const emphasized = cell.spans.filter((span) => span.bg !== undefined);
+      expect(emphasized.map((span) => span.text).join("")).toBe(expected);
+      // Marked by background alone: no recolor, and the syntax foreground survives.
+      expect(emphasized.every((span) => span.bold !== true)).toBe(true);
+      expect(emphasized.every((span) => typeof span.fg === "string")).toBe(true);
+    }
+    expect(joinSpanText(row.left.spans)).toBe("const answer = 41;");
+    expect(joinSpanText(row.right.spans)).toBe("const answer = 42;");
   });
 
   test("difftastic files drop +/- signs and mark every cell with the difftastic style", () => {

@@ -36,24 +36,25 @@ The flake exports a `default` package and a home-manager module (`programs.hunk`
 
 Both installs bring in difftastic. Installing another way means installing
 [difftastic](https://github.com/Wilfred/difftastic) too, since the engine runs `difft`
-as a subprocess. Without it, hunktastic still runs and falls back to line diffs with a
-notice.
+as a subprocess and is on by default. Without it, hunktastic still runs and falls back
+to line diffs with a notice.
 
 macOS arm64 for the Homebrew build. Other platforms build from source.
 
 ## Use it
 
 ```bash
-hunk diff --engine difftastic
+hunk diff
 ```
 
-To make it the default, set the engine in `~/.config/hunk/config.toml`:
+The difftastic engine is the default: that is the point of the fork. `--engine pierre`
+switches back to hunk's line engine for one run, and `engine = "pierre"` in
+`~/.config/hunk/config.toml` makes that permanent.
 
-```toml
-engine = "difftastic"
-```
-
-`--engine pierre` switches back to hunk's line engine for a single run.
+Changed tokens keep their syntax colour and are marked with the word-diff background.
+Pass `--novelty recolor` (or `novelty = "recolor"`) to take difftastic's own look
+instead, where novel tokens turn addition-green or deletion-red in place of their
+syntax colour.
 
 Structural diffs need both file bodies, so the engine applies to hunk's own loaders
 (`hunk diff`, `hunk show`). Git pager mode only ever receives a finished unified patch,

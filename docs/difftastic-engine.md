@@ -46,9 +46,19 @@ Tested against difftastic 0.69.0. Ground-truth fixture:
 ## 2. Engine selection surface
 
 New option `engine`, values `"pierre" | "difftastic"`. Layered exactly like
-existing view options. Precedence (low to high): built-in default `pierre`
+existing view options. Precedence (low to high): built-in default
 -> user config TOML -> repo `.hunk/config.toml` -> `HUNK_ENGINE` env ->
 `--engine` CLI flag.
+
+The built-in default is `difftastic` (`DEFAULT_DIFF_ENGINE` in
+`src/core/types.ts`): structural diffs are what this fork exists for, so they
+are on unless a layer above turns them off. A missing difft therefore surfaces
+the unavailable notice on a default run rather than only when opted in.
+
+A second option `novelty` (`"highlight" | "recolor"`, default `highlight`,
+`DEFAULT_NOVELTY_STYLE`) selects how changed tokens are marked, and layers the
+same way with `HUNK_NOVELTY` as its env hook. It applies only to
+difftastic-engine files, since only they carry novelty spans. See section 5.5.
 
 Touch list (mirrors the `layout` option shape):
 

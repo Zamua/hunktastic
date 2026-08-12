@@ -33,6 +33,22 @@ export type TerminalThemeMode = "light" | "dark";
 /** Diff engine that computed a file's hunks. */
 export type DiffEngineId = "pierre" | "difftastic";
 
+/** Structural diffs are the point of this fork, so they are on unless asked otherwise. */
+export const DEFAULT_DIFF_ENGINE: DiffEngineId = "difftastic";
+
+/**
+ * How changed tokens are marked on difftastic-engine files.
+ *
+ * `highlight` keeps every token's syntax colour and marks the change with the
+ * word-diff background; `recolor` takes difft's own terminal look, giving novel
+ * tokens the addition/deletion foreground plus bold in place of their syntax colour.
+ */
+export type NoveltyStyle = "highlight" | "recolor";
+
+export const NOVELTY_STYLES: readonly NoveltyStyle[] = ["highlight", "recolor"];
+
+export const DEFAULT_NOVELTY_STYLE: NoveltyStyle = "highlight";
+
 /** One intraline novelty range: 0-based, end-exclusive column offsets into the line text. */
 export type ColumnSpan = [number, number];
 
@@ -75,6 +91,11 @@ export interface DiffFile {
   engine?: DiffEngineId;
   /** Intraline novelty columns attached when `engine` is `"difftastic"`. */
   noveltySpans?: DiffLineNoveltySpans;
+  /**
+   * How `noveltySpans` render. Carried on the file rather than passed down the row
+   * builders because it only has meaning alongside the spans the engine attached.
+   */
+  noveltyStyle?: NoveltyStyle;
   lineMoveKinds?: DiffLineMoveKinds;
   agent: AgentFileContext | null;
   isUntracked?: boolean;
@@ -107,6 +128,7 @@ export interface CommonOptions {
   engine?: DiffEngineId;
   /** difftastic binary path; user config and `HUNK_DIFFT_PATH` only, never repo config. */
   difftPath?: string;
+  novelty?: NoveltyStyle;
   cursorLine?: CursorLine;
   vcs?: VcsMode;
   theme?: string;
