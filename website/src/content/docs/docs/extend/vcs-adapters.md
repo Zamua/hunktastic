@@ -68,7 +68,7 @@ hunk.registerVcsAdapter({
 
 Detection runs the same way for every adapter, whichever tier registered it: the nearest checkout wins, `detectionPriority` breaks ties between adapters that recognize the same root, and equal priorities fall back to registration order. Config resolves the session's VCS before your extension has been imported, so detection runs again once extensions are loaded — with the full adapter list — and that second answer is the one the session uses.
 
-What detection never overrides is an explicit choice: a `vcs = "<id>"` in Hunk config naming a backend this session loaded is honored as-is, however near a checkout some other adapter finds. A repository-local adapter can bootstrap a provider Hunk has never seen because `.hunk` itself establishes the project root; global, config-path, and `--extension` adapters also participate in a staged root/config pass before the review loads.
+What detection never overrides is an explicit choice: a `vcs = "<id>"` in Hunk config naming a backend this session loaded is honored as-is, however near a checkout some other adapter finds. A repository-local adapter can bootstrap a provider Hunk has never seen because `.hunkt` itself establishes the project root; global, config-path, and `--extension` adapters also participate in a staged root/config pass before the review loads.
 
 ## Watch support
 
@@ -167,8 +167,8 @@ Throw a `HunkExtensionUserError` when the problem is how Hunk was invoked rather
 ```ts
 import { HunkExtensionUserError } from "hunkdiff/extension";
 
-throw new HunkExtensionUserError("`hunk stash show` is not supported by Mercurial.", {
-  suggestions: ["Use `hunk show <rev>` to review a commit instead."],
+throw new HunkExtensionUserError("`hunkt stash show` is not supported by Mercurial.", {
+  suggestions: ["Use `hunkt show <rev>` to review a commit instead."],
 });
 ```
 

@@ -42,8 +42,8 @@ describe("CLI entrypoint contracts", () => {
     expect(proc.exitCode).toBe(0);
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage:");
-    expect(stdout).toContain("hunk diff");
-    expect(stdout).toContain("hunk show");
+    expect(stdout).toContain("hunkt diff");
+    expect(stdout).toContain("hunkt show");
     expect(stdout).toContain("Global options:");
     expect(stdout).toContain("Common review options:");
     expect(stdout).toContain("--engine <engine>");
@@ -52,16 +52,16 @@ describe("CLI entrypoint contracts", () => {
     expect(stdout).toContain("Git diff options:");
     expect(stdout).toContain("Notes:");
     expect(stdout).toContain(
-      "Run `hunk <command> --help` for command-specific syntax and options.",
+      "Run `hunkt <command> --help` for command-specific syntax and options.",
     );
     expect(stdout).not.toContain("Config:");
     expect(stdout).not.toContain("Examples:");
-    expect(stdout).toContain("hunk pager");
-    expect(stdout).toContain("hunk session <subcommand>");
-    expect(stdout).toContain("hunk skill path");
-    expect(stdout).toContain("hunk daemon serve");
-    expect(stdout).not.toContain("hunk mcp serve");
-    expect(stdout).not.toContain("hunk git");
+    expect(stdout).toContain("hunkt pager");
+    expect(stdout).toContain("hunkt session <subcommand>");
+    expect(stdout).toContain("hunkt skill path");
+    expect(stdout).toContain("hunkt daemon serve");
+    expect(stdout).not.toContain("hunkt mcp serve");
+    expect(stdout).not.toContain("hunkt git");
     expect(stdout).not.toContain("\u001b[?1049h");
   });
 
@@ -78,8 +78,8 @@ describe("CLI entrypoint contracts", () => {
 
     expect(proc.exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("Usage: hunk daemon serve");
-    expect(stdout).toContain("HUNK_MCP_PORT");
+    expect(stdout).toContain("Usage: hunkt daemon serve");
+    expect(stdout).toContain("HUNKT_MCP_PORT");
     expect(stdout).not.toContain("\u001b[?1049h");
   });
 
@@ -97,10 +97,10 @@ describe("CLI entrypoint contracts", () => {
     expect(proc.exitCode).toBe(0);
     expect(stderr).toBe("");
     expect(stdout).toContain(
-      "hunk session review (<session-id> | --repo <path>) [--include-patch] [--include-notes]",
+      "hunkt session review (<session-id> | --repo <path>) [--include-patch] [--include-notes]",
     );
     expect(stdout).toContain(
-      "hunk session comment apply (<session-id> | --repo <path>) --stdin [--focus]",
+      "hunkt session comment apply (<session-id> | --repo <path>) --stdin [--focus]",
     );
     expect(stdout).not.toContain("\u001b[?1049h");
   });
@@ -119,7 +119,7 @@ describe("CLI entrypoint contracts", () => {
     expect(proc.exitCode).toBe(0);
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage: session reload");
-    expect(stdout).toContain("hunk session reload --repo . -- diff");
+    expect(stdout).toContain("hunkt session reload --repo . -- diff");
     expect(stdout).not.toContain("\u001b[?1049h");
   });
 
@@ -141,7 +141,7 @@ describe("CLI entrypoint contracts", () => {
     expect(stdout).not.toContain("\u001b[?1049h");
   });
 
-  test("prints the bundled skill path for hunk skill path without terminal takeover sequences", () => {
+  test("prints the bundled skill path for hunkt skill path without terminal takeover sequences", () => {
     const proc = Bun.spawnSync(["bun", "run", "src/main.tsx", "skill", "path"], {
       cwd: process.cwd(),
       stdin: "ignore",
@@ -160,7 +160,7 @@ describe("CLI entrypoint contracts", () => {
     expect(stdout).not.toContain("\u001b[?1049h");
   });
 
-  test("bin wrapper prints the bundled skill path for hunk skill path", () => {
+  test("bin wrapper prints the bundled skill path for hunkt skill path", () => {
     const proc = Bun.spawnSync(["node", "bin/hunk.cjs", "skill", "path"], {
       cwd: process.cwd(),
       stdin: "ignore",
@@ -179,11 +179,10 @@ describe("CLI entrypoint contracts", () => {
     expect(existsSync(resolvedPath)).toBe(true);
   });
 
-  test("package manifest exposes hunkdiff as an npm exec alias", () => {
+  test("package manifest exposes only the hunkt command", () => {
     const packageJson = require("../../package.json");
     expect(packageJson.bin).toEqual({
-      hunk: "./bin/hunk.cjs",
-      hunkdiff: "./bin/hunk.cjs",
+      hunkt: "./bin/hunk.cjs",
     });
   });
 
@@ -209,7 +208,7 @@ describe("CLI entrypoint contracts", () => {
 
       expect(proc.exitCode).toBe(1);
       expect(stdout).toBe("");
-      expect(stderr).toContain("hunk: could not locate the bundled Hunk review skill");
+      expect(stderr).toContain("hunkt: could not locate the bundled Hunk review skill");
       expect(stderr).toContain(join("skills", "hunk-review", "SKILL.md"));
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
@@ -307,8 +306,8 @@ describe("CLI entrypoint contracts", () => {
 
       expect(proc.exitCode).toBe(1);
       expect(stdout).toBe("");
-      expect(stderr).toContain("hunk: `hunk diff` must be run inside a Git repository.");
-      expect(stderr).toContain("hunk diff <before-file> <after-file>");
+      expect(stderr).toContain("hunkt: `hunkt diff` must be run inside a Git repository.");
+      expect(stderr).toContain("hunkt diff <before-file> <after-file>");
       expect(stderr).not.toContain("at runGitText");
       expect(stderr).not.toContain("loadGitChangeset");
       expect(stderr).not.toContain("Bun v");
@@ -342,7 +341,9 @@ describe("CLI entrypoint contracts", () => {
 
       expect(proc.exitCode).toBe(1);
       expect(stdout).toBe("");
-      expect(stderr).toContain("hunk: `hunk show HEAD~999` could not resolve Git ref `HEAD~999`.");
+      expect(stderr).toContain(
+        "hunkt: `hunkt show HEAD~999` could not resolve Git ref `HEAD~999`.",
+      );
       expect(stderr).toContain("Check the ref name and try again.");
       expect(stderr).not.toContain("runGitText");
       expect(stderr).not.toContain("Bun v");

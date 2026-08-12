@@ -390,7 +390,7 @@ export function App({
   }, [changedViewPreferences]);
   const hasUnsavedViewPreferences = changedViewPreferences.length > 0;
   const viewPreferencesConfigLabel = useMemo(() => {
-    const path = bootstrap.viewPreferencesConfigPath ?? "~/.config/hunk/config.toml";
+    const path = bootstrap.viewPreferencesConfigPath ?? "~/.config/hunkt/config.toml";
     return process.env.HOME && path.startsWith(process.env.HOME)
       ? `~${path.slice(process.env.HOME.length)}`
       : path;
@@ -2358,7 +2358,7 @@ export function App({
         >
           <box style={{ width: "100%", height: 1 }}>
             <text fg={baseTheme.muted}>
-              This repository contains extensions in .hunk/extensions.
+              This repository contains extensions in .hunkt/extensions.
             </text>
           </box>
           <box style={{ width: "100%", height: 1 }}>

@@ -1,5 +1,5 @@
 /**
- * Agent-facing error messages for the `hunk session` surface.
+ * Agent-facing error messages for the `hunkt session` surface.
  *
  * Every message quoted by the generated `skills/hunk-review/SKILL.md` "Common errors" section is
  * defined (or contract-tested) here, so the skill can never quote wording the CLI no longer
@@ -28,7 +28,7 @@ export function constraintViolationMessage(constraint: AgentCommandConstraint) {
 
 /** Reload invoked without the `--` separator or without a nested review command. */
 export const RELOAD_SEPARATOR_MESSAGE =
-  "Pass the replacement Hunk command after `--`, for example `hunk session reload <session-id> -- diff`.";
+  "Pass the replacement Hunk command after `--`, for example `hunkt session reload <session-id> -- diff`.";
 
 /** `comment apply` invoked without opting into the stdin JSON batch. */
 export const COMMENT_APPLY_STDIN_MESSAGE = "Pass --stdin to read batch comments from stdin JSON.";
@@ -75,7 +75,7 @@ export const AGENT_ERROR_DOCS: AgentErrorDoc[] = [
   {
     quote: "No active session matches session path ...",
     remedy:
-      "for advanced split-path reloads, verify the live window `Path` via `hunk session get` or `list`, then use `--session-path`.",
+      "for advanced split-path reloads, verify the live window `Path` via `hunkt session get` or `list`, then use `--session-path`.",
   },
   {
     quote: "Pass the replacement Hunk command after `--`",

@@ -1,5 +1,5 @@
 /**
- * Non-interactive `hunk pager` renderer for captured pager hosts.
+ * Non-interactive `hunkt pager` renderer for captured pager hosts.
  *
  * Hunk's normal pager integration is a full-screen interactive TUI: Git pipes patch text on stdin,
  * and Hunk opens the controlling terminal for keyboard/mouse input. That works for `core.pager`,
@@ -380,7 +380,7 @@ function resolveStaticWidth(deps: StaticDiffPagerDeps) {
 
 function warnFallback(deps: StaticDiffPagerDeps, reason: string) {
   deps.stderr?.write(
-    `hunk: static pager render failed; falling back to raw diff (${sanitizeTerminalLine(reason)}).\n`,
+    `hunkt: static pager render failed; falling back to raw diff (${sanitizeTerminalLine(reason)}).\n`,
   );
 }
 

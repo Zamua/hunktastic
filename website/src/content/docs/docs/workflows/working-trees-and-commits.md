@@ -8,27 +8,27 @@ Use `diff` for working-copy or comparison input and `show` for one committed cha
 ## Review the working tree
 
 ```bash
-hunk diff
+hunkt diff
 ```
 
 For Git and Sapling working-copy reviews, Hunk includes untracked or unknown files by default. Exclude them explicitly:
 
 ```bash
-hunk diff --exclude-untracked
+hunkt diff --exclude-untracked
 ```
 
 Review only staged Git changes with either spelling:
 
 ```bash
-hunk diff --staged
-hunk diff --cached
+hunkt diff --staged
+hunkt diff --cached
 ```
 
 ## Compare against a target
 
 ```bash
-hunk diff main
-hunk diff main...feature -- src/core
+hunkt diff main
+hunkt diff main...feature -- src/core
 ```
 
 Arguments after `--` are pathspecs. Before `--`, the target is interpreted by the detected VCS.
@@ -36,8 +36,8 @@ Arguments after `--` are pathspecs. Before `--`, the target is interpreted by th
 ## Review a commit
 
 ```bash
-hunk show
-hunk show HEAD~2 -- README.md src/ui
+hunkt show
+hunkt show HEAD~2 -- README.md src/ui
 ```
 
 `show` defaults to the latest commit. The loaded files still form one review stream, so path filtering changes the input rather than changing navigation behavior.
@@ -47,8 +47,8 @@ hunk show HEAD~2 -- README.md src/ui
 Git repositories can open a stash directly:
 
 ```bash
-hunk stash show
-hunk stash show stash@{2}
+hunkt stash show
+hunkt stash show stash@{2}
 ```
 
 Staging areas and stashes are Git-only. Hunk reports a focused error if these operations are requested under a VCS that does not support them.

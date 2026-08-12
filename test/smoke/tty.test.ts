@@ -11,7 +11,7 @@ const testConfigHome = createTestConfigHome();
 
 afterAll(cleanupTestConfigHomes);
 const tempDirs: string[] = [];
-const enableTtySmokeTests = process.env.HUNK_RUN_TTY_SMOKE === "1";
+const enableTtySmokeTests = process.env.HUNKT_RUN_TTY_SMOKE === "1";
 if (enableTtySmokeTests) {
   setDefaultTimeout(40_000);
 }
@@ -188,8 +188,8 @@ function spawnTtySmokeProcess(command: string, cwd: string, transcript: string) 
       TERM: "xterm-256color",
       COLUMNS: "80",
       LINES: "24",
-      HUNK_MCP_DISABLE: "1",
-      HUNK_DISABLE_UPDATE_NOTICE: "1",
+      HUNKT_MCP_DISABLE: "1",
+      HUNKT_DISABLE_UPDATE_NOTICE: "1",
     },
   });
 }

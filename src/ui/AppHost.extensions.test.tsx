@@ -112,8 +112,8 @@ function useTempConfigHome(configToml?: string) {
   const configHome = createTempDir("hunk-apphost-xdg-");
   process.env.XDG_CONFIG_HOME = configHome;
   if (configToml !== undefined) {
-    mkdirSync(join(configHome, "hunk"), { recursive: true });
-    writeFileSync(join(configHome, "hunk", "config.toml"), configToml);
+    mkdirSync(join(configHome, "hunkt"), { recursive: true });
+    writeFileSync(join(configHome, "hunkt", "config.toml"), configToml);
   }
   return configHome;
 }
@@ -199,7 +199,7 @@ async function flushUntil(
 /**
  * A broker client stub that captures the bridge App registers with it.
  *
- * Daemon reloads are the case that matters here: `hunk session reload <id> -- diff`
+ * Daemon reloads are the case that matters here: `hunkt session reload <id> -- diff`
  * re-parses its tokens from scratch, so `nextInput` carries none of the flags
  * the session was launched with. The interactive refresh key cannot stand in for
  * it — that path reuses the live bootstrap input and so never loses anything.
@@ -483,7 +483,7 @@ export default function (hunk) {
  */
 async function grantTrustAndCollectProbeEvents(repo: string) {
   const logPath = join(repo, "probe.log");
-  writeProbeExtension(join(repo, ".hunk", "extensions", "probe.ts"), logPath);
+  writeProbeExtension(join(repo, ".hunkt", "extensions", "probe.ts"), logPath);
   // Trust decisions live in the global state file; keep this test off the
   // developer's real one.
   useTempConfigHome();

@@ -12,9 +12,9 @@ import { HUNK_SESSION_API_VERSION, HUNK_SESSION_DAEMON_VERSION } from "../protoc
 
 // These tests exercise the REAL resolveDaemonAvailability path (which the hook-based suite in
 // commands.test.ts deliberately bypasses) by pointing the broker config at a known-free loopback
-// port via HUNK_MCP_PORT. No daemon is listening there, so the health and reachability probes
+// port via HUNKT_MCP_PORT. No daemon is listening there, so the health and reachability probes
 // resolve naturally — no module mocking, so nothing leaks into sibling suites.
-const originalPort = process.env.HUNK_MCP_PORT;
+const originalPort = process.env.HUNKT_MCP_PORT;
 
 // These cases drive the real availability probe against a loopback port with no daemon. Bun's
 // Windows networking does not reliably surface a connection refusal for a closed loopback port
@@ -42,15 +42,15 @@ beforeEach(() => {
 afterEach(() => {
   setSessionCommandTestHooks(null);
   if (originalPort === undefined) {
-    delete process.env.HUNK_MCP_PORT;
+    delete process.env.HUNKT_MCP_PORT;
   } else {
-    process.env.HUNK_MCP_PORT = originalPort;
+    process.env.HUNKT_MCP_PORT = originalPort;
   }
 });
 
 describe("resolveDaemonAvailability with no daemon listening", () => {
   probeTest("returns an empty session list instead of erroring", async () => {
-    process.env.HUNK_MCP_PORT = String(await reserveFreePort());
+    process.env.HUNKT_MCP_PORT = String(await reserveFreePort());
     const output = await runSessionCommand({
       kind: "session",
       action: "list",
@@ -62,7 +62,7 @@ describe("resolveDaemonAvailability with no daemon listening", () => {
   probeTest(
     "throws a clear error for a non-list command when no sessions are registered",
     async () => {
-      process.env.HUNK_MCP_PORT = String(await reserveFreePort());
+      process.env.HUNKT_MCP_PORT = String(await reserveFreePort());
       await expect(
         runSessionCommand({
           kind: "session",
@@ -79,7 +79,7 @@ describe("resolveDaemonAvailability with a foreign process on the port", () => {
   probeTest("throws a port-conflict error when the port is reachable but unhealthy", async () => {
     // A non-broker server occupies the port: reachable (TCP connects) but not health-OK.
     const server = Bun.serve({ port: 0, fetch: () => new Response("nope", { status: 404 }) });
-    process.env.HUNK_MCP_PORT = String(server.port);
+    process.env.HUNKT_MCP_PORT = String(server.port);
     try {
       await expect(
         runSessionCommand({

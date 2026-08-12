@@ -56,8 +56,8 @@ async function launchHunk(options: {
     env: {
       ...process.env,
       XDG_CONFIG_HOME: testConfigHome,
-      HUNK_MCP_DISABLE: "1",
-      HUNK_DISABLE_UPDATE_NOTICE: "1",
+      HUNKT_MCP_DISABLE: "1",
+      HUNKT_DISABLE_UPDATE_NOTICE: "1",
       ...options.env,
     },
   });
@@ -112,7 +112,7 @@ function runSessionCli(args: string[], port: number) {
     env: {
       ...process.env,
       XDG_CONFIG_HOME: testConfigHome,
-      HUNK_MCP_PORT: String(port),
+      HUNKT_MCP_PORT: String(port),
     },
   });
 
@@ -146,7 +146,7 @@ describe("difftastic engine CLI contracts", () => {
 
       const session = await launchHunk({
         args: ["diff", before, after, "--engine", "difftastic"],
-        env: { HUNK_DIFFT_PATH: join(dir, "no-such-difft") },
+        env: { HUNKT_DIFFT_PATH: join(dir, "no-such-difft") },
       });
 
       try {
@@ -182,7 +182,7 @@ describe("difftastic engine CLI contracts", () => {
           "--engine",
           "difftastic",
         ],
-        env: { HUNK_MCP_DISABLE: undefined, HUNK_MCP_PORT: String(port) },
+        env: { HUNKT_MCP_DISABLE: undefined, HUNKT_MCP_PORT: String(port) },
       });
 
       let daemonPid: number | null = null;

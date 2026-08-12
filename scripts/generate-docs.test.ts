@@ -33,9 +33,9 @@ describe("generated website references", () => {
   test("renders representative review, utility, session, and comment commands", () => {
     const reference = renderCliReference();
 
-    expect(reference).toContain("hunk diff --staged");
+    expect(reference).toContain("hunkt diff --staged");
     expect(reference).toContain("--no-transparent-bg");
-    expect(reference).toContain("hunk markup render");
+    expect(reference).toContain("hunkt markup render");
     expect(reference).toMatch(
       new RegExp(
         `\\| \\x60${SESSION_BROKER_HOST_ENV}\\x60\\s+\\| Bind host; defaults to loopback \\x60${DEFAULT_SESSION_BROKER_HOST}\\x60\\.`,
@@ -48,7 +48,7 @@ describe("generated website references", () => {
     );
     expect(reference).toContain(`\`${UNSAFE_ALLOW_REMOTE_SESSION_BROKER_ENV}\``);
     for (const command of SESSION_AGENT_COMMAND_LIST) {
-      expect(reference).toContain(`hunk ${command.name}`);
+      expect(reference).toContain(`hunkt ${command.name}`);
       for (const option of command.options) {
         expect(reference).toContain(option.flag);
       }
@@ -65,8 +65,8 @@ describe("generated website references", () => {
     expect(reference).toContain("`[custom_theme.syntax_scopes]`");
     expect(reference).toContain("`[vcs]`");
     expect(reference).toContain("`[pager]`");
-    expect(reference).toContain("`$HOME/.config/hunk/config.toml`");
-    expect(reference).toContain("`%USERPROFILE%/.config/hunk/config.toml`");
+    expect(reference).toContain("`$HOME/.config/hunkt/config.toml`");
+    expect(reference).toContain("`%USERPROFILE%/.config/hunkt/config.toml`");
     for (const [alias, replacement] of Object.entries(LEGACY_THEME_ID_ALIASES)) {
       expect(reference).toMatch(
         new RegExp(`\\| \\x60${alias}\\x60\\s+\\| \\x60${replacement}\\x60\\s+\\|`),
@@ -79,7 +79,7 @@ describe("generated website references", () => {
 
     expect(artifacts[GENERATED_DOC_PATHS.agentSkill]).toBe(renderHunkReviewSkill());
     expect(artifacts[GENERATED_DOC_PATHS.agentSkill]).toContain(
-      "hunk session review --repo . --json",
+      "hunkt session review --repo . --json",
     );
   });
 

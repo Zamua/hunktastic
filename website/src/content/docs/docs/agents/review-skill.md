@@ -8,7 +8,7 @@ Hunk ships a generated `hunk-review` skill with every installation. It is the au
 ## Locate the installed skill
 
 ```bash
-hunk skill path
+hunkt skill path
 ```
 
 Load or symlink the returned file according to your coding agent's skill mechanism. Resolve the path again after upgrades so the guidance stays aligned with the installed CLI.
@@ -27,6 +27,6 @@ bun run generate:skill
 
 ## Use it safely
 
-The skill instructs agents to avoid launching interactive commands such as `hunk diff` themselves. The user owns the TUI; the agent talks to an already-live review through `hunk session *`.
+The skill instructs agents to avoid launching interactive commands such as `hunkt diff` themselves. The user owns the TUI; the agent talks to an already-live review through `hunkt session *`.
 
 For the human workflow around that surface, start with [Review with an agent](/docs/agents/review-with-an-agent/).

@@ -3,21 +3,21 @@ title: Jujutsu and Sapling
 description: Use native revsets and pager integration in jj and Sapling workspaces.
 ---
 
-Hunk detects Git, Jujutsu (`jj`), and Sapling (`sl`) repositories. `hunk diff [target]` and `hunk show [target]` pass native revsets to the detected backend.
+Hunk detects Git, Jujutsu (`jj`), and Sapling (`sl`) repositories. `hunkt diff [target]` and `hunkt show [target]` pass native revsets to the detected backend.
 
 ## Jujutsu
 
 ```bash
-hunk diff
-hunk diff @-
-hunk show @
+hunkt diff
+hunkt diff @-
+hunkt show @
 ```
 
 Configure Hunk as jj's pager and request Git-format diffs:
 
 ```toml
 [ui]
-pager = ["hunk", "pager"]
+pager = ["hunkt", "pager"]
 diff-formatter = ":git"
 ```
 
@@ -26,16 +26,16 @@ Edit user settings with `jj config edit --user`.
 ## Sapling
 
 ```bash
-hunk diff
-hunk diff .^
-hunk show .
+hunkt diff
+hunkt diff .^
+hunkt show .
 ```
 
 Configure pager output with `sl config -u`:
 
 ```ini
 [pager]
-pager = hunk pager
+pager = hunkt pager
 ```
 
 ## Override detection

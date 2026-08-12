@@ -6,7 +6,7 @@ object. An entry may stand alone or be declared by a folder's optional
 `package.json` manifest; no build step is required.
 
 ```ts
-// ~/.config/hunk/extensions/hello.ts
+// ~/.config/hunkt/extensions/hello.ts
 import type { HunkExtensionAPI } from "hunkdiff/extension";
 
 export default function (hunk: HunkExtensionAPI) {
@@ -22,9 +22,9 @@ export default function (hunk: HunkExtensionAPI) {
 > changes will be called out in release notes, and `hunk.apiVersion` identifies
 > the surface an extension was written against.
 
-Writing one with a coding agent? `hunk skill path hunk-extensions` prints a
+Writing one with a coding agent? `hunkt skill path hunk-extensions` prints a
 bundled skill that maps the touchpoints below for agents, the way
-`hunk skill path` does for reviewing.
+`hunkt skill path` does for reviewing.
 
 ## Where Hunk looks for extensions
 
@@ -33,13 +33,13 @@ group — a folder extension's entries sort together, at the folder's own path.
 The first occurrence of a resolved path wins, so a path you pass explicitly
 keeps its origin even if the same file is also discovered somewhere else.
 
-| Group | Source                                               | Trust                 |
-| ----- | ---------------------------------------------------- | --------------------- |
-| 1     | `--extension <path>` (repeatable)                    | runs immediately      |
-| 2     | `[extensions] paths` in your user config             | runs immediately      |
-| 3     | `~/.config/hunk/extensions/`                         | runs immediately      |
-| 4     | `.hunk/extensions/` in the repo under review         | **prompts for trust** |
-| 4     | `[extensions] paths` in the repo `.hunk/config.toml` | **prompts for trust** |
+| Group | Source                                                | Trust                 |
+| ----- | ----------------------------------------------------- | --------------------- |
+| 1     | `--extension <path>` (repeatable)                     | runs immediately      |
+| 2     | `[extensions] paths` in your user config              | runs immediately      |
+| 3     | `~/.config/hunkt/extensions/`                         | runs immediately      |
+| 4     | `.hunkt/extensions/` in the repo under review         | **prompts for trust** |
+| 4     | `[extensions] paths` in the repo `.hunkt/config.toml` | **prompts for trust** |
 
 The two repo-local sources share a group number because they are one group:
 both are repo-controlled, so they share a trust decision and their paths are
@@ -55,7 +55,7 @@ order, so a folder shipping both a source and a built entry resolves the same
 everywhere). The manifest field is `hunk`:
 
 ```text
-~/.config/hunk/extensions/my-ext/
+~/.config/hunkt/extensions/my-ext/
   package.json          # {"hunk": {"extensions": ["./src/index.ts"]}}
   node_modules/         # bun install / npm install, right here
   src/
@@ -128,17 +128,17 @@ repository's own README.
 ## Sharing and installing extensions
 
 Extensions are shared as plain git repositories — there is no registry to
-publish to. `hunk extension install` clones one into a managed directory
-(`~/.config/hunk/extensions/installed/<repo-name>/`), verifies it actually
+publish to. `hunkt extension install` clones one into a managed directory
+(`~/.config/hunkt/extensions/installed/<repo-name>/`), verifies it actually
 contains an extension, installs its npm dependencies when it declares any, and
 records the source and resolved commit:
 
 ```bash
-hunk extension install acme/hunk-word-diff          # GitHub shorthand
-hunk extension install acme/hunk-word-diff@v1.2.0   # pin a tag, branch, or commit
-hunk extension install git:codeberg.org/acme/ext    # any host; https:// is assumed
-hunk extension install https://github.com/acme/hunk-word-diff.git
-hunk extension install ~/dev/hunk-word-diff         # a local checkout, for testing
+hunkt extension install acme/hunk-word-diff          # GitHub shorthand
+hunkt extension install acme/hunk-word-diff@v1.2.0   # pin a tag, branch, or commit
+hunkt extension install git:codeberg.org/acme/ext    # any host; https:// is assumed
+hunkt extension install https://github.com/acme/hunk-word-diff.git
+hunkt extension install ~/dev/hunk-word-diff         # a local checkout, for testing
 ```
 
 Managed installs load through the global source group — same origin, same
@@ -146,12 +146,12 @@ precedence, no trust prompt — because installing one is the explicit consent:
 the install asks for confirmation (or `--yes`) after stating that extensions
 run with your full user permissions. Only install repositories you trust.
 
-`hunk extension list` shows every managed install with its version, commit, and
-source. `hunk extension update [name]` re-clones one install (or all of them)
+`hunkt extension list` shows every managed install with its version, commit, and
+source. `hunkt extension update [name]` re-clones one install (or all of them)
 from its recorded source — an install pinned with `@ref` stays at that ref
-until you re-install with a different one. `hunk extension remove <name>`
+until you re-install with a different one. `hunkt extension remove <name>`
 deletes the install and its record. Managed installs never collide with
-extensions you copied into `~/.config/hunk/extensions/` by hand, and the
+extensions you copied into `~/.config/hunkt/extensions/` by hand, and the
 installer refuses to overwrite an unmanaged directory of the same name.
 
 ### Publishing an extension
@@ -183,8 +183,8 @@ To publish one:
    up at <https://github.com/topics/hunk-extension>.
 
 Before publishing, exercise the exact layout users will install:
-`hunk extension install /path/to/your/checkout` installs from a local
-repository, and `hunk diff --extension /path/to/your/checkout` loads it for one
+`hunkt extension install /path/to/your/checkout` installs from a local
+repository, and `hunkt diff --extension /path/to/your/checkout` loads it for one
 run without installing anything.
 
 ## Bundled extensions
@@ -224,12 +224,12 @@ came with a repository you are about to review — pointing a diff tool at
 unfamiliar code is a normal thing to do, and it must never execute that code.
 
 So repo-local sources are gated. The first time Hunk finds extensions in a
-repository's `.hunk/extensions` (or repo-config `paths`), it skips them and asks:
+repository's `.hunkt/extensions` (or repo-config `paths`), it skips them and asks:
 
 ```
 Run this repository's extensions?
 
-  This repository contains extensions in .hunk/extensions.
+  This repository contains extensions in .hunkt/extensions.
   Extensions run with your user permissions.
 
   enter/t trust · esc not now · n never
@@ -241,7 +241,7 @@ Run this repository's extensions?
   asked again next time.
 - **Never** records a denial so Hunk stops offering.
 
-Decisions are stored per repository root in `~/.config/hunk/state.json`. The
+Decisions are stored per repository root in `~/.config/hunkt/state.json`. The
 prompt is a normal dialog over the review stream, not a gate in front of it:
 you can dismiss it and keep reviewing.
 
@@ -410,7 +410,7 @@ adapter list — and that second answer is the one the session uses.
 What detection never overrides is an explicit choice: a `vcs = "<id>"` in Hunk
 config naming a backend this session loaded is honored as-is, however near a
 checkout some other adapter finds. A repository-local adapter can bootstrap a
-provider Hunk has never seen because `.hunk` itself establishes the project root;
+provider Hunk has never seen because `.hunkt` itself establishes the project root;
 global, config-path, and `--extension` adapters also participate in a staged
 root/config pass before the review loads. When the final root only adds repo
 candidates, Hunk extends the provisional registry instead of executing its
@@ -553,8 +553,8 @@ it. Anything else is reported as an unexpected error.
 ```ts
 import { HunkExtensionUserError } from "hunkdiff/extension";
 
-throw new HunkExtensionUserError("`hunk stash show` is not supported by Mercurial.", {
-  suggestions: ["Use `hunk show <rev>` to review a commit instead."],
+throw new HunkExtensionUserError("`hunkt stash show` is not supported by Mercurial.", {
+  suggestions: ["Use `hunkt show <rev>` to review a commit instead."],
 });
 ```
 
@@ -571,7 +571,7 @@ Render a React component on the `left`, `right`, `top`, or `bottom` edge of the
 review. Pair it with `registerCommand` so a key opens it:
 
 ```tsx
-// ~/.config/hunk/extensions/flat-pane.tsx
+// ~/.config/hunkt/extensions/flat-pane.tsx
 import { useMemo } from "react";
 import type { ExtensionPaneProps, HunkExtensionAPI } from "hunkdiff/extension";
 
@@ -841,7 +841,7 @@ geometry.
 The installable
 [`examples/extensions/rendered-markdown/`](../examples/extensions/rendered-markdown/)
 uses this contract for a parsed Markdown preview. It is intentionally not bundled
-or loaded by default; copy the folder into `~/.config/hunk/extensions/`, install
+or loaded by default; copy the folder into `~/.config/hunkt/extensions/`, install
 its dependency there, and its View entry and `F8` command become available.
 
 ```ts
@@ -1370,14 +1370,14 @@ hunk.registerCommand({ id: "shout-headings", title: "Shout headings", key: "f7" 
 
 `readDocument` returns the exact source represented by the review, not the
 file's patch. It works for every review kind. For example, the `"new"` side in
-`hunk show HEAD` is the file at that commit, not the working-tree file. It
+`hunkt show HEAD` is the file at that commit, not the working-tree file. It
 returns `null` when the file or side is absent, no source is available, reading
 fails, or the document exceeds Hunk's size limit. Reads never prompt. An invalid
 side rejects the promise.
 
 Writes require all of the following:
 
-- an unstaged working-tree review (`hunk diff` with no revision range)
+- an unstaged working-tree review (`hunkt diff` with no revision range)
 - a reloadable session; `--agent-context -` sessions cannot write
 - a reviewed file with writable new-side text
 - a regular target inside the review root
@@ -1519,7 +1519,7 @@ config overrides user config key by key.
 > loading. Validate those against something the user controls.
 
 ```toml
-# ~/.config/hunk/config.toml
+# ~/.config/hunkt/config.toml
 [extension.collapse-generated]
 patterns = ["*.lock", "dist/**"]
 ```
@@ -1562,7 +1562,7 @@ Collapse lockfiles and generated output out of every review, and say how many
 files were hidden.
 
 ```ts
-// ~/.config/hunk/extensions/collapse-generated.ts
+// ~/.config/hunkt/extensions/collapse-generated.ts
 import type { HunkExtensionAPI } from "hunkdiff/extension";
 
 /** Match one path against a `*`-only glob, anchored at both ends. */
@@ -1599,7 +1599,7 @@ export default function (hunk: HunkExtensionAPI) {
 Configure it without touching the code:
 
 ```toml
-# .hunk/config.toml
+# .hunkt/config.toml
 [extension.collapse-generated]
 patterns = ["*.lock", "bun.lockb", "generated/*"]
 ```
@@ -1607,19 +1607,19 @@ patterns = ["*.lock", "bun.lockb", "generated/*"]
 Try it against the working tree without installing it:
 
 ```bash
-hunk diff --extension ./collapse-generated.ts
+hunkt diff --extension ./collapse-generated.ts
 ```
 
 ## CLI flags and config reference
 
 ```bash
-hunk diff --extension ./path/to/entry.ts   # load one entry file (repeatable)
-hunk diff --extension ./my-ext             # a folder extension: loads ./my-ext/index.ts
-hunk diff --no-extensions                  # disable user extensions for this run
+hunkt diff --extension ./path/to/entry.ts   # load one entry file (repeatable)
+hunkt diff --extension ./my-ext             # a folder extension: loads ./my-ext/index.ts
+hunkt diff --no-extensions                  # disable user extensions for this run
 ```
 
 ```toml
-# ~/.config/hunk/config.toml or .hunk/config.toml
+# ~/.config/hunkt/config.toml or .hunkt/config.toml
 [extensions]
 enabled = true                      # false disables loading for this layer
 paths = ["~/dev/hunk-ext/index.ts"] # extra entry files or directories
@@ -1628,11 +1628,11 @@ paths = ["~/dev/hunk-ext/index.ts"] # extra entry files or directories
 some_key = "some value"
 ```
 
-`[extensions] enabled` layers like every other option: a repo `.hunk/config.toml`
+`[extensions] enabled` layers like every other option: a repo `.hunkt/config.toml`
 overrides your user config. `--no-extensions` is a hard off switch that no config
 layer can re-enable. Both govern **user** extensions only — Hunk's bundled
 Git, Jujutsu, and Sapling backends load either way. `[extensions] paths` from a repo
-config is trust-gated the same way `.hunk/extensions` is, because it is
+config is trust-gated the same way `.hunkt/extensions` is, because it is
 repo-controlled either way.
 
 ## Not contributable yet

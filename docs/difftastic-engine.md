@@ -16,12 +16,12 @@ Tested against difftastic 0.69.0. Ground-truth fixture:
 
 ### v1 in scope
 
-- Structural rendering for the two-file flow (`hunk diff A B`, `difftool`)
-  and the git-backed flows (`hunk diff` working tree, `show`, `stash-show`)
+- Structural rendering for the two-file flow (`hunkt diff A B`, `difftool`)
+  and the git-backed flows (`hunkt diff` working tree, `show`, `stash-show`)
   in the review stream.
 - `[` / `]` hunk navigation over structural chunks (difftastic chunks become
   `metadata.hunks`; all existing cursor machinery works unchanged).
-- Agent comments: `hunk session comment add` with `--hunk/hunkNumber`,
+- Agent comments: `hunkt session comment add` with `--hunk/hunkNumber`,
   `--old-line`, `--new-line` anchors resolving against structural hunks.
 - Split and stack layouts, including difftastic's explicit lhs/rhs row
   alignment in split view.
@@ -47,7 +47,7 @@ Tested against difftastic 0.69.0. Ground-truth fixture:
 
 New option `engine`, values `"pierre" | "difftastic"`. Layered exactly like
 existing view options. Precedence (low to high): built-in default
--> user config TOML -> repo `.hunk/config.toml` -> `HUNK_ENGINE` env ->
+-> user config TOML -> repo `.hunkt/config.toml` -> `HUNKT_ENGINE` env ->
 `--engine` CLI flag.
 
 The built-in default is `difftastic` (`DEFAULT_DIFF_ENGINE` in
@@ -57,7 +57,7 @@ the unavailable notice on a default run rather than only when opted in.
 
 A second option `novelty` (`"highlight" | "recolor"`, default `highlight`,
 `DEFAULT_NOVELTY_STYLE`) selects how changed tokens are marked, and layers the
-same way with `HUNK_NOVELTY` as its env hook. It applies only to
+same way with `HUNKT_NOVELTY` as its env hook. It applies only to
 difftastic-engine files, since only they carry novelty spans. See section 5.5.
 
 Touch list (mirrors the `layout` option shape):
@@ -75,18 +75,18 @@ Touch list (mirrors the `layout` option shape):
   in `normalizeConfigReferenceValue` (the default branch is
   `normalizeBoolean` and silently drops string keys); add
   `engine: overrides.engine ?? base.engine` to `mergeOptions`; apply
-  `HUNK_ENGINE` (validated, invalid value ignored with a notice) in
+  `HUNKT_ENGINE` (validated, invalid value ignored with a notice) in
   `resolveConfiguredCliInput` after the repo layer and before CLI-flag merge;
   final default fill `engine: resolvedOptions.engine ?? "pierre"`.
 - `src/core/config.ts` — second key `difft_path` (binary path override).
-  Honored from user config and `HUNK_DIFFT_PATH` env only; a repo-config
+  Honored from user config and `HUNKT_DIFFT_PATH` env only; a repo-config
   value is IGNORED with the existing exec-adjacent repo-config notice
   treatment (`createRepoExtensionConfigNotice` precedent). Default `"difft"`
   (PATH lookup).
 - Regenerate docs: `bun run generate:docs`
   (`scripts/generate-docs.test.ts` asserts every runtime key renders).
 
-`HUNK_ENGINE` is the test hook: PTY/CLI tests set it instead of threading
+`HUNKT_ENGINE` is the test hook: PTY/CLI tests set it instead of threading
 flags. It deliberately sits below the CLI flag so an explicit `--engine`
 always wins.
 
@@ -383,7 +383,7 @@ Rules:
   1-based at the CLI, converted once at the broker
   (`brokerServer.ts`: `hunkIndex = hunkNumber - 1`), exactly as today. No
   cross-engine translation table is built. The contract that makes this
-  safe: `hunk session review --json` summarizes the SAME array
+  safe: `hunkt session review --json` summarizes the SAME array
   (`summarizeHunk` over `file.metadata.hunks`), so an agent that plans
   `--hunk N` from `review --json` output within a session always targets
   what it saw.
@@ -439,7 +439,7 @@ Unit tests (colocated `*.test.ts`, repo convention):
   and timeout paths via a stub script fixture.
 - `src/core/cli.test.ts` / `src/core/config.test.ts` additions — flag
   parsing (rejects unknown engine), TOML key + per-command section layering,
-  `HUNK_ENGINE` precedence below `--engine`, `difft_path` ignored from repo
+  `HUNKT_ENGINE` precedence below `--engine`, `difft_path` ignored from repo
   config with notice.
 - `src/ui/diff/pierre.test.ts` addition — `overlayNoveltySpans` splits
   spans at column boundaries and preserves text.
@@ -447,7 +447,7 @@ Unit tests (colocated `*.test.ts`, repo convention):
 Integration (one PTY case, only because it is cheap):
 
 - `test/cli/engineDifftastic.test.ts` — skipped unless `difft` is on PATH.
-  Runs `hunk diff before.js after.js --engine difftastic` against the
+  Runs `hunkt diff before.js after.js --engine difftastic` against the
   committed fixture pair, asserts the structural hunk renders and that
   `session review --json` reports `engine: "difftastic"`. A second
   non-skipped case runs with `difft_path` pointed at a nonexistent binary
@@ -470,7 +470,7 @@ Docs: `bun run generate:docs` after the config table change;
   that bakes `difft_path` for nix-installed hunk.
 - **herdr split-screen live-annotation demo**: hunk review TUI with
   `engine = "difftastic"` in one pane, an agent adding structural-hunk
-  comments over `hunk session comment add` in the other.
+  comments over `hunkt session comment add` in the other.
 - Watch-mode spawn cache keyed by (old content hash, new content hash) if
   per-file difft spawns measurably slow reloads.
 - Consider difftastic for `patch`/`pager` inputs by reconstructing bodies

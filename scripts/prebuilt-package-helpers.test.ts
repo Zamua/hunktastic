@@ -29,7 +29,7 @@ describe("prebuilt package helpers", () => {
       if (spec.os === "windows") {
         continue;
       }
-      expect(binaryFilenameForSpec(spec)).toBe("hunk");
+      expect(binaryFilenameForSpec(spec)).toBe("hunkt");
     }
   });
 
@@ -38,11 +38,11 @@ describe("prebuilt package helpers", () => {
       packageName: "hunkdiff-windows-x64",
       os: "windows",
       cpu: "x64",
-      binaryName: "hunk",
-      binaryRelativePath: "bin/hunk.exe",
+      binaryName: "hunkt",
+      binaryRelativePath: "bin/hunkt.exe",
     };
 
-    expect(binaryFilenameForSpec(windowsSpec)).toBe("hunk.exe");
+    expect(binaryFilenameForSpec(windowsSpec)).toBe("hunkt.exe");
   });
 
   test("normalizeHostPlatform and normalizeHostArch reject unsupported values", () => {

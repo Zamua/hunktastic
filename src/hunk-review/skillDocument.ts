@@ -39,7 +39,7 @@ const FRONTMATTER = [
 const INTRO = [
   "# Hunk Review",
   "",
-  "Hunk is an interactive terminal diff viewer. The TUI is for the user -- do NOT run `hunk diff`, `hunk show`, or other interactive commands directly. Use `hunk session *` CLI commands to inspect and control live sessions through the local daemon.",
+  "Hunk is an interactive terminal diff viewer. The TUI is for the user -- do NOT run `hunkt diff`, `hunkt show`, or other interactive commands directly. Use `hunkt session *` CLI commands to inspect and control live sessions through the local daemon.",
   "",
   "If no session exists, ask the user to launch Hunk in their terminal first.",
 ];
@@ -48,15 +48,15 @@ const WORKFLOW = [
   "## Workflow",
   "",
   "```text",
-  "1. hunk session list                                    # find live sessions",
-  "2. hunk session get --repo .                            # inspect path / repo / source",
-  "3. hunk session review --repo . --json                  # inspect file/hunk structure first",
-  "4. hunk session review --repo . --include-patch --json  # opt into raw diff text only when needed",
-  "5. hunk session context --repo .                        # check current focus when needed",
-  "6. hunk session navigate ...                            # move to the right place",
-  "7. hunk session reload -- <command>                     # swap contents if needed",
-  "8. hunk session comment add ...                         # leave one review note",
-  "9. hunk session comment apply ...                       # apply many agent notes in one stdin batch",
+  "1. hunkt session list                                    # find live sessions",
+  "2. hunkt session get --repo .                            # inspect path / repo / source",
+  "3. hunkt session review --repo . --json                  # inspect file/hunk structure first",
+  "4. hunkt session review --repo . --include-patch --json  # opt into raw diff text only when needed",
+  "5. hunkt session context --repo .                        # check current focus when needed",
+  "6. hunkt session navigate ...                            # move to the right place",
+  "7. hunkt session reload -- <command>                     # swap contents if needed",
+  "8. hunkt session comment add ...                         # leave one review note",
+  "9. hunkt session comment apply ...                       # apply many agent notes in one stdin batch",
   "```",
 ];
 
@@ -122,7 +122,7 @@ const RELOAD_SECTION = [
   "- Always include `--` before the nested Hunk command",
   "- `--repo` or `<session-id>` usually selects the session you want",
   "- `--source` is advanced: it does not select the session; it only changes where the replacement review command runs",
-  "- If the live session is already showing the target worktree, prefer `hunk session reload --repo /path/to/worktree -- diff`",
+  "- If the live session is already showing the target worktree, prefer `hunkt session reload --repo /path/to/worktree -- diff`",
   "- `--session-path` targets the live window when you need to keep session selection separate from reload source",
 ];
 
@@ -159,25 +159,25 @@ const COMMENTS_SECTION = [
 const STML_SECTION = [
   "### Experimental rich markup notes (STML)",
   "",
-  "Only use STML when `hunk session context --json` lists `stml` in `experimentalFeatures`. The user opts into that experience by launching the review with `--experimental`; do not ask a normal session to render markup.",
+  "Only use STML when `hunkt session context --json` lists `stml` in `experimentalFeatures`. The user opts into that experience by launching the review with `--experimental`; do not ask a normal session to render markup.",
   "",
   "For an opted-in session, `--markup` (or a `markup` field on apply items) renders the note body as STML — a small HTML-like markup for terminal UI (boxes, rows, gauges, badges, lists, code). Keep `--summary` a real sentence: it is the fallback and the `comment list` text.",
   "",
-  "Before writing markup, run `hunk markup guide` once — it has copy-paste patterns and the width rules. The session context also reports `noteMarkupWidth` (the live render width); preview with `hunk markup render - --width <that>`. Comment responses echo `markupWidth` and return `markupNotes` when markup degraded — fix what they flag.",
+  "Before writing markup, run `hunkt markup guide` once — it has copy-paste patterns and the width rules. The session context also reports `noteMarkupWidth` (the live render width); preview with `hunkt markup render - --width <that>`. Comment responses echo `markupWidth` and return `markupNotes` when markup degraded — fix what they flag.",
 ];
 
 const NEW_FILES_SECTION = [
   "## New files in working-tree reviews",
   "",
-  "`hunk diff` includes untracked files by default. If the user wants tracked changes only, reload with `--exclude-untracked`:",
+  "`hunkt diff` includes untracked files by default. If the user wants tracked changes only, reload with `--exclude-untracked`:",
   "",
-  ...bashFence(["hunk session reload --repo . -- diff --exclude-untracked"]),
+  ...bashFence(["hunkt session reload --repo . -- diff --exclude-untracked"]),
 ];
 
 const GUIDING_SECTION = [
   "## Guiding a review",
   "",
-  "The user may ask you to walk them through a changeset or review code using Hunk. Start with `hunk session review --json` to understand the file/hunk structure without inflating agent context, then use `--include-patch` only for the files you truly need to read in raw diff form. Use `context` and `navigate` to line up the user's current view before adding comments.",
+  "The user may ask you to walk them through a changeset or review code using Hunk. Start with `hunkt session review --json` to understand the file/hunk structure without inflating agent context, then use `--include-patch` only for the files you truly need to read in raw diff form. Use `context` and `navigate` to line up the user's current view before adding comments.",
   "",
   "Your role is to narrate: steer the user's view to what matters and leave comments that explain what they're looking at.",
   "",

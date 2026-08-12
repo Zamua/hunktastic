@@ -8,6 +8,7 @@ import {
   resolveBundledSkillPath,
   resolveCanonicalPath,
   resolveGlobalConfigPath,
+  resolveGlobalExtensionsDir,
   resolveHunkStatePath,
 } from "./paths";
 
@@ -19,27 +20,36 @@ describe("paths", () => {
   test("resolves XDG config and state paths", () => {
     const env = { XDG_CONFIG_HOME: join("/tmp", "xdg-home") } as NodeJS.ProcessEnv;
 
-    expect(resolveGlobalConfigPath(env)).toBe(join("/tmp", "xdg-home", "hunk", "config.toml"));
-    expect(resolveHunkStatePath(env)).toBe(join("/tmp", "xdg-home", "hunk", "state.json"));
+    expect(resolveGlobalConfigPath(env)).toBe(join("/tmp", "xdg-home", "hunkt", "config.toml"));
+    expect(resolveHunkStatePath(env)).toBe(join("/tmp", "xdg-home", "hunkt", "state.json"));
+  });
+
+  /** Every user-scoped path sits under `hunkt`, so upstream `hunk` is never shared with. */
+  test("keeps every user-scoped path out of the upstream hunk directory", () => {
+    const env = { XDG_CONFIG_HOME: join("/tmp", "xdg-home") } as NodeJS.ProcessEnv;
+
+    expect(resolveGlobalConfigPath(env)).toBe(join("/tmp", "xdg-home", "hunkt", "config.toml"));
+    expect(resolveHunkStatePath(env)).toBe(join("/tmp", "xdg-home", "hunkt", "state.json"));
+    expect(resolveGlobalExtensionsDir(env)).toBe(join("/tmp", "xdg-home", "hunkt", "extensions"));
   });
 
   test("falls back to HOME for config and state paths", () => {
     const env = { HOME: join("/tmp", "home") } as NodeJS.ProcessEnv;
 
     expect(resolveGlobalConfigPath(env)).toBe(
-      join("/tmp", "home", ".config", "hunk", "config.toml"),
+      join("/tmp", "home", ".config", "hunkt", "config.toml"),
     );
-    expect(resolveHunkStatePath(env)).toBe(join("/tmp", "home", ".config", "hunk", "state.json"));
+    expect(resolveHunkStatePath(env)).toBe(join("/tmp", "home", ".config", "hunkt", "state.json"));
   });
 
   test("falls back to USERPROFILE when HOME is unavailable", () => {
     const env = { USERPROFILE: join("/tmp", "windows-profile") } as NodeJS.ProcessEnv;
 
     expect(resolveGlobalConfigPath(env)).toBe(
-      join("/tmp", "windows-profile", ".config", "hunk", "config.toml"),
+      join("/tmp", "windows-profile", ".config", "hunkt", "config.toml"),
     );
     expect(resolveHunkStatePath(env)).toBe(
-      join("/tmp", "windows-profile", ".config", "hunk", "state.json"),
+      join("/tmp", "windows-profile", ".config", "hunkt", "state.json"),
     );
   });
 
@@ -83,7 +93,7 @@ describe("paths", () => {
     try {
       const nestedPackageRoot = join(tempRoot, "node_modules", "hunkdiff");
       const skillPath = join(nestedPackageRoot, "skills", "hunk-review", "SKILL.md");
-      const fakeBinary = join(tempRoot, "node_modules", "hunkdiff-linux-x64", "bin", "hunk");
+      const fakeBinary = join(tempRoot, "node_modules", "hunkdiff-linux-x64", "bin", "hunkt");
 
       mkdirSync(dirname(skillPath), { recursive: true });
       mkdirSync(dirname(fakeBinary), { recursive: true });

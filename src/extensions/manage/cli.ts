@@ -11,7 +11,7 @@ import {
 import { parseExtensionInstallSource } from "./source";
 
 /**
- * The I/O one `hunk extension` command runs against.
+ * The I/O one `hunkt extension` command runs against.
  *
  * Everything the runner touches outside the managed install root arrives
  * through this seam, so tests can drive install confirmations and read output
@@ -48,7 +48,7 @@ function requireInstalledRoot(env: NodeJS.ProcessEnv) {
 }
 
 /**
- * Run one `hunk extension` command and return its exit code.
+ * Run one `hunkt extension` command and return its exit code.
  *
  * Install is the only interactive step: extensions execute with the user's
  * full permissions, so a fresh install requires either a terminal confirmation
@@ -101,7 +101,7 @@ export async function runExtensionManageCommand(
     const entries = listExtensions(context);
     if (entries.length === 0) {
       io.stdout(
-        "No managed extension installs.\nInstall one with `hunk extension install <owner>/<repo>`.\n",
+        "No managed extension installs.\nInstall one with `hunkt extension install <owner>/<repo>`.\n",
       );
       return 0;
     }

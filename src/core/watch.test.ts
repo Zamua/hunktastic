@@ -190,7 +190,7 @@ describe("computeWatchSignature", () => {
         },
         { cwd: process.cwd() },
       ),
-    ).toThrow("`hunk stash show` requires Git VCS mode.");
+    ).toThrow("`hunkt stash show` requires Git VCS mode.");
   });
 
   test("tracks untracked file changes when diff compares the working tree against one ref", () => {

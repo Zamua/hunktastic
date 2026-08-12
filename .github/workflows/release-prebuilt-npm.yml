@@ -260,9 +260,9 @@ jobs:
           mkdir -p dist/release/github
           while IFS= read -r -d '' directory; do
             package_name="$(basename "$directory")"
-            binary="$directory/hunk"
-            if [ ! -f "$binary" ] && [ -f "$directory/hunk.exe" ]; then
-              binary="$directory/hunk.exe"
+            binary="$directory/hunkt"
+            if [ ! -f "$binary" ] && [ -f "$directory/hunkt.exe" ]; then
+              binary="$directory/hunkt.exe"
             fi
             if [ ! -f "$binary" ]; then
               echo "Missing release binary in $directory" >&2

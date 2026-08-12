@@ -102,7 +102,7 @@ export interface HunkConfigResolution {
   explicitVcsId?: string;
   startupNotices?: readonly StartupNotice[];
   globalConfigPath?: string;
-  /** Project root selected from `.hunk` or the base VCS catalog. */
+  /** Project root selected from `.hunkt` or the base VCS catalog. */
   projectRoot?: string;
   repoConfigPath?: string;
   viewPreferencesConfigPath?: string;
@@ -267,7 +267,7 @@ export const CONFIG_REFERENCE_OPTIONS: readonly ConfigReferenceOption[] = [
     accepted: "a difftastic executable path or command name",
     runtimeDefault: "difft",
     description:
-      "Locate the difftastic binary for the `difftastic` engine. Honored from user config and `HUNK_DIFFT_PATH` only; a repo config value is ignored with a notice.",
+      "Locate the difftastic binary for the `difftastic` engine. Honored from user config and `HUNKT_DIFFT_PATH` only; a repo config value is ignored with a notice.",
   },
   {
     key: "cursor_line",
@@ -396,12 +396,12 @@ export const CONFIG_REFERENCE_OPTIONS: readonly ConfigReferenceOption[] = [
 
 /** Command-specific TOML tables accepted by the runtime resolver. */
 export const CONFIG_COMMAND_SECTIONS = {
-  vcs: "working-tree and target reviews (`hunk diff`)",
-  show: "commit and target display reviews (`hunk show`)",
-  "stash-show": "stash reviews (`hunk stash show`)",
-  diff: "two-file comparisons (`hunk diff <left> <right>`)",
-  patch: "patch-file reviews (`hunk patch`)",
-  difftool: "Git difftool pair reviews (`hunk difftool`)",
+  vcs: "working-tree and target reviews (`hunkt diff`)",
+  show: "commit and target display reviews (`hunkt show`)",
+  "stash-show": "stash reviews (`hunkt stash show`)",
+  diff: "two-file comparisons (`hunkt diff <left> <right>`)",
+  patch: "patch-file reviews (`hunkt patch`)",
+  difftool: "Git difftool pair reviews (`hunkt difftool`)",
 } as const satisfies Record<CliInput["kind"], string>;
 
 /** Reference metadata for the root-only custom-theme tables. */
@@ -855,16 +855,16 @@ function createRepoExtensionConfigNotice(
 function createRepoDifftPathNotice(): StartupNotice {
   return {
     key: "difftastic:repo-difft-path",
-    message: "Ignored difft_path from repo config. Set it in user config or HUNK_DIFFT_PATH.",
+    message: "Ignored difft_path from repo config. Set it in user config or HUNKT_DIFFT_PATH.",
   };
 }
 
-/** Report an unusable HUNK_ENGINE value instead of silently dropping the override. */
+/** Report an unusable HUNKT_ENGINE value instead of silently dropping the override. */
 function createInvalidEngineEnvNotice(value: string): StartupNotice {
   const listed = sanitizeTerminalLine(value);
   return {
     key: `engine:invalid-env:${listed}`,
-    message: `Ignored HUNK_ENGINE="${listed}". Valid engines: pierre, difftastic.`,
+    message: `Ignored HUNKT_ENGINE="${listed}". Valid engines: pierre, difftastic.`,
   };
 }
 
@@ -1113,7 +1113,7 @@ export function resolveConfiguredCliInput(
   }: ConfigResolutionOptions = {},
 ): HunkConfigResolution {
   const repoRoot = findProjectRootCandidate(cwd, vcsCatalog);
-  const repoConfigPath = repoRoot ? join(repoRoot, ".hunk", "config.toml") : undefined;
+  const repoConfigPath = repoRoot ? join(repoRoot, ".hunkt", "config.toml") : undefined;
   const userConfigPath = resolveGlobalConfigPath(env);
   let resolvedCustomThemes: NamedCustomThemeConfig[] = [];
   let usesLegacyCustomSyntax = false;
@@ -1170,8 +1170,8 @@ export function resolveConfiguredCliInput(
   }
 
   // Env overrides sit above the config layers and below explicit CLI flags.
-  // `HUNK_ENGINE` is the PTY/CLI test hook the spec reserves for engine selection.
-  const envEngine = env.HUNK_ENGINE;
+  // `HUNKT_ENGINE` is the PTY/CLI test hook the spec reserves for engine selection.
+  const envEngine = env.HUNKT_ENGINE;
   if (envEngine !== undefined && envEngine !== "") {
     const normalizedEnvEngine = normalizeDiffEngine(envEngine);
     if (normalizedEnvEngine) {
@@ -1181,14 +1181,14 @@ export function resolveConfiguredCliInput(
     }
   }
 
-  const envNovelty = env.HUNK_NOVELTY;
+  const envNovelty = env.HUNKT_NOVELTY;
   if (envNovelty !== undefined && envNovelty !== "") {
     const normalizedEnvNovelty = normalizeNoveltyStyle(envNovelty);
     if (normalizedEnvNovelty) {
       resolvedOptions = mergeOptions(resolvedOptions, { novelty: normalizedEnvNovelty });
     }
   }
-  const envDifftPath = normalizeString(env.HUNK_DIFFT_PATH);
+  const envDifftPath = normalizeString(env.HUNKT_DIFFT_PATH);
   if (envDifftPath) {
     resolvedOptions = mergeOptions(resolvedOptions, { difftPath: envDifftPath });
   }

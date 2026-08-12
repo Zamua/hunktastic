@@ -193,7 +193,7 @@ export function createUnsupportedVcsOperationError(
     (candidate) => candidate.operations?.[operationKind],
   );
   if (operationKind === "stash-show" && supportingAdapter) {
-    return new HunkUserError(`\`hunk stash show\` requires ${supportingAdapter.name} VCS mode.`, [
+    return new HunkUserError(`\`hunkt stash show\` requires ${supportingAdapter.name} VCS mode.`, [
       `Set \`vcs = "${supportingAdapter.id}"\` in Hunk config, then try again.`,
     ]);
   }

@@ -59,8 +59,8 @@ export interface HunkExtensionUserErrorOptions {
  * it; anything else is reported as an unexpected error.
  *
  * ```ts
- * throw new HunkExtensionUserError("`hunk stash show` is not supported by Mercurial.", {
- *   suggestions: ["Use `hunk show <rev>` to review a commit instead."],
+ * throw new HunkExtensionUserError("`hunkt stash show` is not supported by Mercurial.", {
+ *   suggestions: ["Use `hunkt show <rev>` to review a commit instead."],
  * });
  * ```
  */

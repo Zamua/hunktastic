@@ -234,7 +234,7 @@ Sandbox-specific bullets are marked; each cost real debugging time.
   PNGs. Keep every scene at this size so all frames fit one window.
 - Helpers: `createDemoRepo()` and `launchHunkShell()` are hunk-side glue in
   the script (git repo built from `examples/2-mini-app-refactor`; interactive
-  bash with a real `hunk` command on PATH and a clean `❯` prompt); `snap`,
+  bash with a real `hunkt` command on PATH and a clean `❯` prompt); `snap`,
   `typeCommand`, `launchApp`/`launchShell`, and `createCommandWrapper` come
   from `@hunk/term-video/capture`.
 - Always `waitForText` on scene-specific content before the first snap, and
@@ -254,8 +254,8 @@ Sandbox-specific bullets are marked; each cost real debugging time.
 - Demo content that must exist: STML notes come from
   `examples/9-agent-markup-notes` (launch with `--experimental`), extension
   scenes from `examples/extensions/` loaded via `--extension <path>` (explicit
-  paths skip the repo trust prompt). The pager pipe is `git diff | hunk pager`
-  — bare `hunk` on piped stdin prints help. Sidebar toggle is `s`; comment
+  paths skip the repo trust prompt). The pager pipe is `git diff | hunkt pager`
+  — bare `hunkt` on piped stdin prints help. Sidebar toggle is `s`; comment
   draft is `c`, save with Ctrl+S (`\x13`).
 
 ## Storyboard model (compose.mjs)

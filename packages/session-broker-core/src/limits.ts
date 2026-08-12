@@ -2,7 +2,7 @@
  * Hard size ceilings for everything the session broker parses or stores from the network.
  *
  * The broker is loopback-only by default, but a hostile or buggy local process (and any remote
- * peer when HUNK_MCP_UNSAFE_ALLOW_REMOTE=1) can otherwise stream unbounded HTTP bodies or
+ * peer when HUNKT_MCP_UNSAFE_ALLOW_REMOTE=1) can otherwise stream unbounded HTTP bodies or
  * websocket frames, or register a changeset with an unbounded number of files, hunks, comments,
  * or patch bytes. These caps keep memory bounded while staying far above any realistic review.
  */

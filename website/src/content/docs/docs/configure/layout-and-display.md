@@ -8,9 +8,9 @@ Hunk uses the same normalized review model in every layout.
 ## Pick a layout policy
 
 ```bash
-hunk diff --mode auto
-hunk diff --mode split
-hunk diff --mode stack
+hunkt diff --mode auto
+hunkt diff --mode split
+hunkt diff --mode stack
 ```
 
 - `auto` chooses split on wide terminals and stack on narrow ones.
@@ -22,7 +22,7 @@ Explicit split and stack choices override responsive behavior. Press `0`, `1`, o
 ## Tune code rows
 
 ```bash
-hunk diff --no-line-numbers --wrap --no-hunk-headers --tab-width 2
+hunkt diff --no-line-numbers --wrap --no-hunk-headers --tab-width 2
 ```
 
 Paired flags let scripts express either state: `--line-numbers` / `--no-line-numbers`, `--wrap` / `--no-wrap`, and `--hunk-headers` / `--no-hunk-headers`. Tab width accepts an integer from 1 through 16.

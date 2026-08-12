@@ -53,7 +53,7 @@ function hostCandidates() {
 
   const platform = platformMap[os.platform()] || os.platform();
   const arch = archMap[os.arch()] || os.arch();
-  const binary = platform === "windows" ? "hunk.exe" : "hunk";
+  const binary = platform === "windows" ? "hunkt.exe" : "hunkt";
 
   if (platform === "darwin") {
     if (arch === "arm64") return [{ packageName: "hunkdiff-darwin-arm64", binary }];
@@ -106,7 +106,7 @@ const forwardedArgs = process.argv.slice(2);
 if (forwardedArgs.length === 2 && forwardedArgs[0] === "skill" && forwardedArgs[1] === "path") {
   const skillPath = bundledSkillPath();
   if (!fs.existsSync(skillPath)) {
-    console.error(`hunk: could not locate the bundled Hunk review skill at ${skillPath}`);
+    console.error(`hunkt: could not locate the bundled Hunk review skill at ${skillPath}`);
     process.exit(1);
   }
 
@@ -114,7 +114,7 @@ if (forwardedArgs.length === 2 && forwardedArgs[0] === "skill" && forwardedArgs[
   process.exit(0);
 }
 
-const overrideBinary = process.env.HUNK_BIN_PATH;
+const overrideBinary = process.env.HUNKT_BIN_PATH;
 if (overrideBinary) {
   run(overrideBinary, forwardedArgs);
 }

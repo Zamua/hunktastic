@@ -82,7 +82,7 @@ describe("PTY chrome", () => {
 
   test("quit prompt shows the config diff and saves preferences on mouse click", async () => {
     // Own both config scopes so the test can assert what the save action wrote without an
-    // ambient repository `.hunk/config.toml` changing the starting preferences.
+    // ambient repository `.hunkt/config.toml` changing the starting preferences.
     const configHome = mkdtempSync(join(tmpdir(), "hunk-tuistory-save-view-"));
     const fixture = harness.createMultiHunkFilePair();
     const session = await harness.launchHunk({
@@ -113,7 +113,7 @@ describe("PTY chrome", () => {
 
       // The save handler writes the config and quits shortly after; poll the
       // file instead of the (soon dead) PTY session.
-      const configPath = join(configHome, "hunk", "config.toml");
+      const configPath = join(configHome, "hunkt", "config.toml");
       const deadline = Date.now() + 5_000;
       while (Date.now() < deadline && !existsSync(configPath)) {
         await new Promise((resolve) => setTimeout(resolve, 50));

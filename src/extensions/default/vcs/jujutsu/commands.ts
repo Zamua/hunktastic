@@ -35,7 +35,7 @@ export function buildJjDiffArgs(input: ExtensionVcsDiffInput) {
   return args;
 }
 
-/** Build the `jj diff --git -r` arguments used for `hunk show` in Jujutsu mode. */
+/** Build the `jj diff --git -r` arguments used for `hunkt show` in Jujutsu mode. */
 export function buildJjShowArgs(input: ExtensionVcsShowInput) {
   const args = ["diff", "--git", "-r", input.ref ?? "@"];
 
@@ -46,13 +46,13 @@ export function buildJjShowArgs(input: ExtensionVcsShowInput) {
 export function formatJjCommandLabel(input: JjBackedInput) {
   if (input.kind === "vcs") {
     if (input.staged) {
-      return "hunk diff --staged";
+      return "hunkt diff --staged";
     }
 
-    return input.range ? `hunk diff ${input.range}` : "hunk diff";
+    return input.range ? `hunkt diff ${input.range}` : "hunkt diff";
   }
 
-  return input.ref ? `hunk show ${input.ref}` : "hunk show";
+  return input.ref ? `hunkt show ${input.ref}` : "hunkt show";
 }
 
 function trimJjPrefix(message: string) {

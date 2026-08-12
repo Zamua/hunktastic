@@ -31,7 +31,7 @@ Nix, using the flake:
 inputs.hunktastic.url = "git+https://github.com/Zamua/hunktastic?shallow=1";
 ```
 
-The flake exports a `default` package and a home-manager module (`programs.hunk`, with
+The flake exports a `default` package and a home-manager module (`programs.hunkt`, with
 `installDifftastic` on by default).
 
 Both installs bring in difftastic. Installing another way means installing
@@ -44,12 +44,12 @@ macOS arm64 for the Homebrew build. Other platforms build from source.
 ## Use it
 
 ```bash
-hunk diff
+hunkt diff
 ```
 
 The difftastic engine is the default: that is the point of the fork. `--engine pierre`
 switches back to hunk's line engine for one run, and `engine = "pierre"` in
-`~/.config/hunk/config.toml` makes that permanent.
+`~/.config/hunkt/config.toml` makes that permanent.
 
 Changed tokens keep their syntax colour and are marked with the word-diff background.
 Pass `--novelty recolor` (or `novelty = "recolor"`) to take difftastic's own look
@@ -57,29 +57,29 @@ instead, where novel tokens turn addition-green or deletion-red in place of thei
 syntax colour.
 
 Structural diffs need both file bodies, so the engine applies to hunk's own loaders
-(`hunk diff`, `hunk show`). Git pager mode only ever receives a finished unified patch,
+(`hunkt diff`, `hunkt show`). Git pager mode only ever receives a finished unified patch,
 so it stays on the line engine. Wire up git aliases that call hunktastic directly:
 
 ```bash
-git config --global alias.hdiff '!f() { cd "${GIT_PREFIX:-.}" && hunk diff "$@"; }; f'
-git config --global alias.hshow '!f() { cd "${GIT_PREFIX:-.}" && hunk show "$@"; }; f'
+git config --global alias.hdiff '!f() { cd "${GIT_PREFIX:-.}" && hunkt diff "$@"; }; f'
+git config --global alias.hshow '!f() { cd "${GIT_PREFIX:-.}" && hunkt show "$@"; }; f'
 ```
 
 Files fall back to the line engine individually when difft cannot map them, and the
 review reports which engine produced each file:
 
 ```bash
-hunk session review <session-id> --json   # -> engine: difftastic | pierre, per file
+hunkt session review <session-id> --json   # -> engine: difftastic | pierre, per file
 ```
 
 Hunk numbers are engine-relative, so agents should prefer `--old-line` / `--new-line`
-anchors, which resolve under either engine. `hunk skill path` prints the bundled agent
+anchors, which resolve under either engine. `hunkt skill path` prints the bundled agent
 skill, which documents this.
 
 ## Everything else
 
 Identical to hunk. Keybindings, layouts, themes, sidebar, watch mode, extensions,
-jujutsu and sapling support, the `hunk session` agent API, and the config file are all
+jujutsu and sapling support, the `hunkt session` agent API, and the config file are all
 upstream's, unchanged. See [hunk's README](https://github.com/modem-dev/hunk#readme) and
 [hunk.dev/docs](https://hunk.dev/docs/) for all of it.
 

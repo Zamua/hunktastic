@@ -20,8 +20,7 @@
     "url": "git+https://github.com/modem-dev/hunk.git"
   },
   "bin": {
-    "hunk": "./bin/hunk.cjs",
-    "hunkdiff": "./bin/hunk.cjs"
+    "hunkt": "./bin/hunk.cjs"
   },
   "workspaces": [
     ".",
@@ -79,7 +78,7 @@
     "test": "\"${npm_execpath:-bun}\" test ./src ./packages ./scripts ./test/cli ./test/session",
     "test:theme-contrast": "bun test src/ui/themes.test.ts --test-name-pattern contrast",
     "test:integration": "\"${npm_execpath:-bun}\" test ./test/pty",
-    "test:tty-smoke": "HUNK_RUN_TTY_SMOKE=1 \"${npm_execpath:-bun}\" test ./test/smoke",
+    "test:tty-smoke": "HUNKT_RUN_TTY_SMOKE=1 \"${npm_execpath:-bun}\" test ./test/smoke",
     "check:pack": "bun run ./scripts/check-pack.ts",
     "check:prebuilt-pack": "bun run ./scripts/check-prebuilt-pack.ts",
     "smoke:prebuilt-install": "bun run ./scripts/smoke-prebuilt-install.ts",

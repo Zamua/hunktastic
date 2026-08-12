@@ -120,7 +120,7 @@ try {
   const sanitizedPath = [installedBinDir, nodeDir, bashDir].filter(Boolean).join(path.delimiter);
   const installedHunk = path.join(
     installedBinDir,
-    process.platform === "win32" ? "hunk.cmd" : "hunk",
+    process.platform === "win32" ? "hunkt.cmd" : "hunkt",
   );
   const installedPlatformBinary = path.join(
     installedPackageRoot,
@@ -144,8 +144,8 @@ try {
     env: commandEnv,
   });
 
-  if (help.stdout.includes("Usage: hunk") === false) {
-    throw new Error(`Expected help output to include 'Usage: hunk'.\n${help.stdout}`);
+  if (help.stdout.includes("Usage: hunkt") === false) {
+    throw new Error(`Expected help output to include 'Usage: hunkt'.\n${help.stdout}`);
   }
 
   const version = run([installedHunk, "--version"], {
@@ -153,7 +153,7 @@ try {
   });
   if (version.stdout !== `${packageVersion}\n`) {
     throw new Error(
-      `Expected installed hunk --version to print ${packageVersion}.\n${version.stdout}`,
+      `Expected installed hunkt --version to print ${packageVersion}.\n${version.stdout}`,
     );
   }
 

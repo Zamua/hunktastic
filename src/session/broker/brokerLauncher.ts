@@ -212,7 +212,7 @@ function writeDaemonLaunchMetadata(
 function daemonPortConflictError(config: Pick<ResolvedSessionBrokerConfig, "host" | "port">) {
   return new Error(
     `Session broker port ${config.host}:${config.port} is already in use by another process. ` +
-      `Stop the conflicting process or set HUNK_MCP_PORT to a different loopback port.`,
+      `Stop the conflicting process or set HUNKT_MCP_PORT to a different loopback port.`,
   );
 }
 
@@ -292,9 +292,9 @@ export function resolveSessionBrokerRuntimePaths(
   config: Pick<ResolvedSessionBrokerConfig, "host" | "port"> = resolveSessionBrokerConfig(),
   env: NodeJS.ProcessEnv = process.env,
 ): SessionBrokerRuntimePaths {
-  // Keep the runtime directory stable across the internal rename so in-flight upgrades still find
-  // the same lock and metadata files instead of briefly racing as two different daemons.
-  const runtimeDir = join(resolveRuntimeBaseDir(env), "hunk-mcp");
+  // The runtime directory name is fixed rather than derived from the broker's own name, so
+  // renaming the broker cannot split one daemon's lock and metadata files across two directories.
+  const runtimeDir = join(resolveRuntimeBaseDir(env), "hunkt-mcp");
   const fileStem = `${safeRuntimeToken(config.host)}-${config.port}`;
 
   return {

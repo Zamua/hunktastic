@@ -5,7 +5,7 @@ import path from "node:path";
 
 const repoRoot = path.resolve(import.meta.dir, "..");
 const distDir = path.join(repoRoot, "dist");
-const binaryName = process.platform === "win32" ? "hunk.exe" : "hunk";
+const binaryName = process.platform === "win32" ? "hunkt.exe" : "hunkt";
 const outfile = path.join(distDir, binaryName);
 const legacyOutfile = path.join(distDir, process.platform === "win32" ? "otdiff.exe" : "otdiff");
 

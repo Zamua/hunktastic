@@ -83,7 +83,7 @@ describe("session daemon lifecycle", () => {
       env: {
         ...process.env,
         XDG_CONFIG_HOME: testConfigHome,
-        HUNK_MCP_PORT: String(port),
+        HUNKT_MCP_PORT: String(port),
       },
     });
     spawned.push(proc);

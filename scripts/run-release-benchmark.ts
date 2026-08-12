@@ -31,7 +31,7 @@ export async function parseRunReleaseBenchmarkArgs(
   const version = await readPackageVersion(repoRoot);
   const options: RunReleaseBenchmarkOptions = {
     version,
-    samples: Number(process.env.HUNK_RELEASE_BENCHMARK_SAMPLES ?? 5),
+    samples: Number(process.env.HUNKT_RELEASE_BENCHMARK_SAMPLES ?? 5),
     out: releaseBenchmarkPath(version, releaseBenchmarkDir(repoRoot)),
   };
   let outExplicitlySet = false;

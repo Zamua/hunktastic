@@ -6,7 +6,7 @@ description: Load plain TypeScript extensions, understand discovery and trust, a
 A Hunk extension is one TypeScript (or JavaScript) file that default-exports a function. Hunk imports it at startup and hands it an API object. No build step is required.
 
 ```ts
-// ~/.config/hunk/extensions/hello.ts
+// ~/.config/hunkt/extensions/hello.ts
 import type { HunkExtensionAPI } from "hunkdiff/extension";
 
 export default function (hunk: HunkExtensionAPI) {
@@ -20,17 +20,17 @@ export default function (hunk: HunkExtensionAPI) {
 
 What an extension can register is covered by the companion pages: the [extension API](/docs/extend/extension-api/), [file previews](/docs/extend/file-previews/), [VCS adapters](/docs/extend/vcs-adapters/), and [custom panes](/docs/extend/custom-sidebars/).
 
-Writing one with a coding agent? `hunk skill path hunk-extensions` prints a bundled skill that maps these touchpoints for agents, the way `hunk skill path` does for reviewing.
+Writing one with a coding agent? `hunkt skill path hunk-extensions` prints a bundled skill that maps these touchpoints for agents, the way `hunkt skill path` does for reviewing.
 
 ## Where Hunk looks
 
-| Group | Source                                               | Runs                  |
-| ----- | ---------------------------------------------------- | --------------------- |
-| 1     | `--extension <path>` (repeatable)                    | immediately           |
-| 2     | `[extensions] paths` in your user config             | immediately           |
-| 3     | `~/.config/hunk/extensions/`                         | immediately           |
-| 4     | `.hunk/extensions/` in the repo under review         | after [trust](#trust) |
-| 4     | `[extensions] paths` in the repo `.hunk/config.toml` | after [trust](#trust) |
+| Group | Source                                                | Runs                  |
+| ----- | ----------------------------------------------------- | --------------------- |
+| 1     | `--extension <path>` (repeatable)                     | immediately           |
+| 2     | `[extensions] paths` in your user config              | immediately           |
+| 3     | `~/.config/hunkt/extensions/`                         | immediately           |
+| 4     | `.hunkt/extensions/` in the repo under review         | after [trust](#trust) |
+| 4     | `[extensions] paths` in the repo `.hunkt/config.toml` | after [trust](#trust) |
 
 - Groups load in order; within a group, entries sort alphabetically by resolved path. The first occurrence of a path wins.
 - The two repo-local sources are one group: one trust decision, one sort order.
@@ -43,7 +43,7 @@ Writing one with a coding agent? `hunk skill path hunk-extensions` prints a bund
 A folder is an extension if its `package.json` declares entries under the `hunk` field, or failing that if it has an `index.{ts,tsx,js,jsx,mjs}` (in that preference order):
 
 ```text
-~/.config/hunk/extensions/my-ext/
+~/.config/hunkt/extensions/my-ext/
   package.json          # {"hunk": {"extensions": ["./src/index.ts"]}}
   node_modules/         # bun install / npm install, right here
   src/
@@ -68,18 +68,18 @@ Ids start with a letter or digit, then letters, digits, `-`, or `_`. `hunk`, `gi
 
 ## Installing shared extensions
 
-Extensions are shared as plain git repositories. `hunk extension install` clones one into a managed directory under `~/.config/hunk/extensions/installed/`, verifies it contains an extension, installs its npm dependencies when it declares any, and records the source and commit:
+Extensions are shared as plain git repositories. `hunkt extension install` clones one into a managed directory under `~/.config/hunkt/extensions/installed/`, verifies it contains an extension, installs its npm dependencies when it declares any, and records the source and commit:
 
 ```bash
-hunk extension install acme/hunk-word-diff          # GitHub shorthand
-hunk extension install acme/hunk-word-diff@v1.2.0   # pin a tag, branch, or commit
-hunk extension install git:codeberg.org/acme/ext    # any host; https:// is assumed
-hunk extension install ~/dev/hunk-word-diff         # a local checkout, for testing
+hunkt extension install acme/hunk-word-diff          # GitHub shorthand
+hunkt extension install acme/hunk-word-diff@v1.2.0   # pin a tag, branch, or commit
+hunkt extension install git:codeberg.org/acme/ext    # any host; https:// is assumed
+hunkt extension install ~/dev/hunk-word-diff         # a local checkout, for testing
 ```
 
-- `hunk extension list` shows every managed install with its version, commit, and source.
-- `hunk extension update [name]` re-clones one install (or all of them) from its recorded source; an `@ref` pin stays put until you re-install with a different one.
-- `hunk extension remove <name>` deletes the install and its record. Hand-copied extensions in `~/.config/hunk/extensions/` are never touched.
+- `hunkt extension list` shows every managed install with its version, commit, and source.
+- `hunkt extension update [name]` re-clones one install (or all of them) from its recorded source; an `@ref` pin stays put until you re-install with a different one.
+- `hunkt extension remove <name>` deletes the install and its record. Hand-copied extensions in `~/.config/hunkt/extensions/` are never touched.
 
 Installing is the consent step: extensions run with your full user permissions, so a fresh install asks for confirmation (or takes `--yes`) after naming the repository. Only install repositories you trust. Managed installs then load through the global group above — same precedence, no further prompts.
 
@@ -94,7 +94,7 @@ A publishable extension repository is the folder-extension layout at the reposit
 3. Tag releases so users can pin with `@v1.2.0`.
 4. Push to any git host and add the **`hunk-extension`** GitHub topic so your repository appears in the [community listing](https://github.com/topics/hunk-extension).
 
-Test the exact layout users will get with `hunk extension install /path/to/checkout`, or load it for one run with `hunk diff --extension /path/to/checkout`.
+Test the exact layout users will get with `hunkt extension install /path/to/checkout`, or load it for one run with `hunkt diff --extension /path/to/checkout`.
 
 ## Bundled extensions
 
@@ -111,7 +111,7 @@ Extensions run with your full user permissions, and reviewing a repository must 
 ```text
 Run this repository's extensions?
 
-  This repository contains extensions in .hunk/extensions.
+  This repository contains extensions in .hunkt/extensions.
   Extensions run with your user permissions.
 
   enter/t trust · esc not now · n never
@@ -119,7 +119,7 @@ Run this repository's extensions?
 
 **Trust** records the decision and reloads the session; **not now** asks again next time; **never** stops the offers. The prompt is a dialog over the review stream, not a gate in front of it — dismiss it and keep reviewing.
 
-Decisions are stored per repository root in `~/.config/hunk/state.json`, keyed by path (the VS Code workspace-trust model). A different repository later occupying a trusted path inherits the decision; clear the entry if that matters for a path you reuse.
+Decisions are stored per repository root in `~/.config/hunkt/state.json`, keyed by path (the VS Code workspace-trust model). A different repository later occupying a trusted path inherits the decision; clear the entry if that matters for a path you reuse.
 
 ## Failure isolation
 
@@ -130,13 +130,13 @@ Extensions run with your shell permissions. For reviewed files, prefer [`ctx.wor
 ## CLI flags and config
 
 ```bash
-hunk diff --extension ./path/to/entry.ts   # load one entry file (repeatable)
-hunk diff --extension ./my-ext             # a folder extension: loads ./my-ext/index.ts
-hunk diff --no-extensions                  # disable user extensions for this run
+hunkt diff --extension ./path/to/entry.ts   # load one entry file (repeatable)
+hunkt diff --extension ./my-ext             # a folder extension: loads ./my-ext/index.ts
+hunkt diff --no-extensions                  # disable user extensions for this run
 ```
 
 ```toml
-# ~/.config/hunk/config.toml or .hunk/config.toml
+# ~/.config/hunkt/config.toml or .hunkt/config.toml
 [extensions]
 enabled = true                      # false disables loading for this layer
 paths = ["~/dev/hunk-ext/index.ts"] # extra entry files or directories
@@ -152,7 +152,7 @@ some_key = "some value"
 Collapse lockfiles and generated output out of every review, and say how many files were hidden.
 
 ```ts
-// ~/.config/hunk/extensions/collapse-generated.ts
+// ~/.config/hunkt/extensions/collapse-generated.ts
 import type { HunkExtensionAPI } from "hunkdiff/extension";
 
 /** Match one path against a `*`-only glob, anchored at both ends. */
@@ -189,7 +189,7 @@ export default function (hunk: HunkExtensionAPI) {
 Configure it without touching the code:
 
 ```toml
-# .hunk/config.toml
+# .hunkt/config.toml
 [extension.collapse-generated]
 patterns = ["*.lock", "bun.lockb", "generated/*"]
 ```
@@ -197,7 +197,7 @@ patterns = ["*.lock", "bun.lockb", "generated/*"]
 Try it against the working tree without installing it:
 
 ```bash
-hunk diff --extension ./collapse-generated.ts
+hunkt diff --extension ./collapse-generated.ts
 ```
 
 Continue with the [extension API](/docs/extend/extension-api/) for everything the API object offers.

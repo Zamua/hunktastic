@@ -327,7 +327,7 @@ const requiredPaths = [
   "LICENSE",
   "package.json",
   // The bundled skills must survive the narrowed per-skill files entries —
-  // `hunk skill path [name]` resolves them at runtime.
+  // `hunkt skill path [name]` resolves them at runtime.
   "skills/hunk-review/SKILL.md",
   "skills/hunk-extensions/SKILL.md",
 ];

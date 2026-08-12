@@ -37,6 +37,6 @@ body:
     id: version
     attributes:
       label: Version
-      description: e.g. output from `hunk --version` or the npm package version
+      description: e.g. output from `hunkt --version` or the npm package version
     validations:
       required: false

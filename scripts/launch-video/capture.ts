@@ -53,8 +53,8 @@ function makeTempDir(prefix: string) {
 const configHome = makeTempDir("hunk-video-config-");
 const hunkEnv = {
   XDG_CONFIG_HOME: configHome,
-  HUNK_MCP_DISABLE: "1",
-  HUNK_DISABLE_UPDATE_NOTICE: "1",
+  HUNKT_MCP_DISABLE: "1",
+  HUNKT_DISABLE_UPDATE_NOTICE: "1",
 };
 
 // Hunk's help overlay is the cheap, unmistakable probe surface.
@@ -82,9 +82,9 @@ async function launchHunk(args: string[], options: { cwd?: string } = {}) {
   });
 }
 
-/** Interactive bash with a real `hunk` command on PATH for shell scenes. */
+/** Interactive bash with a real `hunkt` command on PATH for shell scenes. */
 async function launchHunkShell(cwd: string) {
-  const binDir = createCommandWrapper(join(makeTempDir("hunk-video-bin-"), "bin"), "hunk", [
+  const binDir = createCommandWrapper(join(makeTempDir("hunkt-video-bin-"), "bin"), "hunkt", [
     process.execPath,
     "run",
     hunkEntrypoint,
@@ -193,7 +193,7 @@ async function captureStmlScene() {
 }
 
 // ---------------------------------------------------------------------------
-// Scene: authoring STML from the CLI (`hunk markup render`).
+// Scene: authoring STML from the CLI (`hunkt markup render`).
 // ---------------------------------------------------------------------------
 const CLI_NOTE_STML = `<h2>Cache rework</h2>
 <row gap="1">
@@ -217,7 +217,7 @@ async function captureMarkupCliScene() {
   try {
     await session.waitForText(/❯/, { timeout: 15_000 });
     await sleep(300);
-    await typeCommand(session, keyframer, "hunk markup render note.stml --width 72", {
+    await typeCommand(session, keyframer, "hunkt markup render note.stml --width 72", {
       10: "cli-typing-10",
       22: "cli-typing-22",
       34: "cli-typing-34",
@@ -234,7 +234,7 @@ async function captureMarkupCliScene() {
 }
 
 // ---------------------------------------------------------------------------
-// Scene: piped pager review — `git diff | hunk pager` keeps the full UI.
+// Scene: piped pager review — `git diff | hunkt pager` keeps the full UI.
 // ---------------------------------------------------------------------------
 async function capturePagerScene() {
   console.log("scene: pager");
@@ -243,7 +243,7 @@ async function capturePagerScene() {
   try {
     await session.waitForText(/❯/, { timeout: 15_000 });
     await sleep(300);
-    await typeCommand(session, keyframer, "git diff | hunk pager", {
+    await typeCommand(session, keyframer, "git diff | hunkt pager", {
       9: "pager-typing-9",
       20: "pager-typed",
     });

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type { VcsCatalog } from "./vcs/types";
 
-/** Return whether one path is a `.hunk` project directory, following directory symlinks. */
+/** Return whether one path is a `.hunkt` project directory, following directory symlinks. */
 function isHunkProjectDirectory(path: string) {
   try {
     return fs.statSync(path).isDirectory();
@@ -11,7 +11,7 @@ function isHunkProjectDirectory(path: string) {
   }
 }
 
-/** Find the nearest project root established by `.hunk` or a registered VCS adapter. */
+/** Find the nearest project root established by `.hunkt` or a registered VCS adapter. */
 export function findProjectRootCandidate(
   cwd: string,
   catalog?: Pick<VcsCatalog, "adapters">,
@@ -20,7 +20,7 @@ export function findProjectRootCandidate(
 
   for (;;) {
     if (
-      isHunkProjectDirectory(join(current, ".hunk")) ||
+      isHunkProjectDirectory(join(current, ".hunkt")) ||
       (catalog?.adapters ?? []).some((adapter) => {
         try {
           return adapter.detect(current)?.repoRoot === current;

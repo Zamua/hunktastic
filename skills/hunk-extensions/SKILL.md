@@ -10,7 +10,7 @@ factory**. Hunk imports it at startup and hands it an API object. No build step,
 no manifest required.
 
 ```ts
-// ~/.config/hunk/extensions/hello.ts
+// ~/.config/hunkt/extensions/hello.ts
 import type { HunkExtensionAPI } from "hunkdiff/extension";
 
 export default function (hunk: HunkExtensionAPI) {
@@ -50,12 +50,12 @@ The examples, by what they demonstrate:
 
 ## Where extensions live
 
-| Source                                     | Trust            |
-| ------------------------------------------ | ---------------- |
-| `--extension <path>` (repeatable)          | runs immediately |
-| `[extensions] paths` in user config        | runs immediately |
-| `~/.config/hunk/extensions/` (XDG-aware)   | runs immediately |
-| `.hunk/extensions/` or repo-config `paths` | **trust prompt** |
+| Source                                      | Trust            |
+| ------------------------------------------- | ---------------- |
+| `--extension <path>` (repeatable)           | runs immediately |
+| `[extensions] paths` in user config         | runs immediately |
+| `~/.config/hunkt/extensions/` (XDG-aware)   | runs immediately |
+| `.hunkt/extensions/` or repo-config `paths` | **trust prompt** |
 
 Only the repo-local group is gated. Everything else — including `--extension`,
 even when its path points inside the repository under review — is read as
@@ -68,12 +68,12 @@ one level of folder extensions. A folder is an extension if it has a
 `package.json` with `{"hunk": {"extensions": ["./index.ts"]}}`, or an
 `index.{ts,tsx,js,jsx,mjs}`. Reach for a folder only when you need npm
 dependencies, helper modules, or a README; a single file keeps the install to one
-`cp`. A `.hunk/extensions/` folder extension's `node_modules` has to exist on
+`cp`. A `.hunkt/extensions/` folder extension's `node_modules` has to exist on
 every machine that loads it — keep a repo-shared extension dependency-free.
 
-Shared extensions install from git with `hunk extension install <source>`
+Shared extensions install from git with `hunkt extension install <source>`
 (`owner/repo[@ref]`, `git:host/path[@ref]`, a git URL, or a local path) into
-`~/.config/hunk/extensions/installed/<repo-name>/`, where they load with global
+`~/.config/hunkt/extensions/installed/<repo-name>/`, where they load with global
 origin; `list`, `update`, and `remove` manage them. Declared `dependencies` are
 `bun install`ed at install time. The manifest may state
 `{"hunk": {"apiVersion": N}}` — the minimum extension API version — and an older
@@ -216,8 +216,8 @@ Most extension bugs are one of these:
 ## Verifying
 
 Hunk's TUI needs a real terminal, and the review UI is the user's — **do not
-launch `hunk diff`/`hunk show` to test, and do not reach for a pipe.** No
-invocation applies extensions headlessly: `hunk diff … | cat` still starts the
+launch `hunkt diff`/`hunkt show` to test, and do not reach for a pipe.** No
+invocation applies extensions headlessly: `hunkt diff … | cat` still starts the
 app and still takes the keyboard, so it hangs holding the user's terminal.
 Practical checks, in order of cost:
 
@@ -234,7 +234,7 @@ Practical checks, in order of cost:
 3. **PTY integration.** In a checkout, `test/pty/extensions-integration.test.ts`
    launches Hunk over a PTY with `--extension <path>` and asserts on rendered
    snapshots; extend it via `test/pty/harness.ts` and run `bun run test:integration`.
-4. **Hand it to the user** to run: `hunk diff --extension ./my-ext`. `--extension`
+4. **Hand it to the user** to run: `hunkt diff --extension ./my-ext`. `--extension`
    loads immediately with no trust prompt, so it is the iteration path. Ask them
    what the footer notices and toasts said.
 5. **Triage with `--no-extensions`** to confirm a symptom belongs to an extension
@@ -248,7 +248,7 @@ Practical checks, in order of cost:
 - Notice naming the extension → id rejected (reserved, malformed, or already
   claimed), import failure, missing default export, or a throwing factory.
 - Repo-local extension silently absent → the trust prompt was dismissed or denied;
-  decisions are stored per repo root in `~/.config/hunk/state.json`.
+  decisions are stored per repo root in `~/.config/hunkt/state.json`.
 - Pane closes with a toast → the component threw; a second React copy is
   the usual cause.
 - Pane or file view never appears → nothing opened it (no `defaultOpen`, no

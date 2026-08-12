@@ -11,10 +11,10 @@ Install the published `hunkdiff` package globally:
 
 ```bash
 npm install --global hunkdiff
-hunk --version
+hunkt --version
 ```
 
-The package exposes both `hunk` and `hunkdiff`; the docs use `hunk`.
+The package exposes the `hunkt` command.
 
 ## Homebrew
 
@@ -47,7 +47,7 @@ The repository exports a `default` package from `flake.nix`. From a clone of Hun
 
 ```bash
 nix build
-./result/bin/hunk --version
+./result/bin/hunkt --version
 ```
 
 See the repository's `nix/README.md` for Home Manager and development-shell details.
@@ -55,9 +55,9 @@ See the repository's `nix/README.md` for Home Manager and development-shell deta
 ## Verify the install
 
 ```bash
-hunk --help
+hunkt --help
 ```
 
-You should see `Usage: hunk <command> [options]`. If the shell cannot find Hunk, ensure your global npm, Homebrew, or mise binary directory is on `PATH`, then open a new shell.
+You should see `Usage: hunkt <command> [options]`. If the shell cannot find Hunk, ensure your global npm, Homebrew, or mise binary directory is on `PATH`, then open a new shell.
 
 Next, [review your first working tree](/docs/start/quick-start/).

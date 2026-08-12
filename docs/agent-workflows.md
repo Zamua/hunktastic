@@ -2,30 +2,30 @@
 
 Use Hunk with agents in two ways:
 
-- **Recommended:** steer a live Hunk window from another terminal with `hunk session ...`
+- **Recommended:** steer a live Hunk window from another terminal with `hunkt session ...`
 - **Alternative:** load prewritten agent notes from a file with `--agent-context`
 
 ## Recommended workflow: steer a live Hunk window
 
-1. Open Hunk in one terminal with a normal review command such as `hunk diff` or `hunk show`.
+1. Open Hunk in one terminal with a normal review command such as `hunkt diff` or `hunkt show`.
 2. Load the Hunk review skill: [`skills/hunk-review/SKILL.md`](../skills/hunk-review/SKILL.md).
 3. Ask the agent to use the skill and review the current session.
 
 A good generic prompt is:
 
 ```text
-Load the Hunk skill and use it for this review. Run `hunk skill path` to get the skill path.
+Load the Hunk skill and use it for this review. Run `hunkt skill path` to get the skill path.
 ```
 
 That skill teaches the agent how to inspect a live Hunk session, navigate it, reload it, and leave inline comments.
 
 ## How live session control works
 
-When a Hunk TUI starts, it registers with a local loopback daemon. `hunk session ...` talks to that daemon to find the right live window and control it.
+When a Hunk TUI starts, it registers with a local loopback daemon. `hunkt session ...` talks to that daemon to find the right live window and control it.
 
-Most users only need `hunk session ...`. Use `hunk mcp serve` only for manual startup or debugging of the local daemon.
+Most users only need `hunkt session ...`. Use `hunkt mcp serve` only for manual startup or debugging of the local daemon.
 
-If `hunk session list` reports no sessions while Hunk is visibly running, the agent sandbox may be blocking loopback access. Probe the daemon directly:
+If `hunkt session list` reports no sessions while Hunk is visibly running, the agent sandbox may be blocking loopback access. Probe the daemon directly:
 
 ```bash
 curl -s -X POST http://127.0.0.1:47657/session-api \
@@ -33,7 +33,7 @@ curl -s -X POST http://127.0.0.1:47657/session-api \
   --data '{"action":"list"}'
 ```
 
-If this shows sessions, rerun the command with the agent's network/sandbox escalation. If you run the daemon with a custom `HUNK_MCP_PORT`, use that port instead.
+If this shows sessions, rerun the command with the agent's network/sandbox escalation. If you run the daemon with a custom `HUNKT_MCP_PORT`, use that port instead.
 
 ## The commands you will use most
 
@@ -42,9 +42,9 @@ If this shows sessions, rerun the command with the agent's network/sandbox escal
 Start here before navigating or commenting:
 
 ```bash
-hunk session list
-hunk session get --repo .
-hunk session review --repo . --json
+hunkt session list
+hunkt session get --repo .
+hunkt session review --repo . --json
 ```
 
 - `list` shows the active Hunk windows
@@ -54,7 +54,7 @@ hunk session review --repo . --json
 Only add `--include-patch` when an agent truly needs raw unified diff text:
 
 ```bash
-hunk session review --repo . --include-patch --json
+hunkt session review --repo . --include-patch --json
 ```
 
 ### Move the live window to the right place
@@ -62,15 +62,15 @@ hunk session review --repo . --include-patch --json
 Use `navigate` to jump to the file or hunk you want the user to see:
 
 ```bash
-hunk session navigate --repo . --file src/App.tsx --hunk 2
-hunk session navigate --repo . --next-comment
+hunkt session navigate --repo . --file src/App.tsx --hunk 2
+hunkt session navigate --repo . --next-comment
 ```
 
 Use `reload` when you want the already-open Hunk window to show a different diff or commit:
 
 ```bash
-hunk session reload --repo . -- diff
-hunk session reload --repo . -- show HEAD~1 -- README.md
+hunkt session reload --repo . -- diff
+hunkt session reload --repo . -- show HEAD~1 -- README.md
 ```
 
 Notes:
@@ -84,14 +84,14 @@ Notes:
 For one note, use `comment add`:
 
 ```bash
-hunk session comment add --repo . --file README.md --new-line 103 --summary "Tighten this wording"
+hunkt session comment add --repo . --file README.md --new-line 103 --summary "Tighten this wording"
 ```
 
 For multiple notes, use one stdin batch with `comment apply`:
 
 ```bash
 printf '%s\n' '{"comments":[{"filePath":"README.md","newLine":103,"summary":"Tighten this wording"}]}' \
-  | hunk session comment apply --repo . --stdin
+  | hunkt session comment apply --repo . --stdin
 ```
 
 `comment apply` payload items need:
@@ -105,10 +105,10 @@ If you want the UI to jump to the new note, add `--focus` to `comment add` or `c
 For comment cleanup and inspection, use:
 
 ```bash
-hunk session comment list --repo .
-hunk session comment rm --repo . <comment-id>
-hunk session comment clear --repo . --file README.md --yes
-hunk session comment clear --repo . --all --yes # also clears human `c` notes
+hunkt session comment list --repo .
+hunkt session comment rm --repo . <comment-id>
+hunkt session comment clear --repo . --file README.md --yes
+hunkt session comment clear --repo . --all --yes # also clears human `c` notes
 ```
 
 Agents can remove or bulk-clear human notes for cleanup, but cannot create or edit them through the session CLI.
@@ -133,8 +133,8 @@ For normal worktree use, prefer `--repo /path/to/worktree`. Reach for `--session
 Use `--agent-context` when you already have agent-written rationale or notes in a JSON sidecar file and want to render them beside the diff.
 
 ```bash
-hunk diff --agent-context notes.json
-hunk patch change.patch --agent-context notes.json
+hunkt diff --agent-context notes.json
+hunkt patch change.patch --agent-context notes.json
 ```
 
 For a compact real example, see [`examples/3-agent-review-demo/agent-context.json`](../examples/3-agent-review-demo/agent-context.json).
@@ -144,15 +144,15 @@ For a compact real example, see [`examples/3-agent-review-demo/agent-context.jso
 STML note bodies are experimental and disabled by default. Start a new review with `--experimental` to render sidecar `markup` fields and accept live comments that carry markup:
 
 ```bash
-hunk --experimental diff --agent-context notes.json
-# Equivalent: hunk diff --experimental --agent-context notes.json
+hunkt --experimental diff --agent-context notes.json
+# Equivalent: hunkt diff --experimental --agent-context notes.json
 ```
 
-Normal reviews keep using each annotation's required plain-text `summary` fallback. Opted-in live sessions list `stml` in `hunk session context --json` under `experimentalFeatures`; reload commands cannot change the launch opt-in.
+Normal reviews keep using each annotation's required plain-text `summary` fallback. Opted-in live sessions list `stml` in `hunkt session context --json` under `experimentalFeatures`; reload commands cannot change the launch opt-in.
 
 ## Practical defaults
 
-- start with `hunk session review --repo . --json`
+- start with `hunkt session review --repo . --json`
 - only add `--include-patch` when the raw patch is actually needed
 - use `comment add` for one-off notes and `comment apply` for batches
 - prefer `--repo` over `--session-path` unless you have a specific advanced reload case

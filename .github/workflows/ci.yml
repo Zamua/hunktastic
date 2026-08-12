@@ -147,7 +147,7 @@ jobs:
             echo "bun unexpectedly available on the sanitized PATH" >&2
             exit 1
           fi
-          hunk --help | grep 'Usage: hunk'
+          hunkt --help | grep 'Usage: hunkt'
 
   prebuilt-npm:
     name: Verify prebuilt npm package (${{ matrix.os }})
@@ -159,11 +159,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            executable: dist/hunk
+            executable: dist/hunkt
           - os: macos-latest
-            executable: dist/hunk
+            executable: dist/hunkt
           - os: windows-latest
-            executable: dist/hunk.exe
+            executable: dist/hunkt.exe
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -187,7 +187,7 @@ jobs:
       - name: Verify compiled headless commands skip OpenTUI
         run: bun test ./test/cli/compiled-headless-native-lib.test.ts
         env:
-          HUNK_TEST_EXECUTABLE: ${{ github.workspace }}/${{ matrix.executable }}
+          HUNKT_TEST_EXECUTABLE: ${{ github.workspace }}/${{ matrix.executable }}
 
       - name: Verify staged prebuilt packs
         run: bun run check:prebuilt-pack
@@ -218,11 +218,11 @@ jobs:
       - name: Verify compiled binary watch mode
         run: bun test ./test/pty/watch.test.ts
         env:
-          HUNK_TEST_EXECUTABLE: ${{ github.workspace }}/dist/hunk
+          HUNKT_TEST_EXECUTABLE: ${{ github.workspace }}/dist/hunkt
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: hunk-linux-binary
-          path: dist/hunk
+          name: hunkt-linux-binary
+          path: dist/hunkt
           if-no-files-found: error

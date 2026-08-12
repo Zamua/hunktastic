@@ -37,7 +37,7 @@ export function buildSlDiffArgs(input: ExtensionVcsDiffInput) {
   return args;
 }
 
-/** Build the `sl diff --git --change` arguments used for `hunk show` in Sapling mode. */
+/** Build the `sl diff --git --change` arguments used for `hunkt show` in Sapling mode. */
 export function buildSlShowArgs(input: ExtensionVcsShowInput) {
   const args = ["diff", "--git", "--change", input.ref ?? "."];
 
@@ -57,13 +57,13 @@ function buildSlStatusArgs(input: ExtensionVcsDiffInput) {
 export function formatSlCommandLabel(input: SlBackedInput) {
   if (input.kind === "vcs") {
     if (input.staged) {
-      return "hunk diff --staged";
+      return "hunkt diff --staged";
     }
 
-    return input.range ? `hunk diff ${input.range}` : "hunk diff";
+    return input.range ? `hunkt diff ${input.range}` : "hunkt diff";
   }
 
-  return input.ref ? `hunk show ${input.ref}` : "hunk show";
+  return input.ref ? `hunkt show ${input.ref}` : "hunkt show";
 }
 
 function trimSlPrefix(message: string) {

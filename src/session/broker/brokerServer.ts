@@ -81,7 +81,7 @@ export function formatDaemonServeError(error: unknown, host: string, port: numbe
   ) {
     return new Error(
       `Session broker daemon could not bind ${host}:${port} because the port is already in use. ` +
-        `Stop the conflicting process or set HUNK_MCP_PORT to a different loopback port.`,
+        `Stop the conflicting process or set HUNKT_MCP_PORT to a different loopback port.`,
     );
   }
 
@@ -430,7 +430,7 @@ export function serveSessionBrokerDaemon(
     broker: createHunkBrokerController(state),
     capabilities: {
       version: HUNK_SESSION_DAEMON_VERSION,
-      name: "hunk-session-broker",
+      name: "hunkt-session-broker",
       actions: SUPPORTED_SESSION_ACTIONS,
     },
     idleTimeoutMs,

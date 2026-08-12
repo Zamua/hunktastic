@@ -109,7 +109,7 @@ export function buildSelectedHunkSessionContext(session: ListedSession): Selecte
   };
 }
 
-/** Project one raw broker entry into the Hunk review export used by `hunk session review`. */
+/** Project one raw broker entry into the Hunk review export used by `hunkt session review`. */
 export function buildHunkSessionReview(
   entry: HunkSessionEntryLike,
   options: { includePatch?: boolean; includeNotes?: boolean } = {},

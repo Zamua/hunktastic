@@ -13,11 +13,17 @@ import { loadStartupExtensions } from "../extensions/startup";
 import { AppHost } from "./AppHost";
 
 const tempDirs: string[] = [];
+const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   for (const dir of tempDirs.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
+  }
+  if (originalXdgConfigHome === undefined) {
+    delete process.env.XDG_CONFIG_HOME;
+  } else {
+    process.env.XDG_CONFIG_HOME = originalXdgConfigHome;
   }
 });
 
@@ -317,6 +323,9 @@ async function renderWatchedWithExtension({
   // the watch ever mattered.
   const reviewDir = mkdtempSync(join(process.cwd(), ".hunk-mode-reload-"));
   tempDirs.push(reviewDir);
+  // Soft reloads re-resolve config from the ambient environment, so an empty
+  // config home keeps the developer's own settings and notices out of the frame.
+  process.env.XDG_CONFIG_HOME = root;
   const left = join(reviewDir, "before.ts");
   const right = join(reviewDir, "after.ts");
   writeFileSync(left, "export const answer = 41;\n");

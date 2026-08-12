@@ -43,30 +43,30 @@ function markerAdapter(marker: string): VcsAdapter {
 }
 
 describe("findProjectRootCandidate", () => {
-  test("uses .hunk as a provider-independent bootstrap marker", () => {
+  test("uses .hunkt as a provider-independent bootstrap marker", () => {
     const repo = tempDir();
     const nested = join(repo, "src", "deep");
-    mkdirSync(join(repo, ".hunk"));
+    mkdirSync(join(repo, ".hunkt"));
     mkdirSync(nested, { recursive: true });
 
     expect(findProjectRootCandidate(nested)).toBe(repo);
   });
 
-  test("ignores a plain file named .hunk", () => {
+  test("ignores a plain file named .hunkt", () => {
     const directory = tempDir();
     const nested = join(directory, "src");
-    writeFileSync(join(directory, ".hunk"), "not a project directory\n");
+    writeFileSync(join(directory, ".hunkt"), "not a project directory\n");
     mkdirSync(nested);
 
     expect(findProjectRootCandidate(nested)).toBeUndefined();
   });
 
-  test("chooses the nearest .hunk or registered VCS root", () => {
+  test("chooses the nearest .hunkt or registered VCS root", () => {
     const outer = tempDir();
     const inner = join(outer, "inner");
     const nested = join(inner, "src");
     mkdirSync(join(outer, ".custom"));
-    mkdirSync(join(inner, ".hunk"), { recursive: true });
+    mkdirSync(join(inner, ".hunkt"), { recursive: true });
     mkdirSync(nested, { recursive: true });
     const catalog = createVcsCatalog([markerAdapter(".custom")], "custom");
 

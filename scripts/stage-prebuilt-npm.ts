@@ -94,8 +94,7 @@ function stageMetaPackage(
     version: rootPackage.version,
     description: rootPackage.description,
     bin: {
-      hunk: "./bin/hunk.cjs",
-      hunkdiff: "./bin/hunk.cjs",
+      hunkt: "./bin/hunk.cjs",
     },
     files: ["bin", "dist/npm", "skills", "README.md", "LICENSE"],
     type: rootPackage.type,

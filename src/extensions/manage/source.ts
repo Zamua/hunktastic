@@ -3,7 +3,7 @@ import { expandHomePath } from "../discovery";
 import { EXTENSION_ID_RULE, isValidExtensionId } from "../extensionIds";
 
 /**
- * One parsed `hunk extension install` source.
+ * One parsed `hunkt extension install` source.
  *
  * The spec grammar is deliberately git-shaped rather than registry-shaped:
  * extensions are shared as plain git repositories, so every form normalizes to

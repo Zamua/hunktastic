@@ -8,7 +8,7 @@ Notes are hunk-specific and render beside the rows they explain. Hunk intentiona
 ## Add one agent comment
 
 ```bash
-hunk session comment add \
+hunkt session comment add \
   --repo . \
   --file README.md \
   --new-line 103 \
@@ -21,7 +21,7 @@ Choose exactly one `--old-line` or `--new-line` target. Add `--focus` only when 
 
 ```bash
 printf '%s\n' '{"comments":[{"filePath":"README.md","newLine":103,"summary":"Tighten this wording"}]}' \
-  | hunk session comment apply --repo . --stdin
+  | hunkt session comment apply --repo . --stdin
 ```
 
 Every item needs `filePath`, `summary`, and exactly one target: `hunk`, `hunkNumber`, `oldLine`, or `newLine`. Hunk validates the complete batch before changing the live session.
@@ -29,10 +29,10 @@ Every item needs `filePath`, `summary`, and exactly one target: `hunk`, `hunkNum
 ## Inspect and clean up
 
 ```bash
-hunk session comment list --repo .
-hunk session comment list --repo . --type all
-hunk session comment rm --repo . <comment-id>
-hunk session comment clear --repo . --file README.md --yes
+hunkt session comment list --repo .
+hunkt session comment list --repo . --type all
+hunkt session comment rm --repo . <comment-id>
+hunkt session comment clear --repo . --file README.md --yes
 ```
 
 Use `--all --yes` to clear both live agent comments and human notes. Destructive clears require confirmation.

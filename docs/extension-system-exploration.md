@@ -80,7 +80,7 @@ Roughly ordered from "certain someone builds this in week one" to speculative:
   notes beside the hunks they target.
 - **Send-to-agent**: a shortcut that packages the selected hunk plus your draft
   note and sends it to a running pi / Claude Code session ("fix this"), using
-  the daemon the same way `hunk session comment` does — in reverse.
+  the daemon the same way `hunkt session comment` does — in reverse.
 - **Changeset transforms**: auto-collapse lockfiles and generated files,
   reorder files by review priority, hide vendored dirs — per-team policy as a
   10-line extension instead of N config flags.
@@ -151,7 +151,7 @@ Mirror pi's model closely; it is proven and our users overlap with pi's.
 ### Extension form and discovery
 
 ````ts
-// ~/.config/hunk/extensions/copy-as-suggestion.ts
+// ~/.config/hunkt/extensions/copy-as-suggestion.ts
 import type { HunkExtensionAPI } from "hunkdiff/extension";
 
 export default function (hunk: HunkExtensionAPI) {
@@ -170,8 +170,8 @@ export default function (hunk: HunkExtensionAPI) {
 }
 ````
 
-- Discovery: `~/.config/hunk/extensions/*.ts` and `*/index.ts` (global, follows
-  our existing XDG path logic in `src/core/paths.ts`), `.hunk/extensions/`
+- Discovery: `~/.config/hunkt/extensions/*.ts` and `*/index.ts` (global, follows
+  our existing XDG path logic in `src/core/paths.ts`), `.hunkt/extensions/`
   (repo-local, **trust-gated**, same posture as pi's project trust), explicit
   `[extensions] paths = [...]` in `config.toml`, and a `--extension <path>`
   dev flag. `--no-extensions` for a clean run and for bug triage.
@@ -235,7 +235,7 @@ of the same structure for free.
    family — the highest-demand tier.
 4. **Phase 3 — protocol surfaces.** Session-command registry (after collapsing
    the 5-file lockstep), then CLI command table. Extension session commands
-   need a capability story in the daemon handshake so `hunk session <ext-cmd>`
+   need a capability story in the daemon handshake so `hunkt session <ext-cmd>`
    fails cleanly against a session that lacks the extension.
 5. **Phase 4 — distribution.** `hunk install npm:...` package support,
    hot-reload for extension development, and a docs page whose real audience is
@@ -245,7 +245,7 @@ of the same structure for free.
 
 ## 7. Open questions
 
-- **Compiled-binary loading.** The installed `hunk` is a `bun build --compile`
+- **Compiled-binary loading.** The installed `hunkt` is a `bun build --compile`
   snapshot. Runtime `import()` of arbitrary on-disk TS from a compiled binary
   is the load-bearing assumption behind "one TS file, no build step" — it must
   be spiked first. Fallbacks if it fails: transpile with `Bun.Transpiler` and

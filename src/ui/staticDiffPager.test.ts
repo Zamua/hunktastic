@@ -233,7 +233,7 @@ describe("static diff pager", () => {
         },
       ),
     ).resolves.toBe(text);
-    expect(warning).toContain("hunk: static pager render failed");
+    expect(warning).toContain("hunkt: static pager render failed");
     expect(warning).toContain("falling back to raw diff");
   });
 

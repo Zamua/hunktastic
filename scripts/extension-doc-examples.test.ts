@@ -22,7 +22,7 @@ describe("extractTypeScriptBlocks", () => {
 
   test("ignores fences for other languages", () => {
     const blocks = extractTypeScriptBlocks(
-      ["```toml", 'vcs = "git"', "```", "```bash", "hunk diff", "```", ""].join("\n"),
+      ["```toml", 'vcs = "git"', "```", "```bash", "hunkt diff", "```", ""].join("\n"),
     );
 
     expect(blocks).toEqual([]);

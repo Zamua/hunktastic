@@ -210,7 +210,7 @@ describe("managed extension installs", () => {
   });
 });
 
-describe("hunk extension command runner", () => {
+describe("hunkt extension command runner", () => {
   /** Drive the runner against a temp config dir, capturing output. */
   function createRunnerIo(confirmAnswer?: boolean) {
     const configDir = createTempDir("hunk-manage-config-");

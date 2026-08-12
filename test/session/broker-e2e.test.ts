@@ -129,7 +129,7 @@ function spawnHunkSession(fixture: FixtureFiles, port: number) {
       TERM: "xterm-256color",
       COLUMNS: "120",
       LINES: "24",
-      HUNK_MCP_PORT: String(port),
+      HUNKT_MCP_PORT: String(port),
     },
   });
 }
@@ -193,7 +193,7 @@ function runSessionCli(args: string[], port: number) {
     env: {
       ...process.env,
       XDG_CONFIG_HOME: testConfigHome,
-      HUNK_MCP_PORT: `${port}`,
+      HUNKT_MCP_PORT: `${port}`,
     },
   });
 

@@ -4,7 +4,7 @@ import { dirname } from "node:path";
  * Host-owned modules served to dynamically imported extension files.
  *
  * User extensions live outside the app bundle — a file in
- * `~/.config/hunk/extensions/` has no `node_modules` that reaches the React
+ * `~/.config/hunkt/extensions/` has no `node_modules` that reaches the React
  * compiled into the Hunk binary, and an adjacent `node_modules/react` (a
  * repo-local extension inside a JavaScript project) would resolve to a *second*
  * React whose hooks dispatcher is not the one Hunk renders with. That identity
@@ -34,7 +34,7 @@ import { dirname } from "node:path";
  *
  * Laziness is a headless-portability requirement, not a nicety: this module is
  * reachable from the extension loader, which short-lived headless commands
- * (`hunk session list`, the daemon) also touch, and evaluating `@opentui/core`
+ * (`hunkt session list`, the daemon) also touch, and evaluating `@opentui/core`
  * in a compiled binary extracts its native library to disk. Static imports
  * here made every headless invocation pay that extraction; a dynamic import
  * inside the module factory runs only when an extension file imports the

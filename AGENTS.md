@@ -28,9 +28,9 @@ CLI input
   public extension contract; `src/app` composes their registrations into the provider-neutral
   core VCS catalog. Do not add provider commands, spawning, or source readers under `src/core`.
 - Pager mode has two paths: full diff UI for patch-like stdin, plain-text fallback for non-diff pager content.
-- View defaults are layered through built-ins, user config, repo `.hunk/config.toml`, command sections, pager sections, and CLI flags.
-- `hunk daemon serve` runs one loopback daemon that brokers agent commands to many live Hunk sessions. Normal Hunk sessions should auto-start and register with that daemon when session brokering is enabled. Keep it local-only and session-brokered rather than opening per-TUI ports.
-- Extensions come in two tiers — user TypeScript extensions and the bundled tier in `src/extensions/default/` — running through one per-extension API object and registry (`src/extensions/runExtension.ts`, resolved via `src/extensions/apply.ts`). Every shipped VCS backend and the built-in sidebar are bundled extensions registering through the public API; that dogfooding keeps `hunkdiff/extension` honest. Hard rules: `src/extension-api/types.ts` stays import-free (declaration emission publishes whatever it reaches; `scripts/check-pack.ts` gates it); `src/extensions/default/vcs/` loads from VCS adapter resolution and must stay renderer-free (the sidebar loads separately via `getBundledSidebarView`); repo-local `.hunk/extensions/` never executes without the trust prompt; bundled extensions stay loaded under `--no-extensions`. The full architecture — host-served runtime modules, sidebar pane model, command dispatch, VCS detection ordering, conversion boundaries — is mapped in `docs/extension-architecture.md` and documented in depth by the module headers it names; the authoring guide is `docs/extensions.md`, and `skills/hunk-extensions/SKILL.md` is the agent-facing map of those touchpoints.
+- View defaults are layered through built-ins, user config, repo `.hunkt/config.toml`, command sections, pager sections, and CLI flags.
+- `hunkt daemon serve` runs one loopback daemon that brokers agent commands to many live Hunk sessions. Normal Hunk sessions should auto-start and register with that daemon when session brokering is enabled. Keep it local-only and session-brokered rather than opening per-TUI ports.
+- Extensions come in two tiers — user TypeScript extensions and the bundled tier in `src/extensions/default/` — running through one per-extension API object and registry (`src/extensions/runExtension.ts`, resolved via `src/extensions/apply.ts`). Every shipped VCS backend and the built-in sidebar are bundled extensions registering through the public API; that dogfooding keeps `hunkdiff/extension` honest. Hard rules: `src/extension-api/types.ts` stays import-free (declaration emission publishes whatever it reaches; `scripts/check-pack.ts` gates it); `src/extensions/default/vcs/` loads from VCS adapter resolution and must stay renderer-free (the sidebar loads separately via `getBundledSidebarView`); repo-local `.hunkt/extensions/` never executes without the trust prompt; bundled extensions stay loaded under `--no-extensions`. The full architecture — host-served runtime modules, sidebar pane model, command dispatch, VCS detection ordering, conversion boundaries — is mapped in `docs/extension-architecture.md` and documented in depth by the module headers it names; the authoring guide is `docs/extensions.md`, and `skills/hunk-extensions/SKILL.md` is the agent-facing map of those touchpoints.
 - Agent rationale is optional sidecar JSON matched onto files/hunks.
 - The order of `files` in the sidecar is intentional. Hunk uses that order for the sidebar and main review stream.
 - Prefer one source of truth for each user-visible behavior. When rendering, navigation, scrolling, or note placement share the same model, derive them from the same planning layer rather than maintaining parallel implementations.
@@ -99,8 +99,8 @@ CLI input
 - STML markup notes (experimental) live in `src/ui/lib/stml/`. The layout engine is deliberately a deterministic line layout, not OpenTUI flexbox: the row-windowed review stream needs exact note heights before mount, so `(markup, width)` must always produce the same lines. Colors stay symbolic until render time so measurement never needs a theme. Do not "simplify" this into flexbox renderables, and keep note-card geometry in `agentNoteGeometry` as the single source for rendering, measurement, and agent-facing width reporting.
 - If you choose to use a local sidecar for temporary review context, keep it concise and review-oriented: one changeset summary, file summaries in narrative order, and a few hunk-level annotations with real rationale.
 - If a local sidecar is present, its file order is intentional, but the visible note UI should stay hunk-note driven rather than showing generic file or changeset explainer cards.
-- `hunk diff` working-tree reviews include untracked files by default. Use `--exclude-untracked` if you explicitly want tracked changes only.
-- Agents review via `skills/hunk-review/SKILL.md` using `hunk session *` commands; do not run interactive TUI commands directly.
+- `hunkt diff` working-tree reviews include untracked files by default. Use `--exclude-untracked` if you explicitly want tracked changes only.
+- Agents review via `skills/hunk-review/SKILL.md` using `hunkt session *` commands; do not run interactive TUI commands directly.
 - `skills/hunk-review/SKILL.md` is generated. Edit `src/hunk-review/skillDocument.ts`, `src/session/agent/surface.ts`, or `src/session/agent/errors.ts`, then run `bun run generate:skill`; never hand-edit the skill file.
 
 ## commands
@@ -120,7 +120,7 @@ CLI input
 
 ## binary notes
 
-- Installed `hunk` is a compiled snapshot, not linked to source.
+- Installed `hunkt` is a compiled snapshot, not linked to source.
 - After source changes, rebuild/reinstall with `bun run install:bin`.
 - For rendering verification, prefer a real TTY smoke run over redirected stdout capture.
 

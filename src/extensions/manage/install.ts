@@ -32,7 +32,7 @@ export interface ExtensionInstallOutcome {
   dependencyWarning?: string;
 }
 
-/** One row of `hunk extension list`. */
+/** One row of `hunkt extension list`. */
 export interface ExtensionInstallListEntry {
   name: string;
   record: ExtensionInstallRecord;
@@ -274,7 +274,7 @@ export function installExtension(
 
   if (records[source.name]) {
     throw new HunkUserError(`"${source.name}" is already installed.`, [
-      `Run \`hunk extension update ${source.name}\` to refresh it, or \`hunk extension remove ${source.name}\` first.`,
+      `Run \`hunkt extension update ${source.name}\` to refresh it, or \`hunkt extension remove ${source.name}\` first.`,
     ]);
   }
 
@@ -329,7 +329,7 @@ export function updateExtension(
   const record = records[name];
   if (!record) {
     throw new HunkUserError(`"${name}" is not a managed install.`, [
-      "Run `hunk extension list` to see managed installs.",
+      "Run `hunkt extension list` to see managed installs.",
     ]);
   }
 
@@ -381,7 +381,7 @@ export function removeExtension(context: ExtensionManageContext, name: string) {
   const record = records[name];
   if (!record) {
     throw new HunkUserError(`"${name}" is not a managed install.`, [
-      "Run `hunk extension list` to see managed installs.",
+      "Run `hunkt extension list` to see managed installs.",
     ]);
   }
 

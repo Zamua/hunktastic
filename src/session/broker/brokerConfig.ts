@@ -2,11 +2,11 @@ import { isIP } from "node:net";
 
 export const DEFAULT_SESSION_BROKER_HOST = "127.0.0.1";
 export const DEFAULT_SESSION_BROKER_PORT = 47657;
-export const SESSION_BROKER_HOST_ENV = "HUNK_MCP_HOST";
-export const SESSION_BROKER_PORT_ENV = "HUNK_MCP_PORT";
+export const SESSION_BROKER_HOST_ENV = "HUNKT_MCP_HOST";
+export const SESSION_BROKER_PORT_ENV = "HUNKT_MCP_PORT";
 export const LEGACY_MCP_PATH = "/mcp";
 export const SESSION_BROKER_SOCKET_PATH = "/session";
-export const UNSAFE_ALLOW_REMOTE_SESSION_BROKER_ENV = "HUNK_MCP_UNSAFE_ALLOW_REMOTE";
+export const UNSAFE_ALLOW_REMOTE_SESSION_BROKER_ENV = "HUNKT_MCP_UNSAFE_ALLOW_REMOTE";
 
 export interface ResolvedSessionBrokerConfig {
   host: string;

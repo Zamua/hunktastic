@@ -6,7 +6,7 @@ const createdDirs: string[] = [];
 
 /**
  * Create an empty XDG_CONFIG_HOME for spawned hunk processes so integration tests assert
- * against built-in defaults instead of the developer's ambient ~/.config/hunk/config.toml.
+ * against built-in defaults instead of the developer's ambient ~/.config/hunkt/config.toml.
  * hunk resolves XDG_CONFIG_HOME ahead of platform defaults, so this isolates every OS.
  *
  * Callers create the dir at module scope, so pair it with

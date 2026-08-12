@@ -9,13 +9,13 @@ import type { VcsCatalog } from "../../core/vcs/types";
  *
  * | Initial session | Reload roots | Rejected reload filesystem reads |
  * | --- | --- | --- |
- * | `hunk diff` / `hunk show` / `hunk stash show` | Initial repo root | Anything outside that repo root. |
- * | `hunk diff fileA fileB` inside a repo, both files in repo | The repo root | Anything outside that repo root. |
- * | `hunk difftool fileA fileB` inside a repo, both files in repo | The repo root | Anything outside that repo root. |
- * | `hunk diff fileA fileB` outside a repo | None | All session reloads. |
- * | `hunk difftool fileA fileB` outside a repo | None | All session reloads. |
- * | `hunk patch patchfile` inside a repo | The repo root | Anything outside that repo root. |
- * | `hunk patch patchfile` outside a repo | None | All session reloads. |
+ * | `hunkt diff` / `hunkt show` / `hunkt stash show` | Initial repo root | Anything outside that repo root. |
+ * | `hunkt diff fileA fileB` inside a repo, both files in repo | The repo root | Anything outside that repo root. |
+ * | `hunkt difftool fileA fileB` inside a repo, both files in repo | The repo root | Anything outside that repo root. |
+ * | `hunkt diff fileA fileB` outside a repo | None | All session reloads. |
+ * | `hunkt difftool fileA fileB` outside a repo | None | All session reloads. |
+ * | `hunkt patch patchfile` inside a repo | The repo root | Anything outside that repo root. |
+ * | `hunkt patch patchfile` outside a repo | None | All session reloads. |
  * | stdin-backed patch startup | None | All session reloads. |
  * | Any session with `--agent-context path` | Same roots as the session | Agent context sidecars outside those roots, symlink escapes, and `--agent-context -`. |
  *

@@ -72,7 +72,7 @@ export function toUserFacingError(error: unknown): unknown {
 /** Format CLI and startup failures without exposing Bun internal stack frames for expected errors. */
 export function formatCliError(error: unknown) {
   if (isUserFacingError(error)) {
-    const lines = [`hunk: ${error.message}`];
+    const lines = [`hunkt: ${error.message}`];
     const suggestions = readSuggestions(error.suggestions);
 
     if (suggestions.length > 0) {
@@ -83,12 +83,12 @@ export function formatCliError(error: unknown) {
   }
 
   if (error instanceof Error) {
-    if (process.env.HUNK_DEBUG === "1" && error.stack) {
+    if (process.env.HUNKT_DEBUG === "1" && error.stack) {
       return `${error.stack}\n`;
     }
 
-    return `hunk: ${error.message}\n`;
+    return `hunkt: ${error.message}\n`;
   }
 
-  return `hunk: ${String(error)}\n`;
+  return `hunkt: ${String(error)}\n`;
 }

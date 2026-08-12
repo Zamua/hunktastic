@@ -52,9 +52,9 @@ export interface LoadAppBootstrapOptions {
   onEngineDiagnostic?: (message: string) => void;
 }
 
-/** Per-file fallback detail is log-only (the UI shows one aggregate notice); HUNK_DEBUG gates it so the TUI stays clean. */
+/** Per-file fallback detail is log-only (the UI shows one aggregate notice); HUNKT_DEBUG gates it so the TUI stays clean. */
 function logEngineDiagnostic(message: string) {
-  if (process.env.HUNK_DEBUG === "1") {
+  if (process.env.HUNKT_DEBUG === "1") {
     logSourceDiagnostic(message);
   }
 }

@@ -53,15 +53,15 @@ describe("Hunk session daemon config", () => {
   test("refuses non-loopback binds unless the unsafe override is enabled", () => {
     expect(() =>
       resolveSessionBrokerConfig({
-        HUNK_MCP_HOST: "0.0.0.0",
-        HUNK_MCP_PORT: "49000",
+        HUNKT_MCP_HOST: "0.0.0.0",
+        HUNKT_MCP_PORT: "49000",
       }),
     ).toThrow("local-only by default");
 
     expect(
       resolveSessionBrokerConfig({
-        HUNK_MCP_HOST: "0.0.0.0",
-        HUNK_MCP_PORT: "49000",
+        HUNKT_MCP_HOST: "0.0.0.0",
+        HUNKT_MCP_PORT: "49000",
         [UNSAFE_ALLOW_REMOTE_SESSION_BROKER_ENV]: "1",
       }),
     ).toMatchObject({

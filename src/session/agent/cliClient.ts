@@ -440,8 +440,8 @@ export function formatReloadOutput(selector: SessionSelectorInput, result: Reloa
 function formatMarkupNotes(result: AppliedCommentResult, indent = "") {
   const widthHint =
     result.markupWidth !== undefined
-      ? ` (preview with \`hunk markup render - --width ${result.markupWidth}\`)`
-      : " (preview with `hunk markup render`)";
+      ? ` (preview with \`hunkt markup render - --width ${result.markupWidth}\`)`
+      : " (preview with `hunkt markup render`)";
   return (result.markupNotes ?? []).map((note) => `${indent}Markup note: ${note}${widthHint}.`);
 }
 
