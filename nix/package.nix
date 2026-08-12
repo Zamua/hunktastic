@@ -36,6 +36,11 @@ in
       runHook preInstall
       mkdir -p $out/bin
       cp -p ./hunk-bin $out/bin/hunk
+      # The npm package exposes both names, and lib.getExe resolves the pname
+      # (hunkdiff) because the bun2nix builder does not carry meta.mainProgram
+      # through, so a consumer following that path lands here rather than on a
+      # missing file.
+      ln -s hunk $out/bin/hunkdiff
       cp -r ./skills $out/
       # difftastic ships no library, only a CLI, so the difftastic engine
       # shells out to `difft`. Baking it into the wrapper's PATH keeps the
