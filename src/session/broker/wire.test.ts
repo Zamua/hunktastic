@@ -110,6 +110,32 @@ describe("hunk session wire parsing", () => {
     });
   });
 
+  test("registration preserves known engine ids and drops unrecognized ones", () => {
+    const parse = (engine: unknown) =>
+      parseSessionRegistration({
+        registrationVersion: SESSION_BROKER_REGISTRATION_VERSION,
+        sessionId: "session-1",
+        pid: 123,
+        cwd: "/repo",
+        launchedAt: "2026-03-22T00:00:00.000Z",
+        info: {
+          inputKind: "vcs",
+          title: "repo working tree",
+          sourceLabel: "/repo",
+          engine,
+          files: [createFile({ engine })],
+        },
+      });
+
+    const difftastic = parse("difftastic");
+    expect(difftastic?.info.engine).toBe("difftastic");
+    expect(difftastic?.info.files[0]?.engine).toBe("difftastic");
+
+    const unknown = parse("bespoke-engine");
+    expect(unknown?.info.engine).toBeUndefined();
+    expect(unknown?.info.files[0]?.engine).toBeUndefined();
+  });
+
   test("registration preserves only recognized experimental feature ids", () => {
     const registration = parseSessionRegistration({
       registrationVersion: SESSION_BROKER_REGISTRATION_VERSION,

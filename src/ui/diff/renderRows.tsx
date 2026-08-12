@@ -1482,6 +1482,13 @@ export function diffMessage(file: DiffFile) {
     return "No textual hunks. The file is marked as deleted.";
   }
 
+  // A hunkless difftastic file is structurally unchanged: difft can report
+  // `unchanged` for edits it considers non-semantic even when git saw a
+  // textual diff. Mark it so the empty body reads as intentional.
+  if (file.engine === "difftastic") {
+    return "difftastic: no structural changes";
+  }
+
   return "No textual hunks to render for this file.";
 }
 

@@ -25,6 +25,7 @@ import type {
   CursorLine,
   CustomSyntaxColorsConfig,
   CustomSyntaxScopesConfig,
+  DiffEngineId,
   ExtensionsConfig,
   LayoutMode,
   NamedCustomThemeConfig,
@@ -159,6 +160,11 @@ function normalizeCursorLine(value: unknown): CursorLine | undefined {
   return value === "row" || value === "number" || value === "off" ? value : undefined;
 }
 
+/** Accept only the diff engines Hunk ships. */
+function normalizeDiffEngine(value: unknown): DiffEngineId | undefined {
+  return value === "pierre" || value === "difftastic" ? value : undefined;
+}
+
 /**
  * Accept any backend id a config layer names, provisionally.
  *
@@ -227,6 +233,24 @@ export const CONFIG_REFERENCE_OPTIONS: readonly ConfigReferenceOption[] = [
     accepted: "`auto`, `split`, or `stack`",
     runtimeDefault: DEFAULT_VIEW_PREFERENCES.mode,
     description: "Choose responsive, side-by-side, or stacked diff layout.",
+  },
+  {
+    key: "engine",
+    property: "engine",
+    type: "string",
+    accepted: "`pierre` or `difftastic`",
+    runtimeDefault: "pierre",
+    description:
+      "Select the diff engine. `difftastic` computes structural hunks and falls back to `pierre` per file when it cannot.",
+  },
+  {
+    key: "difft_path",
+    property: "difftPath",
+    type: "string",
+    accepted: "a difftastic executable path or command name",
+    runtimeDefault: "difft",
+    description:
+      "Locate the difftastic binary for the `difftastic` engine. Honored from user config and `HUNK_DIFFT_PATH` only; a repo config value is ignored with a notice.",
   },
   {
     key: "cursor_line",
@@ -810,6 +834,23 @@ function createRepoExtensionConfigNotice(
   };
 }
 
+/** Report a repo-config `difft_path`, which is exec-adjacent and therefore user-layer only. */
+function createRepoDifftPathNotice(): StartupNotice {
+  return {
+    key: "difftastic:repo-difft-path",
+    message: "Ignored difft_path from repo config. Set it in user config or HUNK_DIFFT_PATH.",
+  };
+}
+
+/** Report an unusable HUNK_ENGINE value instead of silently dropping the override. */
+function createInvalidEngineEnvNotice(value: string): StartupNotice {
+  const listed = sanitizeTerminalLine(value);
+  return {
+    key: `engine:invalid-env:${listed}`,
+    message: `Ignored HUNK_ENGINE="${listed}". Valid engines: pierre, difftastic.`,
+  };
+}
+
 /** Merge two per-extension config maps so repo tables override user tables key by key. */
 function mergeExtensionConfigs(
   base: Record<string, Record<string, unknown>>,
@@ -828,11 +869,14 @@ function normalizeConfigReferenceValue(property: keyof CommonOptions, value: unk
   switch (property) {
     case "mode":
       return normalizeLayoutMode(value);
+    case "engine":
+      return normalizeDiffEngine(value);
     case "cursorLine":
       return normalizeCursorLine(value);
     case "vcs":
       return normalizeVcsMode(value);
     case "theme":
+    case "difftPath":
       return normalizeString(value);
     case "tabWidth":
       return normalizeTabWidth(value);
@@ -881,6 +925,8 @@ function mergeOptions(base: CommonOptions, overrides: CommonOptions): CommonOpti
   return {
     ...base,
     mode: overrides.mode ?? base.mode,
+    engine: overrides.engine ?? base.engine,
+    difftPath: overrides.difftPath ?? base.difftPath,
     cursorLine: overrides.cursorLine ?? base.cursorLine,
     vcs: overrides.vcs ?? base.vcs,
     theme: overrides.theme ?? base.theme,
@@ -1077,6 +1123,7 @@ export function resolveConfiguredCliInput(
   // The merged `vcs` value loses track of who chose it, so record every layer
   // that names one explicitly, in the same last-layer-wins order options merge.
   let explicitVcsId: string | undefined;
+  const engineNotices: StartupNotice[] = [];
 
   if (userConfigPath) {
     const userConfig = readTomlRecord(userConfigPath);
@@ -1091,10 +1138,31 @@ export function resolveConfiguredCliInput(
   if (repoConfigPath) {
     const repoConfig = readTomlRecord(repoConfigPath);
     const repoLayer = resolveConfigLayer(repoConfig, input);
+    // `difft_path` names a binary Hunk will execute; a checkout must not choose it.
+    if (repoLayer.difftPath !== undefined) {
+      repoLayer.difftPath = undefined;
+      engineNotices.push(createRepoDifftPathNotice());
+    }
     explicitVcsId = repoLayer.vcs ?? explicitVcsId;
     resolvedOptions = mergeOptions(resolvedOptions, repoLayer);
     applyCustomThemeLayer(readCustomThemes(repoConfig));
     repoExtensionsLayer = readExtensionsLayer(repoConfig);
+  }
+
+  // Env overrides sit above the config layers and below explicit CLI flags.
+  // `HUNK_ENGINE` is the PTY/CLI test hook the spec reserves for engine selection.
+  const envEngine = env.HUNK_ENGINE;
+  if (envEngine !== undefined && envEngine !== "") {
+    const normalizedEnvEngine = normalizeDiffEngine(envEngine);
+    if (normalizedEnvEngine) {
+      resolvedOptions = mergeOptions(resolvedOptions, { engine: normalizedEnvEngine });
+    } else {
+      engineNotices.push(createInvalidEngineEnvNotice(envEngine));
+    }
+  }
+  const envDifftPath = normalizeString(env.HUNK_DIFFT_PATH);
+  if (envDifftPath) {
+    resolvedOptions = mergeOptions(resolvedOptions, { difftPath: envDifftPath });
   }
 
   explicitVcsId = input.options.vcs ?? explicitVcsId;
@@ -1109,6 +1177,8 @@ export function resolveConfiguredCliInput(
     theme: resolvedOptions.theme,
     vcs: resolvedOptions.vcs ?? vcsCatalog.defaultAdapterId,
     mode: resolvedOptions.mode ?? DEFAULT_VIEW_PREFERENCES.mode,
+    engine: resolvedOptions.engine ?? "pierre",
+    difftPath: resolvedOptions.difftPath ?? "difft",
     lineNumbers: resolvedOptions.lineNumbers ?? DEFAULT_VIEW_PREFERENCES.showLineNumbers,
     tabWidth: resolvedOptions.tabWidth ?? DEFAULT_TAB_WIDTH,
     wrapLines: resolvedOptions.wrapLines ?? DEFAULT_VIEW_PREFERENCES.wrapLines,
@@ -1164,6 +1234,7 @@ export function resolveConfiguredCliInput(
       ...themeNotices.values(),
       ...repoExtensionConfigNotices,
       ...keybindingNotices,
+      ...engineNotices,
     ]),
     globalConfigPath: userConfigPath,
     projectRoot: repoRoot,

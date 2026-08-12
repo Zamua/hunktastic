@@ -1,4 +1,5 @@
 {
+  "ignorePatterns": ["test/fixtures/difftastic/*.js"],
   "rules": {
     "no-control-regex": "off"
   }

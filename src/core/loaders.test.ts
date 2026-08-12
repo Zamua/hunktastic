@@ -1,13 +1,26 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { platform, tmpdir } from "node:os";
 import { join } from "node:path";
+import { resetDifftVersionCacheForTests } from "./engine/difftastic/exec";
 import { SourceTextTooLargeError } from "./fileSource";
 import { getBundledVcsCatalog } from "../app/vcsCatalog";
 import { createGitVcsAdapter } from "../extensions/default/vcs/git";
 import { toInternalVcsAdapter } from "../extensions/runExtension";
 import { createVcsCatalog } from "./vcs";
-import { loadAppBootstrap as loadCoreAppBootstrap, type LoadAppBootstrapOptions } from "./loaders";
+import {
+  DIFFT_PATCH_INPUT_NOTICE,
+  loadAppBootstrap as loadCoreAppBootstrap,
+  type LoadAppBootstrapOptions,
+} from "./loaders";
 import type { CliInput } from "./types";
 import type { VcsAdapter } from "./vcs/types";
 import { computeWatchSignature } from "./watch";
@@ -2048,5 +2061,101 @@ describe("loadAppBootstrap source fetcher attachment", () => {
     });
 
     expect(bootstrap.changeset.files[0]?.sourceFetcher).toBeUndefined();
+  });
+});
+
+describe("difftastic engine dispatch", () => {
+  const isWindows = platform() === "win32";
+  const difftasticFixturesDir = join(import.meta.dir, "..", "..", "test", "fixtures", "difftastic");
+
+  /** POSIX stub answering the version probe, then emitting the captured sample payload. */
+  function createSampleStubDifft() {
+    const dir = createTempDir("hunk-loader-difft-");
+    const stubPath = join(dir, "difft-stub");
+    writeFileSync(
+      stubPath,
+      [
+        "#!/bin/sh",
+        'if [ "$1" = "--version" ]; then',
+        '  echo "Difftastic 0.69.0"',
+        "  exit 0",
+        "fi",
+        `cat "${join(difftasticFixturesDir, "sample-0.69.0.json")}"`,
+        "",
+      ].join("\n"),
+    );
+    chmodSync(stubPath, 0o755);
+    return stubPath;
+  }
+
+  test("patch input stays on pierre with one notice when difftastic is configured", async () => {
+    const bootstrap = await loadAppBootstrap({
+      kind: "patch",
+      text: "diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -1 +1 @@\n-old\n+new\n",
+      options: { engine: "difftastic" },
+    });
+
+    expect(bootstrap.startupNotices).toEqual([DIFFT_PATCH_INPUT_NOTICE]);
+    expect(bootstrap.changeset.files[0]?.engine).toBeUndefined();
+  });
+
+  test("missing difft binary keeps the pierre render with one notice", async () => {
+    resetDifftVersionCacheForTests();
+    const dir = createTempDir("hunk-loader-difft-");
+    const left = join(dir, "before.ts");
+    const right = join(dir, "after.ts");
+    writeFileSync(left, "const alpha = 1;\n");
+    writeFileSync(right, "const alpha = 2;\n");
+
+    const bootstrap = await loadAppBootstrap({
+      kind: "diff",
+      left,
+      right,
+      options: { engine: "difftastic", difftPath: join(dir, "no-such-difft") },
+    });
+
+    expect(bootstrap.startupNotices?.map((notice) => notice.key)).toEqual([
+      "difftastic:binary-missing",
+    ]);
+    expect(bootstrap.changeset.files[0]?.engine).toBeUndefined();
+    expect(bootstrap.changeset.files[0]?.metadata.hunks.length).toBeGreaterThan(0);
+  });
+
+  test.skipIf(isWindows)(
+    "two-file diff overlays difftastic hunks from the real paths",
+    async () => {
+      resetDifftVersionCacheForTests();
+      const bootstrap = await loadAppBootstrap({
+        kind: "diff",
+        left: join(difftasticFixturesDir, "before.js"),
+        right: join(difftasticFixturesDir, "after.js"),
+        options: { engine: "difftastic", difftPath: createSampleStubDifft() },
+      });
+
+      const file = bootstrap.changeset.files[0];
+      expect(bootstrap.startupNotices).toBeUndefined();
+      expect(file?.engine).toBe("difftastic");
+      expect(file?.metadata.isPartial).toBe(false);
+      expect(file?.metadata.hunks).toHaveLength(1);
+      expect(file?.noveltySpans).toBeDefined();
+    },
+  );
+
+  test("pierre engine leaves the changeset untouched", async () => {
+    const dir = createTempDir("hunk-loader-difft-");
+    const left = join(dir, "before.ts");
+    const right = join(dir, "after.ts");
+    writeFileSync(left, "const alpha = 1;\n");
+    writeFileSync(right, "const alpha = 2;\n");
+
+    const bootstrap = await loadAppBootstrap({
+      kind: "diff",
+      left,
+      right,
+      options: { engine: "pierre" },
+    });
+
+    expect(bootstrap.startupNotices).toBeUndefined();
+    expect(bootstrap.changeset.files[0]?.engine).toBeUndefined();
   });
 });

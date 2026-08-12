@@ -151,6 +151,19 @@ describe("parseCli", () => {
     });
   });
 
+  test("parses the diff engine and rejects an unknown one", async () => {
+    const parsed = await parseCli(["bun", "hunk", "diff", "--engine", "difftastic"]);
+
+    expect(parsed).toMatchObject({
+      kind: "vcs",
+      options: { engine: "difftastic" },
+    });
+
+    await expect(parseCli(["bun", "hunk", "diff", "--engine", "sparkles"])).rejects.toThrow(
+      "Invalid diff engine: sparkles",
+    );
+  });
+
   test("parses the current-line style and rejects an unknown one", async () => {
     const parsed = await parseCli(["bun", "hunk", "diff", "--cursor-line", "number"]);
 

@@ -1,6 +1,6 @@
 import type { ExperimentalFeature } from "../core/experimental";
 import type { CommentTargetInput, DiffSide } from "../core/liveComments";
-import type { CliInput, ReviewNoteSource } from "../core/types";
+import type { CliInput, DiffEngineId, ReviewNoteSource } from "../core/types";
 import type { SessionReloadReason } from "../extensions/types";
 import type { SessionBrokerClient } from "../session/broker/brokerClient";
 import type {
@@ -21,6 +21,8 @@ export interface SessionFileSummary {
   additions: number;
   deletions: number;
   hunkCount: number;
+  /** Engine that produced this file's hunks; absent means the Pierre baseline. */
+  engine?: DiffEngineId;
 }
 
 export interface SessionReviewHunk {
@@ -46,6 +48,8 @@ export interface HunkSessionInfo {
   inputKind: CliInput["kind"];
   title: string;
   sourceLabel: string;
+  /** Configured diff engine; per-file `engine` reports what actually ran (fallback is per-file). */
+  engine?: DiffEngineId;
   experimentalFeatures?: ExperimentalFeature[];
   files: SessionReviewFile[];
 }
@@ -238,6 +242,8 @@ export interface SessionReview {
   cwd?: string;
   repoRoot?: string;
   inputKind: CliInput["kind"];
+  /** Configured diff engine; each file's `engine` reports what actually produced its hunks. */
+  engine?: DiffEngineId;
   experimentalFeatures?: ExperimentalFeature[];
   selectedFile: SessionReviewFile | null;
   selectedHunk: SessionReviewHunk | null;

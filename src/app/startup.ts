@@ -10,6 +10,7 @@ import {
 } from "../extensions/startup";
 import { resolveConfiguredCliInput } from "../core/config";
 import { HunkUserError } from "../core/errors";
+import { combineBootstrapStartupNotices } from "../core/startupNotice";
 import { loadAppBootstrap } from "../core/loaders";
 import { looksLikePatchInput } from "../core/pager";
 import { detectTerminalThemeModeFromBackground } from "../core/themeDetection";
@@ -339,20 +340,14 @@ export async function prepareStartupPlan(
   // these factories are Hunk's own — but the isolation contract is the contract.
   const bundledNotices = createExtensionLoadNotices(loadBundledExtensions().issues);
 
+  // Notices the loader attached (e.g. difftastic fallbacks) merge with config notices.
   bootstrap.startupNotices = mergeStartupNotices(
-    // Keep the resolved array identity when extensions contributed no theme notices.
-    sessionThemes.notices.length > 0 ||
-      applied.issues.length > 0 ||
-      bundledNotices.length > 0 ||
-      unknownVcsNotices.length > 0
-      ? [
-          ...(configured.startupNotices ?? []),
-          ...sessionThemes.notices,
-          ...createExtensionApplyNotices(applied.issues),
-          ...bundledNotices,
-          ...unknownVcsNotices,
-        ]
-      : configured.startupNotices,
+    combineBootstrapStartupNotices(configured.startupNotices, bootstrap.startupNotices, [
+      ...sessionThemes.notices,
+      ...createExtensionApplyNotices(applied.issues),
+      ...bundledNotices,
+      ...unknownVcsNotices,
+    ]),
     extensionResult,
   );
   controllingTerminal ??= usesPipedPatchInputImpl(cliInput) ? openControllingTerminalImpl() : null;

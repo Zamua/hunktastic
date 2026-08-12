@@ -47,6 +47,7 @@ export function summarizeReviewFile(reviewFile: SessionReviewFile): SessionFileS
     additions: reviewFile.additions,
     deletions: reviewFile.deletions,
     hunkCount: reviewFile.hunkCount,
+    engine: reviewFile.engine,
   };
 }
 
@@ -123,6 +124,7 @@ export function buildHunkSessionReview(
     cwd: entry.registration.cwd,
     repoRoot: entry.registration.repoRoot,
     inputKind: entry.registration.info.inputKind,
+    engine: entry.registration.info.engine,
     experimentalFeatures: entry.registration.info.experimentalFeatures ?? [],
     selectedFile: selectedFile ? serializeReviewFile(selectedFile, includePatch) : null,
     selectedHunk: selectedFile

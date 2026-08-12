@@ -86,6 +86,8 @@ const INSPECT_SECTION = [
   "- `Repo` is what `--repo` matches; `Path` is what `--session-path` matches",
   "- `review --json` returns file and hunk structure by default; add `--include-patch` only when a caller truly needs raw unified diff text",
   "- `review --include-notes` also returns the live review notes alongside the file and hunk structure",
+  "",
+  "`review --json` reports which diff engine produced each file's hunks (`engine`: `pierre` or `difftastic`; the top-level `engine` is the session's configured engine, and a file can fall back to `pierre` individually). Hunk numbers are only valid against the hunk list reported by the same session's `review --json` -- when engines may differ, prefer `oldLine` / `newLine` anchors, which are real file line numbers and resolve under either engine.",
 ];
 
 const NAVIGATE_SECTION = [

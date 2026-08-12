@@ -46,6 +46,8 @@ describe("CLI entrypoint contracts", () => {
     expect(stdout).toContain("hunk show");
     expect(stdout).toContain("Global options:");
     expect(stdout).toContain("Common review options:");
+    expect(stdout).toContain("--engine <engine>");
+    expect(stdout).toContain("diff engine: pierre, difftastic");
     expect(stdout).toContain("auto-reload when the current diff input changes");
     expect(stdout).toContain("Git diff options:");
     expect(stdout).toContain("Notes:");

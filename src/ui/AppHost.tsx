@@ -4,7 +4,7 @@ import { loadConfiguredSessionBootstrap } from "../app/sessionBootstrap";
 import { getBundledVcsCatalog } from "../app/vcsCatalog";
 import { resolveConfiguredCliInput } from "../core/config";
 import { resolveRuntimeCliInput } from "../core/terminal";
-import type { StartupNotice } from "../core/startupNotice";
+import { combineBootstrapStartupNotices, type StartupNotice } from "../core/startupNotice";
 import type { AppBootstrap, CliInput } from "../core/types";
 import type { ExtensionLoadResult } from "../extensions/types";
 import {
@@ -183,14 +183,18 @@ export function AppHost({
           if (extensions) {
             reportExtensionApplyIssues(applied.issues, extensions.context);
           }
-          nextBootstrap.startupNotices =
+          // Same merge as initial startup: loader-attached notices (e.g.
+          // difftastic fallbacks) must survive the reload path too.
+          nextBootstrap.startupNotices = combineBootstrapStartupNotices(
+            configured.startupNotices,
+            nextBootstrap.startupNotices,
             sessionVcs.unknownVcsId !== undefined
               ? [
-                  ...(configured.startupNotices ?? []),
                   // Names the backend the reload really used, detection override included.
                   createUnknownVcsNotice(sessionVcs.unknownVcsId, String(reloadInput.options.vcs)),
                 ]
-              : configured.startupNotices;
+              : [],
+          );
           const nextSnapshot = createInitialSessionSnapshot(nextBootstrap);
 
           let sessionId = "local-session";

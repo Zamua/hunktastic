@@ -6,15 +6,17 @@ import {
   renderFileWithHighlighter,
   type FileContents,
   type FileDiffMetadata,
+  type LineDiffTypes,
 } from "@pierre/diffs";
 import { formatHunkHeader } from "../../core/hunkHeader";
 import { DEFAULT_TAB_WIDTH } from "../../core/tabWidth";
-import type { DiffFile, DiffLineMoveKind } from "../../core/types";
+import type { ColumnSpan, DiffFile, DiffLineMoveKind } from "../../core/types";
 import { blendHex, hexColorDistance } from "../lib/color";
 import { measureTextWidth } from "../lib/text";
 import { sanitizeTerminalLine } from "../../lib/terminalText";
 import { TRANSPARENT_BACKGROUND, type AppTheme } from "../themes";
 import { expandDiffTabs } from "./codeColumns";
+import { overlayNoveltySpans, remapColumnSpansThroughTabs } from "./noveltySpans";
 import {
   createSourceBackedHighlightPlan,
   remapSourceBackedHighlight,
@@ -32,13 +34,18 @@ function highlightThemeAppearance(theme: HighlightThemeInput) {
   return typeof theme === "string" ? theme : theme.appearance;
 }
 
-/** Build render options for the active syntax theme. */
-function pierreRenderOptions(theme: HighlightThemeInput) {
+/** Pierre intraline diff mode for one file: difftastic novelty spans replace Pierre word-diff. */
+function fileLineDiffType(file: DiffFile): LineDiffTypes {
+  return file.engine === "difftastic" ? "none" : "word-alt";
+}
+
+/** Build render options for the active syntax theme and one file's intraline diff mode. */
+function pierreRenderOptions(theme: HighlightThemeInput, lineDiffType: LineDiffTypes = "word-alt") {
   return {
     theme: syntaxHighlightThemeName(theme),
     useTokenTransformer: false,
     tokenizeMaxLineLength: 1_000,
-    lineDiffType: "word-alt" as const,
+    lineDiffType,
     maxLineDiffLength: 10_000,
   };
 }
@@ -358,6 +365,31 @@ function cleanDiffLine(line: string | undefined, tabWidth: number) {
   return tabify(cleanLastNewline(line ?? ""), tabWidth);
 }
 
+/** Apply difftastic intraline novelty emphasis to one cell's flattened spans. */
+function overlayCellNoveltySpans(
+  spans: RenderSpan[],
+  noveltyColumns: ColumnSpan[] | undefined,
+  kind: SplitLineCell["kind"],
+  rawLine: string | undefined,
+  theme: AppTheme,
+  tabWidth: number,
+) {
+  if (!noveltyColumns || noveltyColumns.length === 0 || spans.length === 0) {
+    return spans;
+  }
+
+  const lineText = cleanLastNewline(rawLine ?? "");
+  // Sanitization deletes control sequences, which would shift the source columns; skip
+  // emphasis rather than recolor the wrong characters.
+  if (sanitizeTerminalLine(lineText) !== lineText) {
+    return spans;
+  }
+
+  // difftastic columns index the source text, but rendered spans hold tab-expanded text.
+  const renderColumns = remapColumnSpansThroughTabs(lineText, noveltyColumns, tabWidth);
+  return overlayNoveltySpans(spans, renderColumns, wordDiffHighlightBg(kind, theme));
+}
+
 /** Build the normalized render model for one split-view cell. */
 function makeSplitCell(
   kind: SplitLineCell["kind"],
@@ -367,6 +399,7 @@ function makeSplitCell(
   theme: AppTheme,
   tabWidth: number,
   moveKind?: DiffLineMoveKind,
+  noveltyColumns?: ColumnSpan[],
 ) {
   if (kind === "empty") {
     return {
@@ -397,6 +430,8 @@ function makeSplitCell(
     }
   }
 
+  spans = overlayCellNoveltySpans(spans, noveltyColumns, kind, rawLine, theme, tabWidth);
+
   return {
     kind,
     sign: kind === "addition" ? "+" : kind === "deletion" ? "-" : " ",
@@ -416,6 +451,7 @@ function makeStackCell(
   theme: AppTheme,
   tabWidth: number,
   moveKind?: DiffLineMoveKind,
+  noveltyColumns?: ColumnSpan[],
 ) {
   // Same lazy-fallback strategy as split cells: only normalize the raw source line when we really
   // need the plain-text fallback, not when highlighted spans are already ready to reuse.
@@ -436,6 +472,8 @@ function makeStackCell(
       spans = fallbackText.length > 0 ? [{ text: fallbackText }] : [];
     }
   }
+
+  spans = overlayCellNoveltySpans(spans, noveltyColumns, kind, rawLine, theme, tabWidth);
 
   return {
     kind,
@@ -651,7 +689,7 @@ function renderHighlightedDiff(
     const highlighted = renderDiffWithHighlighter(
       metadata,
       highlighter,
-      pierreRenderOptions(theme),
+      pierreRenderOptions(theme, fileLineDiffType(file)),
     );
     return finalizeHighlightedDiff(file, sourcePlan, highlighted);
   });
@@ -712,7 +750,7 @@ export async function loadHighlightedSourceLines({
       const highlighted = renderFileWithHighlighter(
         sourceFileContents(file, text, file.language),
         highlighter,
-        pierreRenderOptions(theme),
+        pierreRenderOptions(theme, fileLineDiffType(file)),
       );
       return {
         lines: highlighted.code as Array<HastNode | undefined>,
@@ -725,7 +763,7 @@ export async function loadHighlightedSourceLines({
       const highlighted = renderFileWithHighlighter(
         sourceFileContents(file, text, "text"),
         highlighter,
-        pierreRenderOptions(fallbackTheme),
+        pierreRenderOptions(fallbackTheme, fileLineDiffType(file)),
       );
       return {
         lines: highlighted.code as Array<HastNode | undefined>,
@@ -846,6 +884,7 @@ export function buildSplitRows(
                 theme,
                 tabWidth,
                 file.lineMoveKinds?.deletionLines[deletionLineIndex + offset],
+                file.noveltySpans?.deletionLines[deletionLineIndex + offset],
               )
             : makeSplitCell("empty", undefined, undefined, undefined, theme, tabWidth),
           right: hasAddition
@@ -857,6 +896,7 @@ export function buildSplitRows(
                 theme,
                 tabWidth,
                 file.lineMoveKinds?.additionLines[additionLineIndex + offset],
+                file.noveltySpans?.additionLines[additionLineIndex + offset],
               )
             : makeSplitCell("empty", undefined, undefined, undefined, theme, tabWidth),
         });
@@ -965,6 +1005,7 @@ export function buildStackRows(
             theme,
             tabWidth,
             file.lineMoveKinds?.deletionLines[deletionLineIndex + offset],
+            file.noveltySpans?.deletionLines[deletionLineIndex + offset],
           ),
         });
       }
@@ -984,6 +1025,7 @@ export function buildStackRows(
             theme,
             tabWidth,
             file.lineMoveKinds?.additionLines[additionLineIndex + offset],
+            file.noveltySpans?.additionLines[additionLineIndex + offset],
           ),
         });
       }

@@ -1,0 +1,46 @@
+{
+  "aligned_lines": [
+    [0, 0],
+    [1, 1],
+    [2, null],
+    [3, null],
+    [4, 2],
+    [5, 3],
+    [6, 4]
+  ],
+  "chunks": [
+    [
+      {
+        "lhs": {
+          "line_number": 2,
+          "changes": [
+            { "start": 2, "end": 9, "content": "console", "highlight": "normal" },
+            { "start": 9, "end": 10, "content": ".", "highlight": "normal" },
+            { "start": 10, "end": 13, "content": "log", "highlight": "normal" },
+            { "start": 13, "end": 14, "content": "(", "highlight": "delimiter" },
+            { "start": 14, "end": 21, "content": "\"debug\"", "highlight": "string" },
+            { "start": 21, "end": 22, "content": ")", "highlight": "delimiter" },
+            { "start": 22, "end": 23, "content": ";", "highlight": "normal" }
+          ]
+        }
+      },
+      {
+        "lhs": {
+          "line_number": 3,
+          "changes": [
+            { "start": 2, "end": 9, "content": "console", "highlight": "normal" },
+            { "start": 9, "end": 10, "content": ".", "highlight": "normal" },
+            { "start": 10, "end": 13, "content": "log", "highlight": "normal" },
+            { "start": 13, "end": 14, "content": "(", "highlight": "delimiter" },
+            { "start": 14, "end": 21, "content": "\"trace\"", "highlight": "string" },
+            { "start": 21, "end": 22, "content": ")", "highlight": "delimiter" },
+            { "start": 22, "end": 23, "content": ";", "highlight": "normal" }
+          ]
+        }
+      }
+    ]
+  ],
+  "language": "JavaScript",
+  "path": "test/fixtures/difftastic/deleted-lines-after.js",
+  "status": "changed"
+}

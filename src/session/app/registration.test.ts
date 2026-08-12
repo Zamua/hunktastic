@@ -51,6 +51,7 @@ describe("session registration", () => {
         inputKind: "vcs",
         title: "working tree",
         sourceLabel: "/repo",
+        engine: "pierre",
         experimentalFeatures: [],
         files: [
           {
@@ -60,6 +61,7 @@ describe("session registration", () => {
             additions: 1,
             deletions: 1,
             hunkCount: 1,
+            engine: "pierre",
             patch: "@@ -1 +1 @@\n-export const value = 1;\n+export const value = 2;\n",
           },
         ],
@@ -113,9 +115,27 @@ describe("session registration", () => {
       inputKind: "patch",
       title: "patch file",
       sourceLabel: "change.patch",
+      engine: "pierre",
       experimentalFeatures: [],
       files: [],
     });
+  });
+
+  // Intent: per-file engine reflects each file's actual engine while info echoes the configured one.
+  test("registration reports the configured engine and each file's producing engine", () => {
+    const bootstrap = createBootstrap({
+      input: { kind: "vcs", staged: false, options: { engine: "difftastic" } },
+    });
+    const [pierreFile] = bootstrap.changeset.files;
+    bootstrap.changeset.files = [
+      { ...pierreFile!, engine: "difftastic" },
+      { ...pierreFile!, id: "file-2", path: "src/fallback.ts", engine: undefined },
+    ];
+
+    const registration = createSessionRegistration(bootstrap);
+
+    expect(registration.info.engine).toBe("difftastic");
+    expect(registration.info.files.map((file) => file.engine)).toEqual(["difftastic", "pierre"]);
   });
 
   test("registration advertises STML only for opted-in launches", () => {

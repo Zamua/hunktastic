@@ -1335,3 +1335,122 @@ describe("extension configuration", () => {
     ).toThrow(/\[extension.copy-as\] to contain a TOML table/);
   });
 });
+
+describe("engine configuration", () => {
+  test("defaults to the pierre engine and the PATH difft binary", () => {
+    const home = createTempDir("hunk-config-home-");
+    const repo = createTempDir("hunk-config-repo-");
+    createRepo(repo);
+
+    const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home },
+    });
+
+    expect(resolved.input.options.engine).toBe("pierre");
+    expect(resolved.input.options.difftPath).toBe("difft");
+  });
+
+  test("layers engine through user config, repo config, HUNK_ENGINE, and the CLI flag", () => {
+    const home = createTempDir("hunk-config-home-");
+    const repo = createTempDir("hunk-config-repo-");
+    createRepo(repo);
+    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'engine = "difftastic"');
+
+    const fromUser = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home },
+    });
+    expect(fromUser.input.options.engine).toBe("difftastic");
+
+    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    writeFileSync(join(repo, ".hunk", "config.toml"), 'engine = "pierre"');
+    const fromRepo = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home },
+    });
+    expect(fromRepo.input.options.engine).toBe("pierre");
+
+    const fromEnv = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home, HUNK_ENGINE: "difftastic" },
+    });
+    expect(fromEnv.input.options.engine).toBe("difftastic");
+
+    const fromFlag = resolveConfiguredCliInput(createPatchPagerInput({ engine: "pierre" }), {
+      cwd: repo,
+      env: { HOME: home, HUNK_ENGINE: "difftastic" },
+    });
+    expect(fromFlag.input.options.engine).toBe("pierre");
+  });
+
+  test("ignores an invalid HUNK_ENGINE value with a startup notice", () => {
+    const home = createTempDir("hunk-config-home-");
+    const repo = createTempDir("hunk-config-repo-");
+    createRepo(repo);
+
+    const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home, HUNK_ENGINE: "sparkles" },
+    });
+
+    expect(resolved.input.options.engine).toBe("pierre");
+    expect(resolved.startupNotices?.map((notice) => notice.message)).toEqual([
+      'Ignored HUNK_ENGINE="sparkles". Valid engines: pierre, difftastic.',
+    ]);
+  });
+
+  test("ignores an unknown engine value from config", () => {
+    const home = createTempDir("hunk-config-home-");
+    const repo = createTempDir("hunk-config-repo-");
+    createRepo(repo);
+    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'engine = "sparkles"');
+
+    const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home },
+    });
+
+    expect(resolved.input.options.engine).toBe("pierre");
+  });
+
+  test("honors difft_path from user config and lets HUNK_DIFFT_PATH outrank it", () => {
+    const home = createTempDir("hunk-config-home-");
+    const repo = createTempDir("hunk-config-repo-");
+    createRepo(repo);
+    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'difft_path = "/opt/difft"');
+
+    const fromUser = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home },
+    });
+    expect(fromUser.input.options.difftPath).toBe("/opt/difft");
+
+    const fromEnv = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home, HUNK_DIFFT_PATH: "/nix/difft" },
+    });
+    expect(fromEnv.input.options.difftPath).toBe("/nix/difft");
+  });
+
+  test("ignores difft_path from repo config with a startup notice", () => {
+    const home = createTempDir("hunk-config-home-");
+    const repo = createTempDir("hunk-config-repo-");
+    createRepo(repo);
+    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    writeFileSync(join(repo, ".hunk", "config.toml"), 'difft_path = "/tmp/evil-difft"');
+
+    const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
+      cwd: repo,
+      env: { HOME: home },
+    });
+
+    expect(resolved.input.options.difftPath).toBe("difft");
+    expect(resolved.startupNotices?.map((notice) => notice.key)).toEqual([
+      "difftastic:repo-difft-path",
+    ]);
+  });
+});

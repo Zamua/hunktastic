@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   createTestSessionLiveComment,
   createTestSessionRegistration,
+  createTestSessionReviewFile,
   createTestSessionSnapshot,
 } from "../../../test/helpers/session-daemon-fixtures";
 import {
@@ -73,6 +74,27 @@ describe("hunk session projections", () => {
 
     const withPatch = buildHunkSessionReview(entry, { includePatch: true });
     expect(withPatch.files[0]).toEqual(expect.objectContaining({ patch: "@@ -1,1 +1,1 @@" }));
+  });
+
+  // Intent: engine survives the patch-stripped file summary so agents can trust hunk numbers.
+  test("buildHunkSessionReview reports the configured engine and per-file engines", () => {
+    const registration = createTestSessionRegistration({
+      files: [createTestSessionReviewFile({ engine: "difftastic" })],
+    });
+    const entry = {
+      registration: {
+        ...registration,
+        info: { ...registration.info, engine: "difftastic" as const },
+      },
+      snapshot: createTestSessionSnapshot(),
+    };
+
+    const review = buildHunkSessionReview(entry);
+    expect(review.engine).toBe("difftastic");
+    expect(review.files[0]).toEqual(
+      expect.objectContaining({ engine: "difftastic", hunkCount: 1 }),
+    );
+    expect(review.files[0]).not.toHaveProperty("patch");
   });
 
   test("buildHunkSessionReview can include live review notes on demand", () => {

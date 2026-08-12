@@ -40,6 +40,9 @@ function buildSessionFiles(bootstrap: AppBootstrap): SessionReviewFile[] {
     additions: file.stats.additions,
     deletions: file.stats.deletions,
     hunkCount: file.metadata.hunks.length,
+    // Per-file because engine fallback is per-file; hunk numbers agents plan
+    // from this export are only valid against the reported engine's hunk list.
+    engine: file.engine ?? "pierre",
     patch: file.patch,
     // The same derivation the extension API's file views use, so the two
     // external views of a review never disagree on a hunk's header or spans.
@@ -63,6 +66,7 @@ export function createSessionRegistration(bootstrap: AppBootstrap): HunkSessionR
       inputKind: bootstrap.input.kind,
       title: bootstrap.changeset.title,
       sourceLabel: bootstrap.changeset.sourceLabel,
+      engine: bootstrap.input.options.engine ?? "pierre",
       experimentalFeatures: resolveExperimentalFeatures(bootstrap.input.options),
       files: buildSessionFiles(bootstrap),
     },
@@ -82,6 +86,7 @@ export function updateSessionRegistration(
       inputKind: bootstrap.input.kind,
       title: bootstrap.changeset.title,
       sourceLabel: bootstrap.changeset.sourceLabel,
+      engine: bootstrap.input.options.engine ?? "pierre",
       experimentalFeatures: resolveExperimentalFeatures(bootstrap.input.options),
       files: buildSessionFiles(bootstrap),
     },

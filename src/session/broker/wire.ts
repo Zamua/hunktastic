@@ -1,5 +1,5 @@
 import { EXPERIMENTAL_FEATURES, type ExperimentalFeature } from "../../core/experimental";
-import type { CliInput } from "../../core/types";
+import type { CliInput, DiffEngineId } from "../../core/types";
 import {
   MAX_REGISTRATION_FILES,
   MAX_REGISTRATION_HUNKS_PER_FILE,
@@ -41,6 +41,11 @@ function parseExperimentalFeatures(value: unknown): ExperimentalFeature[] {
     (feature): feature is ExperimentalFeature =>
       typeof feature === "string" && EXPERIMENTAL_FEATURE_SET.has(feature),
   );
+}
+
+/** Parse one diff engine id, dropping unrecognized values from the wire payload. */
+function parseDiffEngineId(value: unknown): DiffEngineId | undefined {
+  return value === "pierre" || value === "difftastic" ? value : undefined;
 }
 
 /** Parse one optional diff-side line range tuple when the payload shape matches. */
@@ -113,6 +118,7 @@ function parseSessionReviewFile(value: unknown): SessionReviewFile | null {
     additions,
     deletions,
     hunkCount: (hunks as SessionReviewHunk[]).length,
+    engine: parseDiffEngineId(record.engine),
     patch,
     hunks: hunks as SessionReviewHunk[],
   };
@@ -230,6 +236,7 @@ function parseHunkSessionInfo(value: unknown): HunkSessionInfo | null {
     inputKind,
     title,
     sourceLabel,
+    engine: parseDiffEngineId(record.engine),
     experimentalFeatures: parseExperimentalFeatures(record.experimentalFeatures),
     files: files as SessionReviewFile[],
   };

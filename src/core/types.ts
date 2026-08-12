@@ -30,6 +30,22 @@ export type CursorLine = "row" | "number" | "off";
 export type VcsMode = string;
 export type TerminalThemeMode = "light" | "dark";
 
+/** Diff engine that computed a file's hunks. */
+export type DiffEngineId = "pierre" | "difftastic";
+
+/** One intraline novelty range: 0-based, end-exclusive column offsets into the line text. */
+export type ColumnSpan = [number, number];
+
+/**
+ * Per-line intraline novelty columns, index-aligned with the flat
+ * `FileDiffMetadata.additionLines` / `deletionLines` arrays. Sparse: only
+ * novel lines carry entries; a novel line with no token spans carries `[]`.
+ */
+export interface DiffLineNoveltySpans {
+  additionLines: Array<ColumnSpan[] | undefined>;
+  deletionLines: Array<ColumnSpan[] | undefined>;
+}
+
 export type ReviewNoteSource = "ai" | "agent" | "user";
 export type SessionCommentListType = "live" | "all" | ReviewNoteSource;
 
@@ -55,6 +71,10 @@ export interface DiffFile {
     deletions: number;
   };
   metadata: FileDiffMetadata;
+  /** Engine that produced `metadata`; absent means the Pierre baseline. */
+  engine?: DiffEngineId;
+  /** Intraline novelty columns attached when `engine` is `"difftastic"`. */
+  noveltySpans?: DiffLineNoveltySpans;
   lineMoveKinds?: DiffLineMoveKinds;
   agent: AgentFileContext | null;
   isUntracked?: boolean;
@@ -84,6 +104,9 @@ export interface Changeset {
 
 export interface CommonOptions {
   mode?: LayoutMode;
+  engine?: DiffEngineId;
+  /** difftastic binary path; user config and `HUNK_DIFFT_PATH` only, never repo config. */
+  difftPath?: string;
   cursorLine?: CursorLine;
   vcs?: VcsMode;
   theme?: string;

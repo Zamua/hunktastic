@@ -9,6 +9,7 @@ import {
   loadHighlightedSourceLines,
   spansForHighlightedSourceLine,
   type DiffRow,
+  type RenderSpan,
 } from "./pierre";
 import { resolveSplitPaneWidths } from "./codeColumns";
 import { renderCodeOnlyPlannedRowText, renderDecoratedPlannedRowText } from "./renderRows";
@@ -18,6 +19,19 @@ import { measureTextWidth } from "../lib/text";
 import { TRANSPARENT_BACKGROUND, resolveTheme } from "../themes";
 import { createTestSourceFetcher } from "../../../test/helpers/diff-helpers";
 import { createTestCustomThemes } from "../../../test/helpers/theme-helpers";
+
+/** Concatenate span texts back into the rendered line. */
+function joinSpanText(spans: RenderSpan[]) {
+  return spans.map((span) => span.text).join("");
+}
+
+/** Concatenate the text of spans carrying an emphasis background. */
+function emphasizedSpanText(spans: RenderSpan[]) {
+  return spans
+    .filter((span) => span.bg !== undefined)
+    .map((span) => span.text)
+    .join("");
+}
 
 function createDiffFile(): DiffFile {
   const metadata = parseDiffFromFile(
@@ -994,5 +1008,186 @@ describe("Pierre diff rows", () => {
     expect(spans.find((span) => span.text.includes("user") && span.fg)?.fg?.toLowerCase()).toBe(
       "#eba0ac",
     );
+  });
+
+  test("lands difftastic novelty emphasis on tab-expanded cells", () => {
+    const metadata = parseDiffFromFile(
+      { name: "tabs.ts", contents: "\tlet a = 1;\n", cacheKey: "novelty-tabs-before" },
+      { name: "tabs.ts", contents: "\tlet a = 2;\n", cacheKey: "novelty-tabs-after" },
+      { context: 3 },
+      true,
+    );
+    const file: DiffFile = {
+      id: "novelty-tabs",
+      path: "tabs.ts",
+      patch: "",
+      language: "typescript",
+      stats: { additions: 1, deletions: 1 },
+      metadata,
+      engine: "difftastic",
+      // difftastic columns index the raw source: "\tlet a = 2;" holds the literal at [9, 10].
+      noveltySpans: {
+        deletionLines: [[[9, 10]]],
+        additionLines: [[[9, 10]]],
+      },
+      agent: null,
+    };
+    const theme = resolveTheme("github-dark-default", null);
+    const additionCell = (tabWidth: number) => {
+      const row = buildStackRows(file, null, theme, tabWidth).find(
+        (candidate) => candidate.type === "stack-line" && candidate.cell.kind === "addition",
+      );
+      if (!row || row.type !== "stack-line") {
+        throw new Error("Expected one addition row");
+      }
+      return {
+        text: joinSpanText(row.cell.spans),
+        emphasized: emphasizedSpanText(row.cell.spans),
+      };
+    };
+
+    expect(additionCell(4)).toEqual({ text: "    let a = 2;", emphasized: "2" });
+    expect(additionCell(2)).toEqual({ text: "  let a = 2;", emphasized: "2" });
+
+    const splitRow = buildSplitRows(file, null, theme).find(
+      (row) =>
+        row.type === "split-line" && row.left.kind === "deletion" && row.right.kind === "addition",
+    );
+    if (!splitRow || splitRow.type !== "split-line") {
+      throw new Error("Expected a split change row");
+    }
+    expect(emphasizedSpanText(splitRow.left.spans)).toBe("1");
+    expect(emphasizedSpanText(splitRow.right.spans)).toBe("2");
+  });
+
+  test("recolors spans without changing row plans when noveltySpans are attached", () => {
+    const metadata = parseDiffFromFile(
+      { name: "geom.ts", contents: "alpha\nbravo\ncharlie\n", cacheKey: "novelty-geom-before" },
+      { name: "geom.ts", contents: "alpha\nbravo!\ncharlie\n", cacheKey: "novelty-geom-after" },
+      { context: 3 },
+      true,
+    );
+    const file: DiffFile = {
+      id: "novelty-geom",
+      path: "geom.ts",
+      patch: "",
+      stats: { additions: 1, deletions: 1 },
+      metadata,
+      engine: "difftastic",
+      agent: null,
+    };
+    const theme = resolveTheme("github-dark-default", null);
+    // Everything except span colors: row identity, cell kinds, line numbers, and text.
+    const rowPlan = (candidate: DiffFile) =>
+      [buildSplitRows(candidate, null, theme), buildStackRows(candidate, null, theme)].map((rows) =>
+        rows.map((row) => {
+          if (row.type === "split-line") {
+            return [
+              row.key,
+              row.left.kind,
+              row.left.lineNumber,
+              joinSpanText(row.left.spans),
+              row.right.kind,
+              row.right.lineNumber,
+              joinSpanText(row.right.spans),
+            ];
+          }
+          if (row.type === "stack-line") {
+            return [
+              row.key,
+              row.cell.kind,
+              row.cell.oldLineNumber,
+              row.cell.newLineNumber,
+              joinSpanText(row.cell.spans),
+            ];
+          }
+          return [row.type, row.key, row.text];
+        }),
+      );
+
+    const withoutNovelty = rowPlan(file);
+    file.noveltySpans = {
+      // The deletion is novel with zero token spans; the addition gains "!" at [5, 6].
+      deletionLines: [undefined, [], undefined],
+      additionLines: [undefined, [[5, 6]], undefined],
+    };
+    const withNovelty = rowPlan(file);
+
+    expect(withNovelty).toEqual(withoutNovelty);
+
+    const rows = buildStackRows(file, null, theme);
+    const deletionRow = rows.find(
+      (row) => row.type === "stack-line" && row.cell.kind === "deletion",
+    );
+    const additionRow = rows.find(
+      (row) => row.type === "stack-line" && row.cell.kind === "addition",
+    );
+    if (
+      !deletionRow ||
+      deletionRow.type !== "stack-line" ||
+      !additionRow ||
+      additionRow.type !== "stack-line"
+    ) {
+      throw new Error("Expected stacked deletion and addition rows");
+    }
+
+    expect(emphasizedSpanText(additionRow.cell.spans)).toBe("!");
+    // An empty novelty entry marks a novel line with no emphasis columns.
+    expect(deletionRow.cell.spans.every((span) => span.bg === undefined)).toBe(true);
+  });
+
+  test("suppresses Pierre word-diff for difftastic files and overlays novelty columns", async () => {
+    const metadata = parseDiffFromFile(
+      { name: "difft.ts", contents: "const answer = 41;\n", cacheKey: "difft-engine-before" },
+      { name: "difft.ts", contents: "const answer = 42;\n", cacheKey: "difft-engine-after" },
+      { context: 3 },
+      true,
+    );
+    const file: DiffFile = {
+      id: "difft-engine",
+      path: "difft.ts",
+      patch: "",
+      language: "typescript",
+      stats: { additions: 1, deletions: 1 },
+      metadata,
+      engine: "difftastic",
+      agent: null,
+    };
+    const theme = resolveTheme("github-dark-default", null);
+    const highlighted = await loadHighlightedDiff(file, theme);
+    const changedRow = (candidate: DiffFile) => {
+      const row = buildSplitRows(candidate, highlighted, theme).find(
+        (candidateRow) =>
+          candidateRow.type === "split-line" &&
+          candidateRow.left.kind === "deletion" &&
+          candidateRow.right.kind === "addition",
+      );
+      if (!row || row.type !== "split-line") {
+        throw new Error("Expected a split change row");
+      }
+      return row;
+    };
+
+    // lineDiffType "none" for the difftastic engine: no Pierre-authored emphasis backgrounds.
+    const plain = changedRow(file);
+    expect(plain.left.spans.every((span) => span.bg === undefined)).toBe(true);
+    expect(plain.right.spans.every((span) => span.bg === undefined)).toBe(true);
+
+    file.noveltySpans = {
+      deletionLines: [[[15, 17]]],
+      additionLines: [[[15, 17]]],
+    };
+    const overlaid = changedRow(file);
+
+    expect(emphasizedSpanText(overlaid.left.spans)).toBe("41");
+    expect(emphasizedSpanText(overlaid.right.spans)).toBe("42");
+    expect(joinSpanText(overlaid.left.spans)).toBe("const answer = 41;");
+    expect(joinSpanText(overlaid.right.spans)).toBe("const answer = 42;");
+    // Syntax colors survive the overlay split.
+    expect(
+      overlaid.right.spans.some(
+        (span) => span.text.includes("const") && typeof span.fg === "string",
+      ),
+    ).toBe(true);
   });
 });
