@@ -1,6 +1,7 @@
 {
   bun,
   bun2nix,
+  difftastic,
   lib,
   makeWrapper,
   ...
@@ -36,7 +37,15 @@ in
       mkdir -p $out/bin
       cp -p ./hunk-bin $out/bin/hunk
       cp -r ./skills $out/
-      wrapProgram $out/bin/hunk --set HUNK_INSTALL_SOURCE nix
+      # difftastic ships no library, only a CLI, so the difftastic engine
+      # shells out to `difft`. Baking it into the wrapper's PATH keeps the
+      # engine working without a second install. It takes precedence over a
+      # system difft because difft's JSON output is explicitly unstable and
+      # this is the version the engine is tested against; the difft_path
+      # setting still overrides it.
+      wrapProgram $out/bin/hunk \
+        --set HUNK_INSTALL_SOURCE nix \
+        --prefix PATH : ${lib.makeBinPath [difftastic]}
       runHook postInstall
     '';
 
