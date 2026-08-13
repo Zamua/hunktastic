@@ -45,6 +45,7 @@ import {
   buildLineCursors,
   clampLineCursorToViewport,
   EMPTY_LINE_CURSORS,
+  findLineCursorAtVisualRow,
   firstLineCursorInHunk,
   type LineCursor,
   type LineCursorBoundsLookup,
@@ -261,6 +262,7 @@ export function DiffPane({
   onLineCursorsChange,
   currentLinePaintRequested = false,
   onCurrentLinePaintChange,
+  onSelectLineCursor,
   onViewportCenteredHunkChange,
   onViewportLineCursorChange,
 }: {
@@ -323,6 +325,8 @@ export function DiffPane({
   onLineCursorsChange?: (cursors: LineCursor[]) => void;
   currentLinePaintRequested?: boolean;
   onCurrentLinePaintChange?: (update: ExtensionCurrentLinePaintUpdate) => void;
+  /** The reviewer clicked one code row directly; adopt it as the current line. */
+  onSelectLineCursor?: (cursor: LineCursor) => void;
   onViewportCenteredHunkChange?: (fileId: string, hunkIndex: number) => void;
   onViewportLineCursorChange?: (cursor: LineCursor) => void;
 }) {
@@ -1265,6 +1269,32 @@ export function DiffPane({
     [resolveCopySelectionPoint, suppressNativeSelection],
   );
 
+  /**
+   * Move the current line onto a clicked code row.
+   *
+   * Only a press that never became a drag gets here, so text selection keeps owning the pointer,
+   * and the row is adopted without a reveal request because the reviewer just clicked it onscreen.
+   */
+  const selectClickedLineCursor = useCallback(
+    (point: CopySelectionPoint) => {
+      if (!onSelectLineCursor || cursorLine === "off" || point.kind !== "review-row") {
+        return;
+      }
+
+      const side = resolveCopySelectionSide(point.column, layout, diffContentWidth);
+      const cursor = findLineCursorAtVisualRow({
+        fileSectionLayouts,
+        preferredSide: side === "left" ? "old" : side === "right" ? "new" : undefined,
+        sectionGeometry,
+        visualRow: point.visualRow,
+      });
+      if (cursor) {
+        onSelectLineCursor(cursor);
+      }
+    },
+    [cursorLine, diffContentWidth, fileSectionLayouts, layout, onSelectLineCursor, sectionGeometry],
+  );
+
   /** Finish a drag selection and copy its rendered text. */
   const endCopySelection = useCallback(
     (event?: TuiMouseEvent) => {
@@ -1279,6 +1309,7 @@ export function DiffPane({
       event?.stopPropagation();
 
       if (!current.moved) {
+        selectClickedLineCursor(current.anchor);
         return;
       }
 
@@ -1291,7 +1322,7 @@ export function DiffPane({
       });
       copySelectionText(text);
     },
-    [copySelectionContext, copySelectionSide, copySelectionText],
+    [copySelectionContext, copySelectionSide, copySelectionText, selectClickedLineCursor],
   );
 
   // Expose the cancel hook so an ancestor (App's outer container) can release a stuck drag when

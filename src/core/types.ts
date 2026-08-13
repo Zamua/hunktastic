@@ -7,6 +7,7 @@ import type {
   NamedCustomThemeConfig,
 } from "../extension-api/types";
 import type { FileSourceFetcher } from "./fileSource";
+import type { NoteScope } from "./notes/store";
 import type { StartupNotice } from "./startupNotice";
 import type { VcsCatalog } from "./vcs/types";
 
@@ -452,6 +453,8 @@ export interface ReloadContext {
 export interface AppBootstrap<ExtensionState = unknown> {
   input: CliInput;
   reloadContext: ReloadContext;
+  /** Where this review's notes persist; absent for reviews with no stable identity. */
+  noteScope?: NoteScope;
   changeset: Changeset;
   initialMode: LayoutMode;
   initialTheme?: string;

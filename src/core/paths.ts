@@ -98,6 +98,31 @@ export function resolveHunkStatePath(env: NodeJS.ProcessEnv = process.env) {
   return configDir ? join(configDir, "hunkt", "state.json") : undefined;
 }
 
+/**
+ * Resolve the base state directory Hunk should use for user-scoped files.
+ *
+ * State, not config: what lands here grows without bound, is machine-local, and
+ * is never hand-edited, which is the split `XDG_STATE_HOME` exists to make.
+ */
+export function resolveUserStateDir(env: NodeJS.ProcessEnv = process.env) {
+  if (env.XDG_STATE_HOME) {
+    return env.XDG_STATE_HOME;
+  }
+
+  const home = env.HOME || env.USERPROFILE;
+  if (home) {
+    return join(home, ".local", "state");
+  }
+
+  return undefined;
+}
+
+/** Resolve the directory persisted review notes live in. */
+export function resolveNotesDir(env: NodeJS.ProcessEnv = process.env) {
+  const stateDir = resolveUserStateDir(env);
+  return stateDir ? join(stateDir, "hunkt", "notes") : undefined;
+}
+
 /** Resolve the user-scoped directory Hunk scans for globally installed extensions. */
 export function resolveGlobalExtensionsDir(env: NodeJS.ProcessEnv = process.env) {
   const configDir = resolveUserConfigDir(env);

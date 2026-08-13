@@ -59,6 +59,7 @@ function createTestCommands(resolvedKeys?: ResolvedCommandKeys) {
     selectLayoutMode: record("selectLayoutMode"),
     startUserNote: record("startUserNote"),
     toggleAgentNotes: record("toggleAgentNotes"),
+    toggleAllNotes: record("toggleAllNotes"),
     toggleCopyDecorations: record("toggleCopyDecorations"),
     toggleFocusArea: record("toggleFocusArea"),
     toggleGapForSelectedHunk: record("toggleGapForSelectedHunk"),

@@ -8,6 +8,7 @@ import { createTwoFilesPatch } from "diff";
 import { resolve as resolvePath } from "node:path";
 import { findAgentFileContext, loadAgentContext } from "./agent";
 import { createSkippedBinaryMetadata, isProbablyBinaryFile } from "./binary";
+import { resolveNoteScope } from "./notes/session";
 import { buildDiffFile, type BuildDiffFileOptions, type DiffFileSourceContext } from "./diffFile";
 import { applyDifftasticEngine } from "./engine/difftastic";
 import type { StartupNotice } from "./startupNotice";
@@ -566,6 +567,7 @@ export async function loadAppBootstrap(
   return {
     input,
     reloadContext: { cwd, repoRoot, initialWatchSignature, vcsCatalog },
+    noteScope: resolveNoteScope(input, repoRoot),
     changeset,
     initialMode: input.options.mode ?? "auto",
     initialTheme: input.options.theme,

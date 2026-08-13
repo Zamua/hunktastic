@@ -6,9 +6,13 @@ import {
   type ExtensionLoadIssue,
   type ExtensionRegistry,
 } from "../../types";
+import registerBundledNotes from "./notes";
 import registerBundledSidebar from "./sidebar";
 
-const factories: readonly [string, ExtensionFactory][] = [["files", registerBundledSidebar]];
+const factories: readonly [string, ExtensionFactory][] = [
+  ["files", registerBundledSidebar],
+  ["notes", registerBundledNotes],
+];
 let cachedRegistry: ExtensionRegistry | undefined;
 
 /** Load bundled UI registrations through the public factory path, once per process. */

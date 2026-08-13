@@ -119,7 +119,7 @@ import {
   type PlannedPane,
 } from "./lib/extensionPanes";
 import type { ExtensionPanePlacement } from "../extension-api/types";
-import { HUNK_FILES_PANE_KEY } from "../extensions/extensionIds";
+import { HUNK_FILES_PANE_KEY, HUNK_NOTES_PANE_KEY } from "../extensions/extensionIds";
 import { extensionPaneSize } from "../extensions/panes";
 import { nextExtensionTrustPromptRoot } from "./lib/extensionTrustPrompt";
 import {
@@ -131,6 +131,7 @@ import { maxFileHeaderStatsWidth } from "./lib/fileHeader";
 import { verifyWorkspaceWriteTarget } from "./lib/workspaceWriteGuard";
 import { openSelectedFileInEditor } from "./lib/openInEditor";
 import { resolveResponsiveLayout } from "./lib/responsive";
+import { buildReviewNoteEntries, resolveReviewNoteJumpTarget } from "./lib/reviewNotes";
 import { resizeSidebarWidth } from "./lib/sidebar";
 import { availableThemes, resolveTheme, withTransparentSurfaces } from "./themes";
 
@@ -403,12 +404,19 @@ export function App({
     files: reviewFiles,
     lineCursors,
     noteGeometry: noteGeometryRef,
+    noteScope: bootstrap.noteScope,
     stmlEnabled,
   });
   const filteredFiles = review.visibleFiles;
   const selectedFile = review.selectedFile;
   const selectedHunkIndex = review.selectedHunkIndex;
   const selectedFileId = selectedFile?.id ?? null;
+  // The all-notes list, built once per selection change: the pane is memoized on this identity,
+  // so deriving it inside the pane would repaint the list on every unrelated render instead.
+  const noteEntries = useMemo(
+    () => buildReviewNoteEntries({ file: selectedFile, restoredNotes: review.restoredNotes }),
+    [review.restoredNotes, selectedFile],
+  );
   const currentLinePaintMatchesCursor = extensionCurrentLinePaintMatchesCursor(
     currentLinePaintState,
     review.lineCursor,
@@ -668,6 +676,27 @@ export function App({
    * is known (the controls above are created before it is computed).
    */
   const revealSidebarAreaRef = useRef<() => void>(() => {});
+
+  /**
+   * Toggle the all-notes sidebar.
+   *
+   * Opening also reveals the pane area, matching what an extension's
+   * `panes.open` does: a pane the user just asked for must not stay invisible
+   * because the sidebar area happens to be hidden.
+   */
+  const toggleAllNotes = useCallback(() => {
+    const opens = !paneOpenStateRef.current.open.includes(HUNK_NOTES_PANE_KEY);
+    setPaneOpen(HUNK_NOTES_PANE_KEY, "toggle");
+    if (opens) {
+      revealSidebarAreaRef.current();
+    }
+  }, [setPaneOpen]);
+
+  /**
+   * Move the review onto one note, assigned each render so the list always
+   * jumps against the files and line cursors visible now.
+   */
+  const selectNoteRef = useRef<(fileId: string, noteId: string) => void>(() => {});
 
   /**
    * Reload the review after a host-mediated write, assigned each render because
@@ -1720,6 +1749,18 @@ export function App({
     },
   };
 
+  // A note with no resolved position has nowhere to jump to, so the list row stays inert rather
+  // than moving the review somewhere the note is not about.
+  selectNoteRef.current = (fileId, noteId) => {
+    const target = resolveReviewNoteJumpTarget(filteredFiles, fileId, noteId);
+    if (!target) {
+      return;
+    }
+
+    focusFiles();
+    review.selectNoteTarget(fileId, target.hunkIndex, target.lineTarget);
+  };
+
   /** Toggle keyboard focus between the file list and the file filter. */
   const toggleFocusArea = useCallback(() => {
     setFocusArea((current) => (current === "files" ? "filter" : "files"));
@@ -1840,6 +1881,7 @@ export function App({
       selectLayoutMode,
       startUserNote: () => startUserNote(),
       toggleAgentNotes,
+      toggleAllNotes,
       toggleCopyDecorations,
       toggleFocusArea,
       toggleGapForSelectedHunk: review.toggleSelectedHunkGap,
@@ -1881,6 +1923,7 @@ export function App({
     layoutMode,
     renderSidebar,
     showAgentNotes,
+    showAllNotes: paneOpenState.open.includes(HUNK_NOTES_PANE_KEY),
     showHelp,
     showHunkHeaders,
     showLineNumbers,
@@ -2041,7 +2084,9 @@ export function App({
           currentLine={pane.registered.pane.currentLine ? currentLinePaint : null}
           showTopChrome={showMenuBar}
           keybindings={paneKeybindings}
+          noteEntries={noteEntries}
           notify={(message, type) => extensions?.context.notify(message, type)}
+          onSelectNote={(fileId, noteId) => selectNoteRef.current(fileId, noteId)}
           onSelectFile={(fileId) => {
             focusFiles();
             jumpToFile(fileId, 0, { alignFileHeaderTop: true });
@@ -2209,6 +2254,7 @@ export function App({
             onLineCursorsChange={setLineCursors}
             currentLinePaintRequested={currentLinePaintRequested}
             onCurrentLinePaintChange={onCurrentLinePaintChange}
+            onSelectLineCursor={review.anchorLineCursor}
             onViewportLineCursorChange={review.anchorLineCursor}
           />
         </box>

@@ -412,9 +412,10 @@ describe("AppHost file views", () => {
       vcsOptions: { extensionPaths: [extension] },
     });
     bootstrap.extensions = extensions;
+    // Tall enough for the whole View dropdown, whose last entry is what this drives.
     const setup = await testRender(<AppHost bootstrap={bootstrap} onQuit={() => {}} />, {
       width: 120,
-      height: 24,
+      height: 26,
     });
 
     try {

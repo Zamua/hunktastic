@@ -20,7 +20,18 @@ import {
   findDiffFileByPath,
   firstCommentTargetForHunk,
   resolveCommentTarget,
+  type RestoredNoteResolution,
 } from "../../core/liveComments";
+import {
+  captureReviewNoteAnchor,
+  createNoteStoreWriter,
+  resolveStoredNotes,
+  restoredResolution,
+  type NoteStoreWriter,
+  type ResolvedReviewNote,
+} from "../../core/notes/session";
+import { readNotes, type NoteScope } from "../../core/notes/store";
+import type { StoredNote } from "../../core/notes/types";
 import { SourceTextTooLargeError } from "../../core/fileSource";
 import { noDiffFileMatchesMessage } from "../../session/agent/errors";
 import type { AgentAnnotation, DiffFile, LayoutMode, UserNoteLineTarget } from "../../core/types";
@@ -51,7 +62,7 @@ import {
   type LineCursor,
 } from "../lib/lineCursors";
 import { agentNoteMarkupWidth } from "../lib/agentNoteGeometry";
-import { reviewNoteSource } from "../lib/agentAnnotations";
+import { annotatedHunkLineTarget, reviewNoteSource } from "../lib/agentAnnotations";
 import { STML_REFERENCE_WIDTH, validateStmlMarkup } from "../lib/stml/layout";
 import {
   buildReviewStreamState,
@@ -111,6 +122,50 @@ function countFileMapItems<T>(record: Record<string, T[]>) {
   return Object.values(record).reduce((sum, items) => sum + items.length, 0);
 }
 
+/** Collect every id in a file-id keyed note map, optionally from one file only. */
+function collectNoteIds<T extends { id: string }>(record: Record<string, T[]>, fileId?: string) {
+  const ids = new Set<string>();
+  for (const [key, notes] of Object.entries(record)) {
+    if (fileId !== undefined && key !== fileId) {
+      continue;
+    }
+    for (const note of notes) {
+      ids.add(note.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Rebuild a file-id keyed note map around a fresh resolution of the stored set.
+ *
+ * Every stored note is dropped from wherever it currently sits before the
+ * placed ones go back in, so a resolution is what decides where a note renders
+ * and whether it renders at all. Filtering only the buckets the new placements
+ * name would leave the previous copy behind for exactly the notes resolution
+ * just took a position away from: a repeated mount (StrictMode) or a soft
+ * reload after the anchored line was edited would keep showing the note inline
+ * while the notes list called it unanchored.
+ */
+function withRestoredNotes<T extends { id: string }>(
+  current: Record<string, T[]>,
+  restored: Record<string, T[]>,
+  storedIds: ReadonlySet<string>,
+): Record<string, T[]> {
+  if (storedIds.size === 0) {
+    return current;
+  }
+
+  const next: Record<string, T[]> = {};
+  for (const [fileId, notes] of Object.entries(current)) {
+    next[fileId] = notes.filter((note) => !storedIds.has(note.id));
+  }
+  for (const [fileId, notes] of Object.entries(restored)) {
+    next[fileId] = [...(next[fileId] ?? []), ...notes];
+  }
+  return next;
+}
+
 export interface UserReviewNote extends AgentAnnotation {
   id: string;
   source: "user";
@@ -122,7 +177,12 @@ export interface UserReviewNote extends AgentAnnotation {
   author: string;
   createdAt: string;
   editable: true;
+  /** Present only on notes read back from the note store. */
+  restored?: RestoredNoteResolution;
 }
+
+/** Source recorded for a human-authored note in the persisted store. */
+const USER_NOTE_SOURCE = "user";
 
 export interface DraftReviewNote {
   id: string;
@@ -158,6 +218,13 @@ export interface ReviewController {
   liveCommentsByFileId: Record<string, LiveComment[]>;
   reviewNoteCount: number;
   reviewNoteSummaries: SessionReviewNoteSummary[];
+  /**
+   * Every note this scope had on disk when the review opened, with the state it
+   * resolved to. Placed entries are also merged into the inline maps above;
+   * `unanchored` and `orphaned` ones exist only here, since they have no row to
+   * render beside.
+   */
+  restoredNotes: ResolvedReviewNote[];
   userNotesByFileId: Record<string, UserReviewNote[]>;
   lineCursor: LineCursor | null;
   lineCursorRevealRequestId: number;
@@ -200,6 +267,7 @@ export interface ReviewController {
   saveDraftNote: () => UserReviewNote | null;
   selectFile: (fileId: string, nextHunkIndex?: number, options?: ReviewSelectionOptions) => void;
   selectHunk: (fileId: string, hunkIndex: number, options?: ReviewSelectionOptions) => void;
+  selectNoteTarget: (fileId: string, hunkIndex: number, target: UserNoteLineTarget | null) => void;
   startUserNote: (
     fileId?: string,
     hunkIndex?: number,
@@ -222,6 +290,7 @@ export function useReviewController({
   files,
   lineCursors = EMPTY_LINE_CURSORS,
   noteGeometry,
+  noteScope,
   stmlEnabled = false,
 }: {
   files: DiffFile[];
@@ -232,6 +301,11 @@ export function useReviewController({
   lineCursors?: LineCursor[];
   /** Allow STML bodies for live comments in this explicitly opted-in session. */
   stmlEnabled?: boolean;
+  /**
+   * Where this review's notes persist. Absent for reviews with no stable
+   * identity (a two-file compare, a patch stream), which read and write nothing.
+   */
+  noteScope?: NoteScope;
   /**
    * Mutable ref the app keeps pointed at the current layout and pane width.
    * A ref (not a value) because App computes geometry after this hook runs;
@@ -261,6 +335,13 @@ export function useReviewController({
     {},
   );
   const [userNotesByFileId, setUserNotesByFileId] = useState<Record<string, UserReviewNote[]>>({});
+  const [restoredNotes, setRestoredNotes] = useState<ResolvedReviewNote[]>([]);
+  // Every note this scope should hold on disk, keyed by id. Kept beside the
+  // rendered maps rather than derived from them because stored coordinates are
+  // never rewritten: a note that resolved to nowhere still has to be written
+  // back exactly as it was authored, and it appears in no rendered map.
+  const storedNotesRef = useRef(new Map<string, StoredNote>());
+  const noteWriterRef = useRef<NoteStoreWriter | null>(null);
   const [draftNote, setDraftNote] = useState<DraftReviewNote | null>(null);
   // Track the last saved draft id so coalesced save key events dedup synchronously
   // without waiting for the draft-clearing state update to commit.
@@ -524,7 +605,13 @@ export function useReviewController({
     [hunkCursors, selectHunk, selectedFile?.id, selectedHunkIndex],
   );
 
-  /** Move through only hunks that currently have agent notes or live comments. */
+  /**
+   * Move through only hunks that currently have agent notes or live comments.
+   *
+   * The current line lands on the note's own anchor row rather than the hunk's first row, so the
+   * marker names the code the note is about. Placing it here (not through `revealLineCursor`)
+   * keeps the note-reveal scroll the only scroll this jump requests.
+   */
   const moveToAnnotatedHunk = useCallback(
     (delta: number) => {
       const nextCursor = findNextHunkCursor(
@@ -538,9 +625,43 @@ export function useReviewController({
         return;
       }
 
+      const targetFile = visibleFiles.find((file) => file.id === nextCursor.fileId);
+      const target = annotatedHunkLineTarget(targetFile, nextCursor.hunkIndex);
+      if (target) {
+        applyLineCursor(lineCursorAt(lineCursors, nextCursor.fileId, nextCursor.hunkIndex, target));
+      }
+
       selectHunk(nextCursor.fileId, nextCursor.hunkIndex, { scrollToNote: true });
     },
-    [annotatedHunkCursors, hunkCursors, selectHunk, selectedFile?.id, selectedHunkIndex],
+    [
+      annotatedHunkCursors,
+      applyLineCursor,
+      hunkCursors,
+      lineCursors,
+      selectHunk,
+      selectedFile?.id,
+      selectedHunkIndex,
+      visibleFiles,
+    ],
+  );
+
+  /**
+   * Jump to one note's own anchor line, wherever the reviewer picked the note from.
+   *
+   * Shares `moveToAnnotatedHunk`'s placement so a row in the all-notes list and an
+   * annotated-hunk step land identically: the current line goes on the note's row, and the
+   * note-reveal scroll is the only scroll requested. A target of null leaves the marker where
+   * the hunk selection seeds it.
+   */
+  const selectNoteTarget = useCallback(
+    (fileId: string, hunkIndex: number, target: UserNoteLineTarget | null) => {
+      if (target) {
+        applyLineCursor(lineCursorAt(lineCursors, fileId, hunkIndex, target));
+      }
+
+      selectHunk(fileId, hunkIndex, { scrollToNote: true });
+    },
+    [applyLineCursor, lineCursors, selectHunk],
   );
 
   /** Cycle through only the currently visible files that carry annotations. */
@@ -718,6 +839,12 @@ export function useReviewController({
         visibleFiles,
       });
 
+      if (target.lineTarget) {
+        applyLineCursor(
+          lineCursorAt(lineCursors, target.file.id, target.hunkIndex, target.lineTarget),
+        );
+      }
+
       selectHunk(target.file.id, target.hunkIndex, { scrollToNote: target.scrollToNote });
       return {
         fileId: target.file.id,
@@ -726,8 +853,164 @@ export function useReviewController({
         selectedHunk: buildSelectedHunkSummary(target.file, target.hunkIndex),
       };
     },
-    [allFiles, selectHunk, selectedFile?.id, selectedHunkIndex, visibleFiles],
+    [
+      allFiles,
+      applyLineCursor,
+      lineCursors,
+      selectHunk,
+      selectedFile?.id,
+      selectedHunkIndex,
+      visibleFiles,
+    ],
   );
+
+  /** Queue the whole current note set for the store, off the render path. */
+  const persistStoredNotes = useCallback(() => {
+    noteWriterRef.current?.save([...storedNotesRef.current.values()]);
+  }, []);
+
+  /** Record one authored note in the set this scope persists. */
+  const rememberStoredNote = useCallback(
+    (note: StoredNote) => {
+      if (!noteWriterRef.current) {
+        return;
+      }
+
+      storedNotesRef.current.set(note.id, note);
+      persistStoredNotes();
+    },
+    [persistStoredNotes],
+  );
+
+  /** Drop notes from the persisted set and from the restored list that shows them. */
+  const forgetStoredNotes = useCallback(
+    (ids: ReadonlySet<string>) => {
+      if (!noteWriterRef.current || ids.size === 0) {
+        return;
+      }
+
+      for (const id of ids) {
+        storedNotesRef.current.delete(id);
+      }
+      setRestoredNotes((current) => current.filter((entry) => !ids.has(entry.note.id)));
+      persistStoredNotes();
+    },
+    [persistStoredNotes],
+  );
+
+  /**
+   * Capture the note a placement should be written back as.
+   *
+   * The anchor quote is taken from the contents the review already parsed, so
+   * authoring stays synchronous and a note is always quoted against the exact
+   * rows the reviewer was looking at.
+   */
+  const buildStoredNote = useCallback(
+    (
+      file: DiffFile,
+      note: Pick<StoredNote, "id" | "side" | "line" | "summary" | "createdAt"> &
+        Partial<Pick<StoredNote, "rationale">>,
+      source: string,
+    ): StoredNote => ({
+      ...note,
+      filePath: file.path,
+      source,
+      ...captureReviewNoteAnchor(file, note.side, note.line),
+    }),
+    [],
+  );
+
+  // The review's files as of the current render, so restoring reads the loaded
+  // changeset without making the restore itself rerun whenever files change.
+  const filesRef = useRef(files);
+  filesRef.current = files;
+
+  /**
+   * Read this scope's notes once and place them back into the open review.
+   *
+   * Placed notes join the same maps live comments and human notes already
+   * render from, so nothing downstream has to know a note came from disk.
+   */
+  useEffect(() => {
+    if (!noteScope) {
+      return;
+    }
+
+    const writer = createNoteStoreWriter(noteScope, {
+      onFailure: (message) => {
+        console.error(`hunk: ${message}.`);
+      },
+    });
+    noteWriterRef.current = writer;
+
+    const resolved = resolveStoredNotes(readNotes(noteScope), filesRef.current);
+    for (const entry of resolved) {
+      storedNotesRef.current.set(entry.note.id, entry.note);
+    }
+
+    const restoredComments: Record<string, LiveComment[]> = {};
+    const restoredUserNotes: Record<string, UserReviewNote[]> = {};
+
+    for (const entry of resolved) {
+      const placement = entry.placement;
+      if (!placement) {
+        continue;
+      }
+
+      const { note } = entry;
+      const restored = restoredResolution(entry);
+      if (note.source === USER_NOTE_SOURCE) {
+        restoredUserNotes[placement.fileId] = [
+          ...(restoredUserNotes[placement.fileId] ?? []),
+          {
+            id: note.id,
+            source: "user",
+            filePath: placement.filePath,
+            hunkIndex: placement.hunkIndex,
+            side: placement.side,
+            line: placement.line,
+            oldRange: placement.side === "old" ? [placement.line, placement.line] : undefined,
+            newRange: placement.side === "new" ? [placement.line, placement.line] : undefined,
+            summary: note.summary,
+            author: USER_NOTE_SOURCE,
+            createdAt: note.createdAt,
+            editable: true,
+            restored,
+          },
+        ];
+        continue;
+      }
+
+      restoredComments[placement.fileId] = [
+        ...(restoredComments[placement.fileId] ?? []),
+        {
+          ...buildLiveComment(
+            {
+              filePath: placement.filePath,
+              summary: note.summary,
+              rationale: note.rationale,
+              side: placement.side,
+              line: placement.line,
+            },
+            note.id,
+            note.createdAt,
+            placement.hunkIndex,
+          ),
+          restored,
+        },
+      ];
+    }
+
+    const storedIds = new Set(resolved.map((entry) => entry.note.id));
+    setRestoredNotes(resolved);
+    setLiveCommentsByFileId((current) => withRestoredNotes(current, restoredComments, storedIds));
+    setUserNotesByFileId((current) => withRestoredNotes(current, restoredUserNotes, storedIds));
+
+    return () => {
+      writer.dispose();
+      noteWriterRef.current = null;
+    };
+  }, [noteScope]);
 
   /**
    * Validate one comment's STML markup at the width the note will actually
@@ -778,6 +1061,7 @@ export function useReviewController({
       const target = resolveCommentTarget(file, input);
       const feedback = markupFeedback(input.markup, target.side);
 
+      const createdAt = new Date().toISOString();
       const liveComment = buildLiveComment(
         {
           ...input,
@@ -785,13 +1069,27 @@ export function useReviewController({
           line: target.line,
         },
         commentId,
-        new Date().toISOString(),
+        createdAt,
         target.hunkIndex,
       );
       setLiveCommentsByFileId((current) => ({
         ...current,
         [file.id]: [...(current[file.id] ?? []), liveComment],
       }));
+      rememberStoredNote(
+        buildStoredNote(
+          file,
+          {
+            id: commentId,
+            side: target.side,
+            line: target.line,
+            summary: input.summary,
+            rationale: input.rationale,
+            createdAt,
+          },
+          liveComment.source,
+        ),
+      );
 
       if (options?.reveal ?? false) {
         selectHunk(file.id, target.hunkIndex);
@@ -807,7 +1105,7 @@ export function useReviewController({
         ...feedback,
       };
     },
-    [allFiles, markupFeedback, selectHunk],
+    [allFiles, buildStoredNote, markupFeedback, rememberStoredNote, selectHunk],
   );
 
   /** Apply several live comments together after validating every target first. */
@@ -852,6 +1150,22 @@ export function useReviewController({
 
           return next;
         });
+        for (const entry of prepared) {
+          rememberStoredNote(
+            buildStoredNote(
+              entry.file,
+              {
+                id: entry.liveComment.id,
+                side: entry.target.side,
+                line: entry.target.line,
+                summary: entry.liveComment.summary,
+                rationale: entry.liveComment.rationale,
+                createdAt,
+              },
+              entry.liveComment.source,
+            ),
+          );
+        }
       }
 
       if (options?.revealMode === "first" && prepared.length > 0) {
@@ -871,7 +1185,7 @@ export function useReviewController({
         })),
       };
     },
-    [allFiles, markupFeedback, selectHunk],
+    [allFiles, buildStoredNote, markupFeedback, rememberStoredNote, selectHunk],
   );
 
   /** Remove one daemon-addressable comment, including human notes by stable `user:*` id. */
@@ -896,6 +1210,7 @@ export function useReviewController({
         }
 
         setUserNotesByFileId(next);
+        forgetStoredNotes(new Set([commentId]));
         return {
           commentId,
           removed: true,
@@ -925,6 +1240,7 @@ export function useReviewController({
       }
 
       setLiveCommentsByFileId(next);
+      forgetStoredNotes(new Set([commentId]));
       return {
         commentId,
         removed: true,
@@ -932,7 +1248,7 @@ export function useReviewController({
         source: "agent",
       };
     },
-    [liveCommentsByFileId, userNotesByFileId],
+    [forgetStoredNotes, liveCommentsByFileId, userNotesByFileId],
   );
 
   /** Clear live comments, optionally including human notes, globally or for one file. */
@@ -996,6 +1312,24 @@ export function useReviewController({
         }
       }
 
+      // Notes that resolved to nowhere are in no rendered map, so clearing has to
+      // reach them through the restored list or they would come back on the next load.
+      const clearedIds = collectNoteIds(liveCommentsByFileId, file?.id);
+      if (options.includeUser) {
+        for (const id of collectNoteIds(userNotesByFileId, file?.id)) {
+          clearedIds.add(id);
+        }
+      }
+      for (const entry of restoredNotes) {
+        const isUserNote = entry.note.source === USER_NOTE_SOURCE;
+        const matchesFile =
+          !file || entry.note.filePath === file.path || entry.note.filePath === file.previousPath;
+        if (!entry.placement && matchesFile && (options.includeUser || !isUserNote)) {
+          clearedIds.add(entry.note.id);
+        }
+      }
+      forgetStoredNotes(clearedIds);
+
       return {
         removedCount: removedLiveCommentCount + removedUserNoteCount,
         remainingCommentCount: remainingLiveCommentCount + remainingUserNoteCount,
@@ -1007,7 +1341,7 @@ export function useReviewController({
         remainingUserNoteCount,
       };
     },
-    [allFiles, liveCommentsByFileId, userNotesByFileId],
+    [allFiles, forgetStoredNotes, liveCommentsByFileId, restoredNotes, userNotesByFileId],
   );
 
   /** Start a human-authored draft note at the selected or requested hunk. */
@@ -1073,6 +1407,7 @@ export function useReviewController({
 
     savedDraftIdRef.current = draftNote.id;
 
+    const createdAt = new Date().toISOString();
     const savedNote: UserReviewNote = {
       id: `user:${Date.now()}-${++userNoteSequenceRef.current}`,
       source: "user",
@@ -1083,8 +1418,8 @@ export function useReviewController({
       oldRange: draftNote.oldRange,
       newRange: draftNote.newRange,
       summary: body,
-      author: "user",
-      createdAt: new Date().toISOString(),
+      author: USER_NOTE_SOURCE,
+      createdAt,
       editable: true,
     };
 
@@ -1092,9 +1427,25 @@ export function useReviewController({
       ...notesByFile,
       [draftNote.fileId]: [...(notesByFile[draftNote.fileId] ?? []), savedNote],
     }));
+    const file = allFiles.find((candidate) => candidate.id === draftNote.fileId);
+    if (file) {
+      rememberStoredNote(
+        buildStoredNote(
+          file,
+          {
+            id: savedNote.id,
+            side: savedNote.side,
+            line: savedNote.line,
+            summary: savedNote.summary,
+            createdAt,
+          },
+          USER_NOTE_SOURCE,
+        ),
+      );
+    }
     setDraftNote(null);
     return savedNote;
-  }, [draftNote]);
+  }, [allFiles, buildStoredNote, draftNote, rememberStoredNote]);
 
   /** Remove one in-memory user note by id. */
   const removeUserNote = useCallback(
@@ -1117,8 +1468,9 @@ export function useReviewController({
       }
 
       setUserNotesByFileId(next);
+      forgetStoredNotes(new Set([noteId]));
     },
-    [userNotesByFileId],
+    [forgetStoredNotes, userNotesByFileId],
   );
 
   /** Count all currently tracked live comments, including ones hidden by the active filter. */
@@ -1217,6 +1569,7 @@ export function useReviewController({
     lineCursorRevealRequestId,
     reviewNoteCount,
     reviewNoteSummaries,
+    restoredNotes,
     userNotesByFileId,
     scrollToNote,
     selectedFile,
@@ -1246,6 +1599,7 @@ export function useReviewController({
     saveDraftNote,
     selectFile,
     selectHunk,
+    selectNoteTarget,
     startUserNote,
     setFilter,
     updateDraftNote,

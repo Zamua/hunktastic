@@ -21,7 +21,7 @@ Press `?` at any time for Hunk's in-app shortcut reference. Menus and primary re
 
 Hunk navigation stays review-wide: hunk and file shortcuts move through the same multi-file stream shown in the main pane.
 
-`↑` / `↓` and `k` / `j` move a highlighted current line, and the view scrolls only far enough to keep it visible. Paging or scrolling past it moves it to the nearest line still on screen, and `c` anchors a note on it. Pick the marker from the View menu, or set [`cursor_line`](/docs/configure/layout-and-display/): `number` marks only the line number, and `off` turns the marker off and lets `↑` / `↓` and `k` / `j` scroll the view one row at a time instead.
+`↑` / `↓` and `k` / `j` move a highlighted current line, and the view scrolls only far enough to keep it visible. Clicking a diff line moves it there too. Paging or scrolling past it moves it to the nearest line still on screen, and `c` anchors a note on it. `{` / `}` land it on the line the annotated hunk's note is about. Pick the marker from the View menu, or set [`cursor_line`](/docs/configure/layout-and-display/): `number` marks only the line number, and `off` turns the marker off and lets `↑` / `↓` and `k` / `j` scroll the view one row at a time instead.
 
 ## Change the view
 
@@ -52,6 +52,7 @@ Press `c` on the selected hunk or use a visible add-note affordance with the mou
 ## Mouse behavior
 
 - Click a sidebar file to jump to it in the review stream.
+- Click a diff line to move the current line to it; dragging from it selects text instead.
 - Click menus and dialog actions instead of their key equivalents.
 - Use the wheel or scrollbar to move through the review; hold Shift while scrolling to move horizontally through unwrapped code.
 - Select diff text for copy where the terminal supports it.

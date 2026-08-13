@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createTestDiffFile, lines } from "../../../test/helpers/diff-helpers";
 import { buildLiveComment, resolveCommentTarget } from "../../core/liveComments";
 import {
+  annotatedHunkLineTarget,
   annotationRangeLabel,
   getAnnotatedHunkIndices,
   getSelectedAnnotations,
@@ -73,5 +74,53 @@ describe("agent annotations", () => {
 
     expect([...getAnnotatedHunkIndices(annotatedFile)]).toEqual([0]);
     expect(getSelectedAnnotations(annotatedFile, hunk)).toEqual([comment]);
+  });
+
+  test("takes the jump target from the hunk's first anchorable annotation", () => {
+    const file = createContextHeavyHunkFile();
+    const annotatedFile = {
+      ...file,
+      agent: {
+        path: file.path,
+        annotations: [
+          { summary: "Whole changeset" },
+          { summary: "Old side", oldRange: [8, 9] as [number, number] },
+          { summary: "New side", newRange: [13, 13] as [number, number] },
+        ],
+      },
+    };
+
+    // The range-less note carries no anchor, so the first note that names lines owns the target.
+    expect(annotatedHunkLineTarget(annotatedFile, 0)).toEqual({ side: "old", line: 8 });
+  });
+
+  test("gives no jump target for a hunk without annotations", () => {
+    const file = createContextHeavyHunkFile();
+
+    expect(annotatedHunkLineTarget(file, 0)).toBeNull();
+    expect(annotatedHunkLineTarget(undefined, 0)).toBeNull();
+  });
+
+  test("keeps notes whose line this diff no longer holds out of the inline layer", () => {
+    const file = createContextHeavyHunkFile();
+    const placed = { summary: "Still here", newRange: [13, 13] as [number, number] };
+    const unanchored = {
+      summary: "Line is gone",
+      newRange: [13, 13] as [number, number],
+      restored: { state: "unanchored" as const, confidence: "high" as const, anchorText: "line12" },
+    };
+    const annotatedFile = {
+      ...file,
+      agent: { path: file.path, annotations: [placed, unanchored] },
+    };
+
+    expect(getSelectedAnnotations(annotatedFile, file.metadata.hunks[0]!)).toEqual([placed]);
+    expect(annotatedHunkLineTarget(annotatedFile, 0)).toEqual({ side: "new", line: 13 });
+    expect([
+      ...getAnnotatedHunkIndices({
+        ...file,
+        agent: { path: file.path, annotations: [unanchored] },
+      }),
+    ]).toEqual([]);
   });
 });

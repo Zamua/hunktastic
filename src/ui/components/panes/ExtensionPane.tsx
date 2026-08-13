@@ -10,10 +10,15 @@ import type {
 import type { DiffFile } from "../../../core/types";
 import { paneKey } from "../../../extensions/apply";
 import { BuiltInSidebarView } from "../../../extensions/default/ui/sidebar";
-import { HUNK_FILES_PANE_KEY } from "../../../extensions/extensionIds";
+import {
+  HUNK_FILES_PANE_KEY,
+  HUNK_NOTES_PANE_KEY,
+  HUNK_VENDOR_EXTENSION_ID,
+} from "../../../extensions/extensionIds";
 import type { ExtensionNotifySink, RegisteredPane } from "../../../extensions/types";
 import { createGuardedReviewNavigation } from "../../lib/extensionNavigation";
 import { toExtensionPaintTheme } from "../../lib/extensionPaintTheme";
+import type { ReviewNoteEntry } from "../../lib/reviewNotes";
 import type { AppTheme } from "../../themes";
 
 function describeError(error: unknown) {
@@ -50,6 +55,20 @@ class ExtensionPaneErrorBoundary extends Component<
   }
 }
 
+/**
+ * What a bundled Hunk pane receives on top of the published pane props.
+ *
+ * Bundled UI is host code rather than a third-party consumer, so a surface only
+ * Hunk ships can take a host callback without widening the contract every
+ * extension has to be able to satisfy.
+ */
+export interface BundledPaneHostProps extends ExtensionPaneProps {
+  /** The all-notes list for the selected file, including notes with no resolved line. */
+  readonly noteEntries?: readonly ReviewNoteEntry[];
+  /** Move the review to one note's own anchor line. */
+  readonly onSelectNote?: (fileId: string, noteId: string) => void;
+}
+
 export interface ExtensionPaneHostProps {
   registered: RegisteredPane;
   files: DiffFile[];
@@ -64,8 +83,12 @@ export interface ExtensionPaneHostProps {
   showTopChrome?: boolean;
   keybindings: ExtensionPaneKeybindings;
   notify: ExtensionNotifySink;
+  /** The all-notes list; reaches bundled Hunk panes only. */
+  noteEntries?: readonly ReviewNoteEntry[];
   onSelectFile: (fileId: string) => void;
   onSelectHunk: (fileId: string, hunkIndex: number) => void;
+  /** Jump to one note's own line; reaches bundled Hunk panes only. */
+  onSelectNote?: (fileId: string, noteId: string) => void;
   onRenderFailure?: () => void;
 }
 
@@ -83,9 +106,11 @@ function ExtensionPaneHostView({
   currentLine,
   showTopChrome = false,
   keybindings,
+  noteEntries,
   notify,
   onSelectFile,
   onSelectHunk,
+  onSelectNote,
   onRenderFailure,
 }: ExtensionPaneHostProps) {
   const { extensionId } = registered;
@@ -106,7 +131,11 @@ function ExtensionPaneHostView({
       }),
     [extensionId, files, notify, onSelectFile, onSelectHunk],
   );
-  const View = registered.pane.component as (props: ExtensionPaneProps) => ReactNode;
+  // Bundled Hunk panes are host code, so they may take host props the published contract does not
+  // carry. Third-party panes never see them: the extras are withheld outside the vendor namespace,
+  // and a component typed against `ExtensionPaneProps` would ignore them anyway.
+  const bundled = extensionId === HUNK_VENDOR_EXTENSION_ID;
+  const View = registered.pane.component as (props: BundledPaneHostProps) => ReactNode;
   const viewProps: ExtensionPaneProps = {
     files: fileViews,
     selectedFileId,
@@ -120,6 +149,9 @@ function ExtensionPaneHostView({
     currentLine: registered.pane.currentLine ? currentLine : null,
   };
   const filesChrome = paneKey(registered) === HUNK_FILES_PANE_KEY;
+  // Hunk's own docked panes share one top rule and inset, so the file list and the notes list line
+  // their first rows up with each other. A third-party pane owns its whole rectangle instead.
+  const bundledChrome = filesChrome || paneKey(registered) === HUNK_NOTES_PANE_KEY;
   const box = (children: ReactNode) => (
     <box
       style={{
@@ -129,7 +161,7 @@ function ExtensionPaneHostView({
         overflow: "hidden",
         flexDirection: "column",
         backgroundColor: theme.panel,
-        ...(filesChrome
+        ...(bundledChrome
           ? {
               border: showTopChrome ? (["top"] as const) : [],
               borderColor: theme.border,
@@ -160,7 +192,7 @@ function ExtensionPaneHostView({
         onRenderFailure?.();
       }}
     >
-      {box(<View {...viewProps} />)}
+      {box(<View {...viewProps} {...(bundled ? { noteEntries, onSelectNote } : {})} />)}
     </ExtensionPaneErrorBoundary>
   );
 }
@@ -180,5 +212,6 @@ export const ExtensionPaneHost = memo(
     previous.height === next.height &&
     previous.showTopChrome === next.showTopChrome &&
     previous.keybindings === next.keybindings &&
+    previous.noteEntries === next.noteEntries &&
     (!next.registered.pane.currentLine || previous.currentLine === next.currentLine),
 );

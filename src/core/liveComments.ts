@@ -1,7 +1,22 @@
 import type { Hunk } from "@pierre/diffs";
+import type { NoteResolutionState } from "./notes/resolve";
 import type { AgentAnnotation, DiffFile } from "./types";
 
 export type DiffSide = "old" | "new";
+
+/**
+ * How one note restored from a previous session fits the review it re-entered.
+ *
+ * Carried on the note itself so a surface that renders it can say why it sits
+ * where it does without re-running resolution. `anchorText` is what a note with
+ * no placement is shown as, so an unplaceable note still reads as a statement
+ * about known code.
+ */
+export interface RestoredNoteResolution {
+  state: NoteResolutionState;
+  confidence: "high" | "low";
+  anchorText: string;
+}
 
 export interface CommentTargetInput {
   filePath: string;
@@ -24,6 +39,8 @@ export interface LiveComment extends AgentAnnotation {
   hunkIndex: number;
   side: DiffSide;
   line: number;
+  /** Present only on comments read back from the note store. */
+  restored?: RestoredNoteResolution;
 }
 
 export interface ResolvedCommentTarget {

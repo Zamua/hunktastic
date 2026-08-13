@@ -104,6 +104,7 @@ export interface BuildAppCommandsOptions {
   selectLayoutMode: (mode: LayoutMode) => void;
   startUserNote: () => void;
   toggleAgentNotes: () => void;
+  toggleAllNotes: () => void;
   toggleCopyDecorations: () => void;
   toggleFocusArea: () => void;
   toggleGapForSelectedHunk: () => void;
@@ -163,6 +164,7 @@ const PUBLIC_EXTENSION_COMMAND_IDS = new Set([
   "hunk.app.refresh",
   "hunk.view.openThemeSelector",
   "hunk.view.toggleAgentNotes",
+  "hunk.view.toggleAllNotes",
   "hunk.view.toggleLineNumbers",
   "hunk.view.toggleLineWrap",
   "hunk.view.toggleMenuBar",
@@ -383,10 +385,19 @@ function builtinCommandSpecs(options: BuildAppCommandsOptions): BuiltinCommandSp
       closesMenu: true,
     },
     {
+      // The id predates the "inline notes" wording and keeps its name: renaming a command id
+      // silently breaks every `[keybindings]` entry already using it.
       id: "hunk.view.toggleAgentNotes",
-      title: "Toggle agent notes",
+      title: "Toggle inline notes",
       defaultKeys: ["a"],
       run: () => options.toggleAgentNotes(),
+      closesMenu: true,
+    },
+    {
+      id: "hunk.view.toggleAllNotes",
+      title: "Toggle all notes",
+      defaultKeys: ["n"],
+      run: () => options.toggleAllNotes(),
       closesMenu: true,
     },
     {
@@ -549,6 +560,7 @@ const NOOP_COMMAND_OPTIONS: BuildAppCommandsOptions = (() => {
     selectLayoutMode: noop,
     startUserNote: noop,
     toggleAgentNotes: noop,
+    toggleAllNotes: noop,
     toggleCopyDecorations: noop,
     toggleFocusArea: noop,
     toggleGapForSelectedHunk: noop,

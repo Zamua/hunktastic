@@ -43,6 +43,7 @@ export interface BuildAppMenusOptions {
   layoutMode: LayoutMode;
   renderSidebar: boolean;
   showAgentNotes: boolean;
+  showAllNotes: boolean;
   showHelp: boolean;
   showHunkHeaders: boolean;
   showLineNumbers: boolean;
@@ -133,6 +134,7 @@ export function buildAppMenus({
   layoutMode,
   renderSidebar,
   showAgentNotes,
+  showAllNotes,
   showHelp,
   showHunkHeaders,
   showLineNumbers,
@@ -162,7 +164,8 @@ export function buildAppMenus({
       SEPARATOR,
       { commandId: "hunk.view.openThemeSelector", label: "Themes…" },
       SEPARATOR,
-      { commandId: "hunk.view.toggleAgentNotes", label: "Agent notes", checked: showAgentNotes },
+      { commandId: "hunk.view.toggleAgentNotes", label: "Inline notes", checked: showAgentNotes },
+      { commandId: "hunk.view.toggleAllNotes", label: "All notes", checked: showAllNotes },
       { commandId: "hunk.view.toggleLineNumbers", label: "Line numbers", checked: showLineNumbers },
       { commandId: "hunk.view.toggleLineWrap", label: "Line wrapping", checked: wrapLines },
       {
@@ -201,7 +204,7 @@ export function buildAppMenus({
       { commandId: "hunk.review.focusFilter", label: "Focus filter" },
     ],
     agent: [
-      { commandId: "hunk.view.toggleAgentNotes", label: "Agent notes", checked: showAgentNotes },
+      { commandId: "hunk.view.toggleAgentNotes", label: "Inline notes", checked: showAgentNotes },
       { commandId: "hunk.app.openAgentSkill", label: "Agent skill" },
       SEPARATOR,
       { commandId: "hunk.review.nextAnnotatedFile" },

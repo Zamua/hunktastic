@@ -67,7 +67,7 @@ function createModeExtension(name: string, source: string) {
 /**
  * A view whose mode moves a cursor, declines some keys, and exits on its own.
  *
- * `j` and `n` are answered (`j` also refreshes, so the routed key is visible on
+ * `j` and `y` are answered (`j` also refreshes, so the routed key is visible on
  * screen), `x` leaves, and everything else is declined — which is what lets the
  * bound `p` command and the host's own navigation keep working while the mode
  * holds the keyboard.
@@ -95,7 +95,7 @@ function createInteractiveModeExtension() {
           ctx.fileViews.refresh("outline");
           return "handled";
         }
-        if (key.name === "n") return "handled";
+        if (key.name === "y") return "handled";
         if (key.name === "x") return "exit";
         return "pass";
       },
@@ -139,8 +139,8 @@ function createInteractiveModeExtension() {
     ctx.fileViews.exitMode();
     ctx.fileViews.exitMode();
   });
-  hunk.registerCommand({ id: "answered", title: "Answered command", key: "n" }, (ctx) =>
-    ctx.notify("COMMAND N RAN"),
+  hunk.registerCommand({ id: "answered", title: "Answered command", key: "y" }, (ctx) =>
+    ctx.notify("COMMAND Y RAN"),
   );
   hunk.registerCommand({ id: "declined", title: "Declined command", key: "p" }, (ctx) =>
     ctx.notify("COMMAND P RAN"),
@@ -452,9 +452,9 @@ describe("AppHost file-view modes", () => {
       await waitForFrame(setup, (frame) => frame.includes("CURSOR 1"));
 
       // "handled" for a key the command table binds: the command must not run.
-      await act(async () => setup.mockInput.typeText("n"));
+      await act(async () => setup.mockInput.typeText("y"));
       await act(async () => setup.renderOnce());
-      expect(notices).not.toContain("COMMAND N RAN");
+      expect(notices).not.toContain("COMMAND Y RAN");
 
       // "pass": the command bound to the key still fires, exactly as it would
       // with no mode running.
@@ -470,8 +470,8 @@ describe("AppHost file-view modes", () => {
       expect(notices).not.toContain("MODE KEY escape");
 
       // With the mode gone, the previously answered key reaches its command.
-      await act(async () => setup.mockInput.typeText("n"));
-      await waitForNotice(setup, notices, "COMMAND N RAN");
+      await act(async () => setup.mockInput.typeText("y"));
+      await waitForNotice(setup, notices, "COMMAND Y RAN");
     } finally {
       await act(async () => setup.renderer.destroy());
     }

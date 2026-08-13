@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
+import { MouseButtons } from "@opentui/core/testing";
 import { act } from "react";
 import type { CursorLine } from "../core/types";
 import { createTestVcsAppBootstrap } from "../../test/helpers/app-bootstrap";
@@ -87,6 +88,19 @@ function gutterBackground(setup: Awaited<ReturnType<typeof testRender>>, needle:
   }
 
   throw new Error(`No rendered gutter for ${JSON.stringify(needle)}.`);
+}
+
+/** Find the screen position of the first occurrence of `needle` in the rendered frame. */
+function locateText(setup: Awaited<ReturnType<typeof testRender>>, needle: string) {
+  const rows = setup.captureCharFrame().split("\n");
+  for (let y = 0; y < rows.length; y += 1) {
+    const x = rows[y]?.indexOf(needle) ?? -1;
+    if (x >= 0) {
+      return { x, y };
+    }
+  }
+
+  throw new Error(`No rendered row contained ${JSON.stringify(needle)}.`);
 }
 
 async function renderCursorLineApp(
@@ -242,6 +256,78 @@ describe("current line highlight", () => {
       await act(async () => {
         marked.renderer.destroy();
         plain.renderer.destroy();
+      });
+    }
+  });
+
+  test("moves to the code row the reviewer clicks", async () => {
+    const setup = await renderCursorLineApp("row");
+
+    try {
+      const target = locateText(setup, "delta = 4");
+      await act(async () => {
+        await setup.mockMouse.click(target.x + 2, target.y, MouseButtons.LEFT);
+      });
+      await flush(setup);
+
+      expect(rowBackground(setup, "delta = 4")).not.toEqual(rowBackground(setup, "epsilon = 5"));
+      // The row the marker started on releases it, so the click moved rather than added a mark.
+      expect(rowBackground(setup, "alpha = 1")).toEqual(rowBackground(setup, "epsilon = 5"));
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("stays put when the click lands on a row that is not source code", async () => {
+    const setup = await renderCursorLineApp("row");
+
+    try {
+      const code = locateText(setup, "delta = 4");
+      await act(async () => {
+        await setup.mockMouse.click(code.x + 2, code.y, MouseButtons.LEFT);
+      });
+      await flush(setup);
+
+      const hunkHeader = locateText(setup, "@@");
+      await act(async () => {
+        await setup.mockMouse.click(hunkHeader.x + 2, hunkHeader.y, MouseButtons.LEFT);
+      });
+      await flush(setup);
+
+      expect(rowBackground(setup, "delta = 4")).not.toEqual(rowBackground(setup, "epsilon = 5"));
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("leaves the current line alone while a drag selects text", async () => {
+    const setup = await renderCursorLineApp("row");
+    const copied: string[] = [];
+    setup.renderer.isOsc52Supported = () => true;
+    setup.renderer.copyToClipboardOSC52 = (text: string) => {
+      copied.push(text);
+      return true;
+    };
+
+    try {
+      const start = locateText(setup, "delta = 4");
+      const end = locateText(setup, "epsilon = 5");
+      await act(async () => {
+        await setup.mockMouse.drag(start.x, start.y, end.x + 6, end.y, MouseButtons.LEFT);
+      });
+      await flush(setup);
+
+      expect(copied.join("\n")).toContain("delta");
+      // The drag pressed on the delta row; the marker still belongs to the row it started on.
+      expect(rowBackground(setup, "alpha = 1")).not.toEqual(rowBackground(setup, "gamma = 3"));
+      expect(rowBackground(setup, "delta = 4")).toEqual(rowBackground(setup, "gamma = 3"));
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
       });
     }
   });

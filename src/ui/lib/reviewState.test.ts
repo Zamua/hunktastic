@@ -51,7 +51,13 @@ describe("review state helpers", () => {
       input: { commentDirection: "next" },
     });
 
-    expect(target).toEqual({ file: gamma, hunkIndex: 0, scrollToNote: true });
+    // The note's own anchor line rides along so the jump can place the current line on it.
+    expect(target).toEqual({
+      file: gamma,
+      hunkIndex: 0,
+      scrollToNote: true,
+      lineTarget: { side: "new", line: 1 },
+    });
   });
 
   // Intent: absolute navigation supports both hunk index and side+line addressing.
@@ -66,7 +72,7 @@ describe("review state helpers", () => {
         currentHunkIndex: 0,
         input: { filePath: "src/alpha.ts", hunkIndex: 0 },
       }),
-    ).toEqual({ file, hunkIndex: 0, scrollToNote: false });
+    ).toEqual({ file, hunkIndex: 0, scrollToNote: false, lineTarget: null });
 
     expect(
       resolveReviewNavigationTarget({
@@ -76,7 +82,7 @@ describe("review state helpers", () => {
         currentHunkIndex: 0,
         input: { filePath: "src/alpha.ts", side: "new", line: 1 },
       }),
-    ).toEqual({ file, hunkIndex: 0, scrollToNote: false });
+    ).toEqual({ file, hunkIndex: 0, scrollToNote: false, lineTarget: null });
   });
 
   // Intent: invalid agent navigation requests fail before mutating review state.

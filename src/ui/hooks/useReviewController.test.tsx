@@ -467,6 +467,87 @@ describe("useReviewController", () => {
     }
   });
 
+  test("jumping to an annotated hunk lands the current line on the annotated line", async () => {
+    const { controllerRef, setup } = await renderReviewController([createThreeHunkFile()]);
+
+    try {
+      await flush(setup);
+      await act(async () => {
+        expectValue(controllerRef.current).addLiveComment(
+          { filePath: "alpha.ts", side: "new", line: 15, summary: "Explain line 15" },
+          "comment-1",
+          { reveal: false },
+        );
+      });
+      await flush(setup);
+
+      await act(async () => {
+        expectValue(controllerRef.current).moveToAnnotatedHunk(1);
+      });
+      await flush(setup);
+
+      const controller = expectValue(controllerRef.current);
+      expect(controller.selectedHunkIndex).toBe(1);
+      // The note's own anchor, not the hunk's first row (context line 12).
+      expect(controller.lineCursor?.target).toEqual({ side: "new", line: 15 });
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("session comment navigation lands the current line on the annotated line", async () => {
+    const { controllerRef, setup } = await renderReviewController([createThreeHunkFile()]);
+
+    try {
+      await flush(setup);
+      await act(async () => {
+        expectValue(controllerRef.current).addLiveComment(
+          { filePath: "alpha.ts", side: "new", line: 15, summary: "Explain line 15" },
+          "comment-1",
+          { reveal: false },
+        );
+      });
+      await flush(setup);
+
+      await act(async () => {
+        expectValue(controllerRef.current).navigateToLocation({ commentDirection: "next" });
+      });
+      await flush(setup);
+
+      const controller = expectValue(controllerRef.current);
+      expect(controller.selectedHunkIndex).toBe(1);
+      expect(controller.lineCursor?.target).toEqual({ side: "new", line: 15 });
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("plain hunk navigation still seeds the current line from the hunk's first row", async () => {
+    const { controllerRef, setup } = await renderReviewController([createThreeHunkFile()]);
+
+    try {
+      await flush(setup);
+
+      await act(async () => {
+        expectValue(controllerRef.current).moveToHunk(1);
+      });
+      await flush(setup);
+
+      const controller = expectValue(controllerRef.current);
+      expect(controller.selectedHunkIndex).toBe(1);
+      // Hunk 1 opens on three context lines, so its first navigable row is new line 12.
+      expect(controller.lineCursor?.target).toEqual({ side: "new", line: 12 });
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
   test("live comments validate markup at the published live width", async () => {
     const noteGeometry: { current: { layout: "split" | "stack"; width: number } | null } = {
       current: { layout: "stack", width: 120 },

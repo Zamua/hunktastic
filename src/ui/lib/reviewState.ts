@@ -8,8 +8,9 @@
  */
 import { findDiffFileByPath, findHunkIndexForLine, hunkLineRange } from "../../core/liveComments";
 import { noDiffFileMatchesMessage } from "../../session/agent/errors";
-import type { AgentAnnotation, DiffFile } from "../../core/types";
+import type { AgentAnnotation, DiffFile, UserNoteLineTarget } from "../../core/types";
 import type { NavigateToHunkToolInput, SelectedHunkSummary } from "../../session/types";
+import { annotatedHunkLineTarget } from "./agentAnnotations";
 import { filterReviewFiles, mergeFileAnnotationsByFileId } from "./files";
 import {
   buildAnnotatedHunkCursors,
@@ -35,6 +36,8 @@ export interface ReviewNavigationTarget {
   file: DiffFile;
   hunkIndex: number;
   scrollToNote: boolean;
+  /** Annotated line to place the current line on; null leaves hunk seeding to the controller. */
+  lineTarget: UserNoteLineTarget | null;
 }
 
 /** Build selection-independent review stream state from files and filter text. */
@@ -138,6 +141,7 @@ export function resolveReviewNavigationTarget({
       file: targetFile,
       hunkIndex: nextCursor.hunkIndex,
       scrollToNote: true,
+      lineTarget: annotatedHunkLineTarget(targetFile, nextCursor.hunkIndex),
     };
   }
 
@@ -163,9 +167,12 @@ export function resolveReviewNavigationTarget({
     throw new Error(`No diff hunk in ${input.filePath} matches the requested target.`);
   }
 
+  // An explicit file/hunk request is plain hunk navigation, so it keeps the controller's
+  // first-line seeding rather than pulling the current line onto a note anchor.
   return {
     file,
     hunkIndex,
     scrollToNote: false,
+    lineTarget: null,
   };
 }

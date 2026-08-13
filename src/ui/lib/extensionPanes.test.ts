@@ -7,7 +7,7 @@ import type {
 } from "../../extension-api/types";
 import type { RegisteredPane } from "../../extensions/types";
 import { createEmptyExtensionLoadResult } from "../../extensions/types";
-import { HUNK_FILES_PANE_KEY } from "../../extensions/extensionIds";
+import { HUNK_FILES_PANE_KEY, HUNK_NOTES_PANE_KEY } from "../../extensions/extensionIds";
 import {
   buildSessionPanes,
   initialPaneOpenState,
@@ -46,10 +46,11 @@ function loadResultWith(panes: RegisteredPane[]) {
 }
 
 describe("extension panes", () => {
-  test("offers the bundled files pane before user panes", () => {
+  test("offers the bundled panes before user panes", () => {
     const panes = buildSessionPanes(undefined);
-    expect(panes.map((pane) => pane.key)).toEqual([HUNK_FILES_PANE_KEY]);
-    expect(panes.map((pane) => pane.defaultOpen)).toEqual([true]);
+    expect(panes.map((pane) => pane.key)).toEqual([HUNK_FILES_PANE_KEY, HUNK_NOTES_PANE_KEY]);
+    // Only the files pane starts open; the all-notes sidebar waits to be asked for.
+    expect(panes.map((pane) => pane.defaultOpen)).toEqual([true, false]);
   });
 
   test("a replacement changes only the initial bundled files default", () => {
@@ -58,6 +59,7 @@ describe("extension panes", () => {
     );
     expect(panes.map((pane) => [pane.key, pane.defaultOpen])).toEqual([
       [HUNK_FILES_PANE_KEY, false],
+      [HUNK_NOTES_PANE_KEY, false],
       ["meta:files", true],
     ]);
   });
