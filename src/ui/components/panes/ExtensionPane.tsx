@@ -18,7 +18,7 @@ import {
 import type { ExtensionNotifySink, RegisteredPane } from "../../../extensions/types";
 import { createGuardedReviewNavigation } from "../../lib/extensionNavigation";
 import { toExtensionPaintTheme } from "../../lib/extensionPaintTheme";
-import type { ReviewNoteEntry } from "../../lib/reviewNotes";
+import type { ReviewNoteGroup } from "../../lib/reviewNotes";
 import type { AppTheme } from "../../themes";
 
 function describeError(error: unknown) {
@@ -63,8 +63,8 @@ class ExtensionPaneErrorBoundary extends Component<
  * extension has to be able to satisfy.
  */
 export interface BundledPaneHostProps extends ExtensionPaneProps {
-  /** The all-notes list for the selected file, including notes with no resolved line. */
-  readonly noteEntries?: readonly ReviewNoteEntry[];
+  /** The all-notes list for the whole review, including notes with no resolved line. */
+  readonly noteGroups?: readonly ReviewNoteGroup[];
   /** Move the review to one note's own anchor line. */
   readonly onSelectNote?: (fileId: string, noteId: string) => void;
 }
@@ -84,7 +84,7 @@ export interface ExtensionPaneHostProps {
   keybindings: ExtensionPaneKeybindings;
   notify: ExtensionNotifySink;
   /** The all-notes list; reaches bundled Hunk panes only. */
-  noteEntries?: readonly ReviewNoteEntry[];
+  noteGroups?: readonly ReviewNoteGroup[];
   onSelectFile: (fileId: string) => void;
   onSelectHunk: (fileId: string, hunkIndex: number) => void;
   /** Jump to one note's own line; reaches bundled Hunk panes only. */
@@ -106,7 +106,7 @@ function ExtensionPaneHostView({
   currentLine,
   showTopChrome = false,
   keybindings,
-  noteEntries,
+  noteGroups,
   notify,
   onSelectFile,
   onSelectHunk,
@@ -192,7 +192,7 @@ function ExtensionPaneHostView({
         onRenderFailure?.();
       }}
     >
-      {box(<View {...viewProps} {...(bundled ? { noteEntries, onSelectNote } : {})} />)}
+      {box(<View {...viewProps} {...(bundled ? { noteGroups, onSelectNote } : {})} />)}
     </ExtensionPaneErrorBoundary>
   );
 }
@@ -212,6 +212,6 @@ export const ExtensionPaneHost = memo(
     previous.height === next.height &&
     previous.showTopChrome === next.showTopChrome &&
     previous.keybindings === next.keybindings &&
-    previous.noteEntries === next.noteEntries &&
+    previous.noteGroups === next.noteGroups &&
     (!next.registered.pane.currentLine || previous.currentLine === next.currentLine),
 );

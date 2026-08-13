@@ -111,6 +111,57 @@ describe("built-in command chords", () => {
     ]);
   });
 
+  test("ctrl+e and ctrl+y scroll the view a line without touching the current line", () => {
+    const { commands, ran } = createTestCommands();
+    const press = (fields: Partial<ParsedKey>) =>
+      dispatchAppCommand(commands, keyEvent(fields))?.id;
+
+    expect(press({ name: "e", sequence: "e", ctrl: true })).toBe("hunk.review.scrollLineDown");
+    expect(press({ name: "y", sequence: "y", ctrl: true })).toBe("hunk.review.scrollLineUp");
+    // The view moves; `stepDiffLine`, which would carry the cursor with it, is never called.
+    expect(ran).toEqual(["scrollDiff:1,step", "scrollDiff:-1,step"]);
+  });
+
+  test("j and k still move the current line rather than the view", () => {
+    const { commands, ran } = createTestCommands();
+    const press = (fields: Partial<ParsedKey>) =>
+      dispatchAppCommand(commands, keyEvent(fields))?.id;
+
+    expect(press({ name: "j", sequence: "j" })).toBe("hunk.review.stepDown");
+    expect(press({ name: "k", sequence: "k" })).toBe("hunk.review.stepUp");
+    expect(ran).toEqual(["stepDiffLine:1", "stepDiffLine:-1"]);
+  });
+
+  test("the two notes toggles ship on i and a, and n stays unbound", () => {
+    const { commands, ran } = createTestCommands();
+    const press = (fields: Partial<ParsedKey>) =>
+      dispatchAppCommand(commands, keyEvent(fields))?.id;
+
+    expect(press({ name: "i", sequence: "i" })).toBe("hunk.view.toggleAgentNotes");
+    expect(press({ name: "a", sequence: "a" })).toBe("hunk.view.toggleAllNotes");
+    expect(press({ name: "n", sequence: "n" })).toBeUndefined();
+    expect(ran).toEqual(["toggleAgentNotes", "toggleAllNotes"]);
+  });
+
+  test("no two built-in commands ship the same default chord", () => {
+    const owners = new Map<string, string>();
+    const collisions: string[] = [];
+
+    for (const command of builtinCommandKeyDefaults()) {
+      for (const chord of command.defaultKeys) {
+        const owner = owners.get(chord);
+        if (owner) {
+          collisions.push(`${chord}: ${owner} and ${command.id}`);
+          continue;
+        }
+
+        owners.set(chord, command.id);
+      }
+    }
+
+    expect(collisions).toEqual([]);
+  });
+
   test("shifted and unshifted forms stay separate commands", () => {
     const { commands } = createTestCommands();
     const press = (fields: Partial<ParsedKey>) =>

@@ -1199,7 +1199,7 @@ track `selection_changed` itself to know what the user is looking at:
 
 ```ts
 hunk.registerCommand(
-  { id: "show-selection", title: "Show the selected file", key: "ctrl+y" },
+  { id: "show-selection", title: "Show the selected file", key: "ctrl+o" },
   (ctx) => {
     const { file, hunkIndex } = ctx.selection;
     if (!file) {

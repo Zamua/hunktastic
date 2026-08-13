@@ -396,8 +396,8 @@ describe("PTY file views", () => {
       await harness.ensureKeyboardIsLive(session);
 
       // One press: `enterMode` selects the view for the file and takes the
-      // keyboard together, so the editor opens without a second Ctrl-E.
-      await session.press(["ctrl", "e"]);
+      // keyboard together, so the editor opens without a second F4.
+      await session.press("f4");
       // The view shows the new document alone, so the removed old-side line is
       // how the terminal reports that the presentation actually switched.
       await harness.waitForSnapshot(session, (text) => !text.includes("alpha = 1"), 20_000);
@@ -481,7 +481,7 @@ describe("PTY file views", () => {
     try {
       await session.waitForText(/Keep this note visible\./, { timeout: 20_000 });
       await harness.ensureKeyboardIsLive(session);
-      await session.press(["ctrl", "e"]);
+      await session.press("f4");
       await session.waitForText(/EDITING — Esc exits/, { timeout: 20_000 });
 
       await session.press("down");
@@ -516,7 +516,7 @@ describe("PTY file views", () => {
     try {
       await session.waitForText(/😀/, { timeout: 20_000 });
       await harness.ensureKeyboardIsLive(session);
-      await session.press(["ctrl", "e"]);
+      await session.press("f4");
       await session.waitForText(/EDITING — Esc exits/, { timeout: 20_000 });
       await session.press("right");
       await session.press("backspace");
@@ -596,7 +596,7 @@ describe("PTY file views", () => {
       await session.waitForText(/\[x\] File presentation: Rendered Markdown/);
       await session.press("escape");
 
-      await session.press("a");
+      await session.press("i");
       const restored = await session.waitForText(/• new item/);
       expect(restored).not.toContain("old item");
     } finally {

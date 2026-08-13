@@ -9,7 +9,7 @@
  * - a file view `mode` routes real keystrokes into the view: it claims arrows,
  *   most printable characters, Backspace, Enter, and Ctrl-S, and declines
  *   `]`, `?`, and `q` so navigation, help, and quit keep working. One
- *   `enterMode` selects the view *and* takes the keyboard, so one Ctrl-E opens
+ *   `enterMode` selects the view *and* takes the keyboard, so one F4 opens
  *   the editor rather than two.
  * - `fileViews.refresh(VIEW_ID, { fileId })` re-derives the layout after every
  *   buffer or caret change, which is the only way a stateful view redraws at
@@ -31,7 +31,7 @@
  * settles and no promise is left dangling.
  *
  * That last guarantee is why the editor slot is claimed *synchronously*, before
- * the handler's first `await`: two fast Ctrl-E presses would otherwise both
+ * the handler's first `await`: two fast F4 presses would otherwise both
  * pass a guard that only reads the live session, and the loser's loop would
  * park on a mailbox nothing is left holding a reference to.
  */
@@ -686,7 +686,7 @@ const inlineEditExtension: ExtensionFactory = (hunk) => {
         // The command enters synchronously before awaiting its document read,
         // so the live mode file must be the file that claimed the opening slot.
         if (openingFileId !== ctx.file.id) {
-          ctx.notify("Inline edit mode must be opened with Ctrl-E", "warning");
+          ctx.notify("Inline edit mode must be opened with F4", "warning");
           ctx.fileViews.exitMode();
         }
       },
@@ -750,7 +750,7 @@ const inlineEditExtension: ExtensionFactory = (hunk) => {
   });
 
   hunk.registerCommand(
-    { id: "edit", title: "Edit the selected file inline", key: "ctrl+e" },
+    { id: "edit", title: "Edit the selected file inline", key: "f4" },
     async (ctx) => {
       const file = ctx.selection.file;
       if (!file) {
@@ -758,7 +758,7 @@ const inlineEditExtension: ExtensionFactory = (hunk) => {
         return;
       }
 
-      // `onKey` passes on Ctrl-E, so this command is reachable from inside its
+      // `onKey` passes on F4, so this command is reachable from inside its
       // own mode, and from a second press while the first one is still opening.
       // Answer both instead of starting a second session on one file.
       if (opening) {

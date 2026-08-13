@@ -372,7 +372,7 @@ async function captureAgent() {
   });
   try {
     await waitForReview(session, /normalize\.ts/);
-    await session.press("a");
+    await session.press("i");
     await sleep(500);
 
     const story = new Storyboard(session);

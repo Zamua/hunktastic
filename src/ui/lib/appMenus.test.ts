@@ -152,7 +152,65 @@ describe("buildAppMenus", () => {
       "Next annotated file",
       "Previous annotated file",
     ]);
-    expect(items(menus.navigate).map((item) => item.hint)).toEqual(["[", "]", "{", "}", "/"]);
+    expect(items(menus.navigate).map((item) => item.hint)).toEqual([
+      "[",
+      "]",
+      "{",
+      "}",
+      "Ctrl+Y",
+      "Ctrl+E",
+      "u",
+      "d",
+      "PageUp",
+      "PageDown",
+      "g",
+      "G",
+      "/",
+    ]);
+  });
+
+  test("Navigate offers the viewport movements as well as hunk stepping", () => {
+    const { commands } = createTestCommands();
+    const menus = buildAppMenus({ commands, ...MENU_STATE });
+
+    expect(items(menus.navigate).map((item) => item.commandId)).toEqual([
+      "hunk.review.previousHunk",
+      "hunk.review.nextHunk",
+      "hunk.review.previousAnnotatedHunk",
+      "hunk.review.nextAnnotatedHunk",
+      "hunk.review.scrollLineUp",
+      "hunk.review.scrollLineDown",
+      "hunk.review.halfPageUp",
+      "hunk.review.halfPageDown",
+      "hunk.review.pageUp",
+      "hunk.review.pageDown",
+      "hunk.review.jumpToTop",
+      "hunk.review.jumpToBottom",
+      "hunk.review.focusFilter",
+    ]);
+    // Each group is ruled off from the next rather than running together.
+    expect((menus.navigate ?? []).filter((item) => item.kind === "separator")).toHaveLength(4);
+  });
+
+  test("a Navigate scroll entry dispatches the command it names", () => {
+    const scrolls: string[] = [];
+    const { commands } = createTestCommands({
+      scrollDiff: (delta, unit) => scrolls.push(`${delta},${unit}`),
+    });
+    const menus = buildAppMenus({ commands, ...MENU_STATE });
+
+    entry(menus, "navigate", "Scroll down one line").action();
+    entry(menus, "navigate", "Jump to end").action();
+    expect(scrolls).toEqual(["1,step", "1,content"]);
+  });
+
+  test("the notes entries advertise the keys their commands ship with", () => {
+    const { commands } = createTestCommands();
+    const menus = buildAppMenus({ commands, ...MENU_STATE });
+
+    expect(entry(menus, "view", "Inline notes").hint).toBe("i");
+    expect(entry(menus, "view", "All notes").hint).toBe("a");
+    expect(entry(menus, "agent", "Inline notes").hint).toBe("i");
   });
 
   test("every item carries the id of the command it runs", () => {

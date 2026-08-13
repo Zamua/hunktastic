@@ -21,6 +21,18 @@ const AFTER = lines(
   "const filler4 = 4;",
   "const omega = 999;",
 );
+const SECOND_BEFORE = lines(
+  "const zeta = 1;",
+  "const spacer1 = 1;",
+  "const spacer2 = 2;",
+  "const kappa = 9;",
+);
+const SECOND_AFTER = lines(
+  "const zeta = 1;",
+  "const spacer1 = 1;",
+  "const spacer2 = 2;",
+  "const kappa = 999;",
+);
 
 function createNotesBootstrap() {
   const file = createTestDiffFile({
@@ -29,6 +41,13 @@ function createNotesBootstrap() {
     context: 0,
     id: "noted",
     path: "noted.ts",
+  });
+  const second = createTestDiffFile({
+    after: SECOND_AFTER,
+    before: SECOND_BEFORE,
+    context: 0,
+    id: "second",
+    path: "second.ts",
   });
 
   return {
@@ -43,6 +62,19 @@ function createNotesBootstrap() {
                 id: "omega-note",
                 summary: "Bump the omega constant",
                 newRange: [6, 6] as [number, number],
+              },
+            ],
+          },
+        },
+        {
+          ...second,
+          agent: {
+            path: second.path,
+            annotations: [
+              {
+                id: "kappa-note",
+                summary: "Rename the kappa constant",
+                newRange: [4, 4] as [number, number],
               },
             ],
           },
@@ -95,10 +127,33 @@ function locate(setup: Awaited<ReturnType<typeof testRender>>, needle: string) {
   throw new Error(`No rendered row contained ${JSON.stringify(needle)}.`);
 }
 
-async function renderNotesApp() {
+/**
+ * Read what the all-notes pane rendered, one trimmed line per row.
+ *
+ * The pane is the column right of the last divider, so this reads it without
+ * matching the file headers the review stream draws for the same files.
+ */
+function notesPaneLines(setup: Awaited<ReturnType<typeof testRender>>) {
+  const rows = setup.captureCharFrame().split("\n");
+  const dividerColumn = Math.max(...rows.map((row) => row.lastIndexOf("│")));
+  if (dividerColumn < 0) {
+    throw new Error("No pane divider rendered.");
+  }
+
+  return rows
+    .map((row) => row.slice(dividerColumn + 1).trim())
+    .filter((row) => row.length > 0 && !row.startsWith("─"));
+}
+
+/** Report whether the file sidebar is on screen; only its rows carry the status prefix. */
+function fileSidebarVisible(setup: Awaited<ReturnType<typeof testRender>>) {
+  return setup.captureCharFrame().includes("M noted.ts");
+}
+
+async function renderNotesApp(width = 200) {
   const setup = await testRender(<AppHost bootstrap={createNotesBootstrap() as never} />, {
-    width: 200,
-    height: 20,
+    width,
+    height: 22,
   });
   await flush(setup);
   await act(async () => {
@@ -109,23 +164,115 @@ async function renderNotesApp() {
 }
 
 describe("all notes sidebar", () => {
-  test("opens and closes on n", async () => {
+  test("opens and closes on a", async () => {
     const setup = await renderNotesApp();
 
     try {
       expect(setup.captureCharFrame()).not.toContain("Bump the omega constant");
 
       await act(async () => {
-        await setup.mockInput.typeText("n");
+        await setup.mockInput.typeText("a");
       });
       await flush(setup);
       expect(setup.captureCharFrame()).toContain("Bump the omega constant");
 
       await act(async () => {
-        await setup.mockInput.typeText("n");
+        await setup.mockInput.typeText("a");
       });
       await flush(setup);
       expect(setup.captureCharFrame()).not.toContain("Bump the omega constant");
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("lists every file's notes, grouped under the file they belong to", async () => {
+    const setup = await renderNotesApp();
+
+    try {
+      await act(async () => {
+        await setup.mockInput.typeText("a");
+      });
+      await flush(setup);
+
+      expect(notesPaneLines(setup)).toEqual([
+        "noted.ts",
+        "R6 Bump the omega constant",
+        "second.ts",
+        "R4 Rename the kappa constant",
+      ]);
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("opening and closing it leaves the file sidebar exactly as it was", async () => {
+    // Wide enough that the sidebar area shows by default.
+    const shown = await renderNotesApp(230);
+    // Narrow enough that the responsive layout hides it.
+    const hidden = await renderNotesApp(200);
+
+    try {
+      expect(fileSidebarVisible(shown)).toBe(true);
+      expect(fileSidebarVisible(hidden)).toBe(false);
+
+      for (const setup of [shown, hidden]) {
+        await act(async () => {
+          await setup.mockInput.typeText("a");
+        });
+        await flush(setup);
+      }
+
+      expect(shown.captureCharFrame()).toContain("Bump the omega constant");
+      expect(hidden.captureCharFrame()).toContain("Bump the omega constant");
+      expect(fileSidebarVisible(shown)).toBe(true);
+      expect(fileSidebarVisible(hidden)).toBe(false);
+
+      for (const setup of [shown, hidden]) {
+        await act(async () => {
+          await setup.mockInput.typeText("a");
+        });
+        await flush(setup);
+      }
+
+      expect(shown.captureCharFrame()).not.toContain("Bump the omega constant");
+      expect(fileSidebarVisible(shown)).toBe(true);
+      expect(fileSidebarVisible(hidden)).toBe(false);
+    } finally {
+      await act(async () => {
+        shown.renderer.destroy();
+        hidden.renderer.destroy();
+      });
+    }
+  });
+
+  test("selecting a note from another file moves the review onto that file", async () => {
+    const setup = await renderNotesApp();
+
+    try {
+      await act(async () => {
+        await setup.mockInput.typeText("a");
+      });
+      await flush(setup);
+
+      // The review opens on the first file, so its first hunk carries the marker.
+      expect(rowBackground(setup, "alpha = 1;")).not.toEqual(rowBackground(setup, "omega = 9;"));
+      const plainAddition = rowBackground(setup, "kappa = 999");
+
+      const row = locate(setup, "Rename the kappa constant");
+      await act(async () => {
+        await setup.mockMouse.click(row.x, row.y);
+      });
+      await flush(setup);
+
+      // The marker crossed the file boundary onto the note's own line, and the file it left
+      // holds no marker at all.
+      expect(rowBackground(setup, "kappa = 999")).not.toEqual(plainAddition);
+      expect(rowBackground(setup, "alpha = 1;")).toEqual(rowBackground(setup, "omega = 9;"));
     } finally {
       await act(async () => {
         setup.renderer.destroy();
@@ -138,7 +285,7 @@ describe("all notes sidebar", () => {
 
     try {
       await act(async () => {
-        await setup.mockInput.typeText("n");
+        await setup.mockInput.typeText("a");
       });
       await flush(setup);
 

@@ -173,7 +173,7 @@ async function captureStmlScene() {
     await sleep(500);
     await snap(session, "stml-review");
 
-    await session.press("a");
+    await session.press("i");
     await sleep(900);
     await snap(session, "stml-notes");
 

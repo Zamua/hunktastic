@@ -148,6 +148,8 @@ const PUBLIC_EXTENSION_COMMAND_IDS = new Set([
   "hunk.review.halfPageUp",
   "hunk.review.stepDown",
   "hunk.review.stepUp",
+  "hunk.review.scrollLineDown",
+  "hunk.review.scrollLineUp",
   "hunk.review.scrollCodeLeft",
   "hunk.review.scrollCodeRight",
   "hunk.review.alignCurrentLineTop",
@@ -272,6 +274,21 @@ function builtinCommandSpecs(options: BuildAppCommandsOptions): BuiltinCommandSp
       run: (_key, count) => options.stepDiffLine(-count),
     },
     {
+      // Vim's Ctrl-E / Ctrl-Y: the view moves and the current line stays put, the opposite of
+      // the step commands above. Pushing the cursor past an edge is what moves it, and the
+      // review clamps it back to the nearest visible row rather than letting it leave.
+      id: "hunk.review.scrollLineDown",
+      title: "Scroll the view down one line",
+      defaultKeys: ["ctrl+e"],
+      run: (_key, count) => options.scrollDiff(count, "step"),
+    },
+    {
+      id: "hunk.review.scrollLineUp",
+      title: "Scroll the view up one line",
+      defaultKeys: ["ctrl+y"],
+      run: (_key, count) => options.scrollDiff(-count, "step"),
+    },
+    {
       id: "hunk.review.scrollCodeLeft",
       title: "Scroll code left",
       // Both chords run the same command; the shifted one scrolls further, so
@@ -389,14 +406,14 @@ function builtinCommandSpecs(options: BuildAppCommandsOptions): BuiltinCommandSp
       // silently breaks every `[keybindings]` entry already using it.
       id: "hunk.view.toggleAgentNotes",
       title: "Toggle inline notes",
-      defaultKeys: ["a"],
+      defaultKeys: ["i"],
       run: () => options.toggleAgentNotes(),
       closesMenu: true,
     },
     {
       id: "hunk.view.toggleAllNotes",
       title: "Toggle all notes",
-      defaultKeys: ["n"],
+      defaultKeys: ["a"],
       run: () => options.toggleAllNotes(),
       closesMenu: true,
     },

@@ -10,6 +10,7 @@ Press `?` at any time for Hunk's in-app shortcut reference. Menus and primary re
 | Keys                      | Action                                                |
 | ------------------------- | ----------------------------------------------------- |
 | `↑` / `↓`, `k` / `j`      | Scroll one row                                        |
+| `Ctrl+E` / `Ctrl+Y`       | Scroll the view one line, leaving the current line    |
 | `Space` / `f`, `b`        | Page down / up                                        |
 | `Shift+Space`             | Page up                                               |
 | `d` / `u`                 | Half page down / up                                   |
@@ -35,7 +36,8 @@ Hunk navigation stays review-wide: hunk and file shortcuts move through the same
 | `m`             | Toggle hunk metadata                             |
 | `M`             | Toggle menu bar                                  |
 | `z`             | Toggle unchanged context for the selected hunk   |
-| `a`             | Toggle agent notes                               |
+| `i`             | Toggle inline notes                              |
+| `a`             | Toggle the all-notes sidebar                     |
 | `e`             | Open the selected file in `$EDITOR`              |
 | `/`             | Focus file filter                                |
 | `Tab`           | Move focus between the file list and file filter |
@@ -54,6 +56,7 @@ Press `c` on the selected hunk or use a visible add-note affordance with the mou
 - Click a sidebar file to jump to it in the review stream.
 - Click a diff line to move the current line to it; dragging from it selects text instead.
 - Click menus and dialog actions instead of their key equivalents.
+- Click anywhere outside an open menu to dismiss it; that click only closes the menu. Clicking another menu title switches to it, and scrolling the wheel closes it too.
 - Use the wheel or scrollbar to move through the review; hold Shift while scrolling to move horizontally through unwrapped code.
 - Select diff text for copy where the terminal supports it.
 

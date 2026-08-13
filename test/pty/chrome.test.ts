@@ -54,18 +54,18 @@ describe("PTY chrome", () => {
 
       await session.click(/Agent/, { first: true });
       const agentMenu = await session.waitForText(/Next annotated file/, { timeout: 5_000 });
-      expect(agentMenu).toContain("Agent notes");
+      expect(agentMenu).toContain("Inline notes");
 
-      await session.click(/Agent notes/);
+      await session.click(/Inline notes/);
       await harness.waitForSnapshot(
         session,
-        (text) => !text.includes("Adds bonus export.") && !text.includes("Agent notes"),
+        (text) => !text.includes("Adds bonus export.") && !text.includes("Inline notes"),
         5_000,
       );
 
       await session.click(/Agent/, { first: true });
-      await session.waitForText(/Agent notes/, { timeout: 5_000 });
-      await session.click(/Agent notes/);
+      await session.waitForText(/Inline notes/, { timeout: 5_000 });
+      await session.click(/Inline notes/);
       await session.waitForText(/Adds bonus export\./, { timeout: 5_000 });
 
       await session.click(/Help/);

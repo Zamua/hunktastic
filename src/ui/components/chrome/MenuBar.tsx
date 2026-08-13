@@ -1,3 +1,4 @@
+import type { MouseEvent as TuiMouseEvent } from "@opentui/core";
 import type { AppTheme } from "../../themes";
 import { fitText } from "../../lib/text";
 import { menuBarTitleWidth, type MenuId, type MenuSpec } from "./menu";
@@ -9,6 +10,7 @@ export function MenuBar({
   terminalWidth,
   theme,
   topTitle,
+  onDismissMenu,
   onHoverMenu,
   onToggleMenu,
 }: {
@@ -17,12 +19,15 @@ export function MenuBar({
   terminalWidth: number;
   theme: AppTheme;
   topTitle: string;
+  onDismissMenu: () => void;
   onHoverMenu: (menuId: MenuId) => void;
   onToggleMenu: (menuId: MenuId) => void;
 }) {
   return (
     // The outer row paints the app background so the bar keeps the same
     // one-column gutter the body panes have; only the inner band is chrome.
+    // The row is left uncovered by the menu scrim so titles stay clickable,
+    // which makes it responsible for dismissing on its own dead space.
     <box
       style={{
         height: 1,
@@ -32,6 +37,7 @@ export function MenuBar({
         paddingLeft: 1,
         paddingRight: 1,
       }}
+      onMouseUp={onDismissMenu}
     >
       <box
         style={{
@@ -52,7 +58,12 @@ export function MenuBar({
                 height: 1,
                 backgroundColor: active ? theme.accentMuted : theme.panelAlt,
               }}
-              onMouseUp={() => onToggleMenu(menu.id)}
+              // A title owns its own click: without this the press would also
+              // reach the row's dismiss handler and close what it just opened.
+              onMouseUp={(event: TuiMouseEvent) => {
+                event.stopPropagation();
+                onToggleMenu(menu.id);
+              }}
               onMouseOver={() => onHoverMenu(menu.id)}
             >
               <text fg={active ? theme.text : theme.muted}>{` ${menu.label} `}</text>

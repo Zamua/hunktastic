@@ -11,7 +11,7 @@ hunkt patch examples/9-agent-markup-notes/change.patch \
   --agent-context examples/9-agent-markup-notes/agent-context.json
 ```
 
-Press `a` to reveal the agent notes for the selected hunk.
+Press `i` to reveal the inline notes for the selected hunk.
 
 The same markup works for live comments from an agent driving a session:
 

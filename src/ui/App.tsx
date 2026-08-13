@@ -64,6 +64,7 @@ import type {
   ReloadSessionOptions,
 } from "../session/types";
 import { MenuBar } from "./components/chrome/MenuBar";
+import { MenuScrim } from "./components/chrome/MenuScrim";
 import { ConfirmDialog, confirmDialogHeight } from "./components/chrome/ConfirmDialog";
 import { ExtensionDialog } from "./components/chrome/ExtensionDialog";
 import { ExtensionToast } from "./components/chrome/ExtensionToast";
@@ -131,7 +132,7 @@ import { maxFileHeaderStatsWidth } from "./lib/fileHeader";
 import { verifyWorkspaceWriteTarget } from "./lib/workspaceWriteGuard";
 import { openSelectedFileInEditor } from "./lib/openInEditor";
 import { resolveResponsiveLayout } from "./lib/responsive";
-import { buildReviewNoteEntries, resolveReviewNoteJumpTarget } from "./lib/reviewNotes";
+import { buildReviewNoteGroups, resolveReviewNoteJumpTarget } from "./lib/reviewNotes";
 import { resizeSidebarWidth } from "./lib/sidebar";
 import { availableThemes, resolveTheme, withTransparentSurfaces } from "./themes";
 
@@ -268,6 +269,9 @@ export function App({
   });
   const [sidebarVisible, setSidebarVisible] = useState(() => !pagerMode);
   const [forceSidebarOpen, setForceSidebarOpen] = useState(false);
+  // Side panes shown on their own while the sidebar area is hidden. Opening one pane is a request
+  // to see that pane, not a request to bring back every other pane docked beside it.
+  const [soloRevealedPaneKeys, setSoloRevealedPaneKeys] = useState<readonly string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [showAgentSkill, setShowAgentSkill] = useState(false);
   const [saveConfigPromptOpen, setSaveConfigPromptOpen] = useState(false);
@@ -411,11 +415,12 @@ export function App({
   const selectedFile = review.selectedFile;
   const selectedHunkIndex = review.selectedHunkIndex;
   const selectedFileId = selectedFile?.id ?? null;
-  // The all-notes list, built once per selection change: the pane is memoized on this identity,
-  // so deriving it inside the pane would repaint the list on every unrelated render instead.
-  const noteEntries = useMemo(
-    () => buildReviewNoteEntries({ file: selectedFile, restoredNotes: review.restoredNotes }),
-    [review.restoredNotes, selectedFile],
+  // The all-notes list spans the review, so it is rebuilt only when the review's files or its
+  // restored notes change: the pane is memoized on this identity, so deriving it inside the pane
+  // would repaint the list on every unrelated render instead.
+  const noteGroups = useMemo(
+    () => buildReviewNoteGroups({ files: filteredFiles, restoredNotes: review.restoredNotes }),
+    [filteredFiles, review.restoredNotes],
   );
   const currentLinePaintMatchesCursor = extensionCurrentLinePaintMatchesCursor(
     currentLinePaintState,
@@ -678,18 +683,19 @@ export function App({
   const revealSidebarAreaRef = useRef<() => void>(() => {});
 
   /**
-   * Toggle the all-notes sidebar.
+   * Toggle the all-notes pane.
    *
-   * Opening also reveals the pane area, matching what an extension's
-   * `panes.open` does: a pane the user just asked for must not stay invisible
-   * because the sidebar area happens to be hidden.
+   * Opening reveals that pane alone rather than the whole sidebar area: the
+   * notes list docks on the right, and asking for it must not drag the file
+   * list on the left back onto the screen with it.
    */
   const toggleAllNotes = useCallback(() => {
     const opens = !paneOpenStateRef.current.open.includes(HUNK_NOTES_PANE_KEY);
     setPaneOpen(HUNK_NOTES_PANE_KEY, "toggle");
-    if (opens) {
-      revealSidebarAreaRef.current();
-    }
+    setSoloRevealedPaneKeys((current) => {
+      const others = current.filter((key) => key !== HUNK_NOTES_PANE_KEY);
+      return opens ? [...others, HUNK_NOTES_PANE_KEY] : others;
+    });
   }, [setPaneOpen]);
 
   /**
@@ -1055,6 +1061,9 @@ export function App({
     0,
     terminal.height - (showMenuBar ? 1 : 0) - (extensionToast ? 1 : 0) - (statusBarVisible ? 1 : 0),
   );
+  // The first row the menu overlays own: the bar keeps row 0 when it shows, so
+  // its titles stay clickable while a menu is open.
+  const menuOverlayTop = showMenuBar ? 1 : 0;
   const failedFilesReplacement = sessionPanes.some(
     (pane) =>
       paneOpenState.open.includes(pane.key) &&
@@ -1063,7 +1072,13 @@ export function App({
   );
   const effectiveOpenPaneKeys = paneOpenState.open.filter((key) => {
     const pane = sessionPanes.find((entry) => entry.key === key);
-    return sidebarAreaVisible || (pane?.placement !== "left" && pane?.placement !== "right");
+    if (pane?.placement !== "left" && pane?.placement !== "right") {
+      return true;
+    }
+
+    // A solo-revealed pane docks on its own while the rest of the area stays hidden. It still
+    // answers to the layout: `planExtensionPanes` omits it when the terminal has no room.
+    return sidebarAreaVisible || soloRevealedPaneKeys.includes(key);
   });
   if (
     failedFilesReplacement &&
@@ -1427,6 +1442,8 @@ export function App({
     if (sidebarVisible && (responsiveLayout.showSidebar || forceSidebarOpen)) {
       setSidebarVisible(false);
       setForceSidebarOpen(false);
+      // Hiding the area hides every docked pane, including one revealed on its own.
+      setSoloRevealedPaneKeys([]);
       return;
     }
 
@@ -1994,7 +2011,6 @@ export function App({
     const vertical = planned.pane.placement === "left" || planned.pane.placement === "right";
     const spec = extensionPaneSize(planned.pane.registered.pane, planned.pane.placement);
     const currentSize = vertical ? planned.bounds.width : planned.bounds.height;
-    closeMenu();
     setPaneResize({
       key: planned.pane.key,
       registered: planned.pane.registered,
@@ -2084,7 +2100,7 @@ export function App({
           currentLine={pane.registered.pane.currentLine ? currentLinePaint : null}
           showTopChrome={showMenuBar}
           keybindings={paneKeybindings}
-          noteEntries={noteEntries}
+          noteGroups={noteGroups}
           notify={(message, type) => extensions?.context.notify(message, type)}
           onSelectNote={(fileId, noteId) => selectNoteRef.current(fileId, noteId)}
           onSelectFile={(fileId) => {
@@ -2153,6 +2169,7 @@ export function App({
           terminalWidth={terminal.width}
           theme={activeTheme}
           topTitle={topTitle}
+          onDismissMenu={closeMenu}
           onHoverMenu={(menuId) => {
             if (activeMenuId) {
               openMenu(menuId);
@@ -2178,7 +2195,6 @@ export function App({
         }}
         onMouseUp={(event) => {
           endPaneResize(event);
-          closeMenu();
           cancelCopySelectionRef.current?.();
         }}
       >
@@ -2278,10 +2294,17 @@ export function App({
           }
           terminalWidth={terminal.width}
           theme={activeTheme}
-          onCloseMenu={closeMenu}
           onFilterInput={review.setFilter}
           onFilterSubmit={focusFiles}
           onExitMode={exitKeyboardMode}
+        />
+      ) : null}
+
+      {activeMenuId ? (
+        <MenuScrim
+          top={menuOverlayTop}
+          height={Math.max(0, terminal.height - menuOverlayTop)}
+          onDismiss={closeMenu}
         />
       ) : null}
 
@@ -2293,7 +2316,7 @@ export function App({
             activeMenuItemIndex={activeMenuItemIndex}
             activeMenuSpec={activeMenuSpec}
             activeMenuWidth={activeMenuWidth}
-            top={showMenuBar ? 1 : 0}
+            top={menuOverlayTop}
             terminalWidth={terminal.width}
             theme={baseTheme}
             onHoverItem={setActiveMenuItemIndex}

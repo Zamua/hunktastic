@@ -34,6 +34,7 @@ describe("buildHelpSections", () => {
     expect(keysFor(sections, "move line-by-line")).toBe("Up / Down");
     expect(keysFor(sections, "split / stack / auto")).toBe("1 / 2 / 0");
     expect(keysFor(sections, "lines / wrap / metadata / menu")).toBe("l / w / m / M");
+    expect(keysFor(sections, "inline notes / all notes")).toBe("i / a");
   });
 
   test("a row about one command lists every chord it answers to", () => {

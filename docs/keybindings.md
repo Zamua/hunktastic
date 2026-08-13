@@ -67,6 +67,8 @@ The built-in commands and the keys they ship with:
 | `hunk.review.previousHunk`                     | Previous hunk                                  | `[`                          |
 | `hunk.review.scrollCodeLeft`                   | Scroll code left (shifted scrolls fast)        | `left`, `shift+left`         |
 | `hunk.review.scrollCodeRight`                  | Scroll code right (shifted scrolls fast)       | `right`, `shift+right`       |
+| `hunk.review.scrollLineDown`                   | Scroll the view down one line                  | `ctrl+e`                     |
+| `hunk.review.scrollLineUp`                     | Scroll the view up one line                    | `ctrl+y`                     |
 | `hunk.review.startNote`                        | Add a review note                              | `c`                          |
 | `hunk.review.stepDown`                         | Scroll down one row                            | `down`, `j`                  |
 | `hunk.review.stepUp`                           | Scroll up one row                              | `up`, `k`                    |
@@ -79,8 +81,8 @@ The built-in commands and the keys they ship with:
 | `hunk.view.layoutSplit`                        | Split layout                                   | `1`                          |
 | `hunk.view.layoutStack`                        | Stack layout                                   | `2`                          |
 | `hunk.view.openThemeSelector`                  | Choose theme                                   | `t`                          |
-| `hunk.view.toggleAgentNotes`                   | Toggle inline notes                            | `a`                          |
-| `hunk.view.toggleAllNotes`                     | Toggle the all-notes sidebar                   | `n`                          |
+| `hunk.view.toggleAgentNotes`                   | Toggle inline notes                            | `i`                          |
+| `hunk.view.toggleAllNotes`                     | Toggle the all-notes sidebar                   | `a`                          |
 | `hunk.view.toggleCopyDecorations`              | Toggle copy decorations                        | _(none)_                     |
 | `hunk.view.toggleHunkHeaders`                  | Toggle hunk headers                            | `m`                          |
 | `hunk.view.toggleLineNumbers`                  | Toggle line numbers                            | `l`                          |

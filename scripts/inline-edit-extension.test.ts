@@ -174,7 +174,7 @@ function createInlineEditTestHost({
       canWriteDocument: () => canWrite,
       readDocument: async (fileId: string) => {
         // Suspending here is what a slow working-tree read does to the command:
-        // it opens a window in which a second Ctrl-E can arrive.
+        // it opens a window in which a second F4 can arrive.
         if (readGate) {
           await readGate;
         }
@@ -224,7 +224,7 @@ function createInlineEditTestHost({
 describe("inline edit example extension", () => {
   test("registers one interactive file view and one command on a free chord", () => {
     const host = createInlineEditTestHost();
-    expect(host.command).toMatchObject({ id: "edit", key: "ctrl+e" });
+    expect(host.command).toMatchObject({ id: "edit", key: "f4" });
     expect(host.view.id).toBe("inline-edit");
     expect(typeof host.view.mode?.onKey).toBe("function");
     expect(host.view.matches({ path: "alpha.ts" } as never)).toBe(true);
@@ -610,7 +610,7 @@ describe("inline edit example extension", () => {
     await flush();
     host.press({ name: "z", sequence: "z" });
 
-    // Ctrl-E is one of the keys `onKey` passes on, so the command is reachable
+    // F4 is one of the keys `onKey` passes on, so the command is reachable
     // from inside its own mode. The claim taken while opening must not have
     // replaced this answer.
     expect(await settlement(host.run())).toBe("settled");

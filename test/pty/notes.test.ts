@@ -42,13 +42,13 @@ describe("PTY notes", () => {
 
       expect(initial).not.toContain("Adds bonus export.");
 
-      await session.press("a");
+      await session.press("i");
       const withNotes = await session.waitForText(/Adds bonus export\./, { timeout: 5_000 });
 
       expect(withNotes).toContain("Highlights the follow-up addition for review.");
       expect(withNotes).not.toContain("STML ACTIVE");
 
-      await session.press("a");
+      await session.press("i");
       const withoutNotes = await harness.waitForSnapshot(
         session,
         (text) => !text.includes("Adds bonus export."),
@@ -80,7 +80,7 @@ describe("PTY notes", () => {
 
     try {
       await session.waitForText(/View\s+Navigate\s+Agent\s+Help/, { timeout: 15_000 });
-      await session.press("a");
+      await session.press("i");
       const withMarkup = await session.waitForText(/STML ACTIVE/, { timeout: 5_000 });
 
       expect(withMarkup).not.toContain("Highlights the follow-up addition for review.");

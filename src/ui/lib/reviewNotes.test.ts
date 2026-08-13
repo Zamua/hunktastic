@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { createTestDiffFile, lines } from "../../../test/helpers/diff-helpers";
 import type { ResolvedReviewNote } from "../../core/notes/session";
 import type { StoredNote } from "../../core/notes/types";
-import { buildReviewNoteEntries, resolveReviewNoteJumpTarget } from "./reviewNotes";
+import type { AgentAnnotation, DiffFile } from "../../core/types";
+import { buildReviewNoteGroups, resolveReviewNoteJumpTarget } from "./reviewNotes";
 
-function createNotedFile() {
+function createNotedFile(id = "file:noted", path = "src/noted.ts") {
   const before = Array.from({ length: 20 }, (_, index) => `line${index + 1}`);
   const after = [...before.slice(0, 12), "INSERTED", ...before.slice(12)];
 
@@ -12,9 +13,14 @@ function createNotedFile() {
     after: lines(...after),
     before: lines(...before),
     context: 100,
-    id: "file:noted",
-    path: "src/noted.ts",
+    id,
+    path,
   });
+}
+
+/** Attach one annotation list to a file, the way a restored review does. */
+function withAnnotations(file: DiffFile, annotations: AgentAnnotation[]): DiffFile {
+  return { ...file, agent: { path: file.path, annotations } };
 }
 
 function storedNote(
@@ -31,18 +37,12 @@ function storedNote(
   };
 }
 
-describe("buildReviewNoteEntries", () => {
+describe("buildReviewNoteGroups", () => {
   test("lists placed notes with their line and unplaceable ones with their stored text", () => {
     const file = createNotedFile();
-    const withNotes = {
-      ...file,
-      agent: {
-        path: file.path,
-        annotations: [
-          { id: "placed", summary: "Explain the insert", newRange: [13, 13] as [number, number] },
-        ],
-      },
-    };
+    const withNotes = withAnnotations(file, [
+      { id: "placed", summary: "Explain the insert", newRange: [13, 13] },
+    ]);
     const restored: ResolvedReviewNote[] = [
       {
         note: storedNote({ id: "gone", filePath: file.path, summary: "Line was edited" }),
@@ -51,29 +51,88 @@ describe("buildReviewNoteEntries", () => {
       },
     ];
 
-    expect(buildReviewNoteEntries({ file: withNotes, restoredNotes: restored })).toEqual([
+    expect(buildReviewNoteGroups({ files: [withNotes], restoredNotes: restored })).toEqual([
       {
-        id: "placed",
         fileId: file.id,
-        state: "anchored",
-        placeable: true,
-        source: "ai",
-        summary: "Explain the insert",
-        location: "R13",
-      },
-      {
-        id: "gone",
-        fileId: file.id,
-        state: "unanchored",
-        placeable: false,
-        source: "agent",
-        summary: "Line was edited",
-        anchorText: "const removed = true;",
+        label: "src/noted.ts",
+        entries: [
+          {
+            id: "placed",
+            fileId: file.id,
+            state: "anchored",
+            placeable: true,
+            source: "ai",
+            summary: "Explain the insert",
+            location: "R13",
+          },
+          {
+            id: "gone",
+            fileId: file.id,
+            state: "unanchored",
+            placeable: false,
+            source: "agent",
+            summary: "Line was edited",
+            anchorText: "const removed = true;",
+          },
+        ],
       },
     ]);
   });
 
-  test("keeps orphaned notes reachable even though no reviewed file claims them", () => {
+  test("covers every file in the review, in review order, under its own heading", () => {
+    const first = withAnnotations(createNotedFile("file:first", "src/first.ts"), [
+      { id: "first-note", summary: "About the first file", newRange: [13, 13] },
+    ]);
+    const second = withAnnotations(createNotedFile("file:second", "src/second.ts"), [
+      { id: "second-note", summary: "About the second file", newRange: [13, 13] },
+    ]);
+
+    const groups = buildReviewNoteGroups({ files: [second, first] });
+
+    expect(groups.map((group) => [group.fileId, group.label])).toEqual([
+      ["file:second", "src/second.ts"],
+      ["file:first", "src/first.ts"],
+    ]);
+    // Each entry names its own file, which is what lets a selection cross a file boundary.
+    expect(
+      groups.flatMap((group) => group.entries.map((entry) => [entry.fileId, entry.id])),
+    ).toEqual([
+      ["file:second", "second-note"],
+      ["file:first", "first-note"],
+    ]);
+  });
+
+  test("omits a file that carries no notes", () => {
+    const bare = createNotedFile("file:bare", "src/bare.ts");
+    const noted = withAnnotations(createNotedFile(), [
+      { id: "placed", summary: "Explain the insert", newRange: [13, 13] },
+    ]);
+
+    expect(buildReviewNoteGroups({ files: [bare, noted] }).map((group) => group.fileId)).toEqual([
+      "file:noted",
+    ]);
+  });
+
+  test("puts an unanchored note in the group of the file it was stored against", () => {
+    const first = createNotedFile("file:first", "src/first.ts");
+    const second = createNotedFile("file:second", "src/second.ts");
+    const restored: ResolvedReviewNote[] = [
+      {
+        note: storedNote({ id: "second-stray", filePath: second.path, summary: "Line is gone" }),
+        state: "unanchored",
+        confidence: "high",
+      },
+    ];
+
+    expect(
+      buildReviewNoteGroups({ files: [first, second], restoredNotes: restored }).map((group) => [
+        group.fileId,
+        group.entries.map((entry) => entry.id),
+      ]),
+    ).toEqual([["file:second", ["second-stray"]]]);
+  });
+
+  test("keeps orphaned notes reachable under the path they were stored against", () => {
     const file = createNotedFile();
     const restored: ResolvedReviewNote[] = [
       {
@@ -85,22 +144,21 @@ describe("buildReviewNoteEntries", () => {
         state: "orphaned",
         confidence: "high",
       },
-      {
-        note: storedNote({ id: "elsewhere", filePath: "src/other.ts", summary: "Another file" }),
-        state: "unanchored",
-        confidence: "high",
-      },
     ];
 
-    // The orphan's own file left the review, so no per-file list would ever show it; the
-    // unanchored note of a different file belongs to that file's list, not this one.
+    // The orphan's own file left the review, so it gets a group of its own after the review's
+    // files rather than being attached to whichever file happens to be selected.
     expect(
-      buildReviewNoteEntries({ file, restoredNotes: restored }).map((entry) => entry.id),
-    ).toEqual(["orphan"]);
+      buildReviewNoteGroups({ files: [file], restoredNotes: restored }).map((group) => [
+        group.fileId,
+        group.label,
+        group.entries.map((entry) => entry.id),
+      ]),
+    ).toEqual([["", "src/deleted.ts", ["orphan"]]]);
   });
 
-  test("has nothing to list without a selected file", () => {
-    expect(buildReviewNoteEntries({ file: undefined, restoredNotes: [] })).toEqual([]);
+  test("has nothing to list for an empty review", () => {
+    expect(buildReviewNoteGroups({ files: [], restoredNotes: [] })).toEqual([]);
   });
 });
 

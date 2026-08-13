@@ -1,17 +1,18 @@
 import { memo, type ReactNode } from "react";
 import type { ExtensionPaneTheme } from "../../../extension-api/types";
 import { noteRowId } from "../../lib/ids";
-import type { ReviewNoteEntry } from "../../lib/reviewNotes";
+import type { ReviewNoteEntry, ReviewNoteGroup } from "../../lib/reviewNotes";
 import { fitText } from "../../lib/text";
 
 /**
- * The all-notes list: every note the review still holds for the selected file,
- * whether or not this diff has a line to put it on.
+ * The all-notes list: every note the review still holds, grouped by file,
+ * whether or not the diff has a line to put each one on.
  *
  * The inline layer answers "what is this code about"; this pane answers "what
- * did I say about this file", which is why an unplaceable note stays here after
- * the line it was written against is gone. Rows render from the public pane
- * theme tokens, like the file sidebar's rows do.
+ * did I say about this review", which is why it spans every file and why an
+ * unplaceable note stays here after the line it was written against is gone.
+ * Rows render from the public pane theme tokens, like the file sidebar's rows
+ * do.
  */
 
 /** Render one note row, plus the anchor text when the note has nowhere to sit. */
@@ -54,20 +55,32 @@ const NoteListItem = memo(function NoteListItem({
   );
 });
 
+/** Render one file heading above the notes that belong to it. */
+const NoteGroupHeading = memo(function NoteGroupHeading({
+  label,
+  textWidth,
+  theme,
+}: {
+  label: string;
+  textWidth: number;
+  theme: ExtensionPaneTheme;
+}) {
+  return (
+    <box style={{ width: "100%", height: 1, backgroundColor: theme.panel }}>
+      <text fg={theme.accent}>{fitText(label, textWidth)}</text>
+    </box>
+  );
+});
+
 export interface AllNotesPaneProps {
-  entries: readonly ReviewNoteEntry[];
+  groups: readonly ReviewNoteGroup[];
   width: number;
   theme: ExtensionPaneTheme;
   onSelectNote: (fileId: string, noteId: string) => void;
 }
 
-/** Render every note on the selected file as a selectable list. */
-export function AllNotesPane({
-  entries,
-  width,
-  theme,
-  onSelectNote,
-}: AllNotesPaneProps): ReactNode {
+/** Render every note in the review as a selectable list, grouped by file. */
+export function AllNotesPane({ groups, width, theme, onSelectNote }: AllNotesPaneProps): ReactNode {
   // Mirrors the file sidebar: one column of row padding on each side.
   const textWidth = Math.max(8, width - 2);
 
@@ -86,17 +99,29 @@ export function AllNotesPane({
       horizontalScrollbarOptions={{ visible: false }}
     >
       <box style={{ width: "100%", paddingLeft: 1, flexDirection: "column" }}>
-        {entries.length === 0 ? (
-          <text fg={theme.muted}>{fitText("No notes on this file", textWidth)}</text>
+        {groups.length === 0 ? (
+          <text fg={theme.muted}>{fitText("No notes in this review", textWidth)}</text>
         ) : (
-          entries.map((entry) => (
-            <NoteListItem
-              key={entry.id}
-              entry={entry}
-              textWidth={textWidth}
-              theme={theme}
-              onSelectNote={onSelectNote}
-            />
+          groups.map((group) => (
+            // Grouping is per file, and a file the review dropped keeps its stored path as the
+            // heading, so the key covers both instead of assuming a file id exists.
+            <box
+              key={`${group.fileId}\0${group.label}`}
+              style={{ width: "100%", flexDirection: "column" }}
+            >
+              <NoteGroupHeading label={group.label} textWidth={textWidth} theme={theme} />
+              <box style={{ width: "100%", paddingLeft: 1, flexDirection: "column" }}>
+                {group.entries.map((entry) => (
+                  <NoteListItem
+                    key={entry.id}
+                    entry={entry}
+                    textWidth={Math.max(1, textWidth - 1)}
+                    theme={theme}
+                    onSelectNote={onSelectNote}
+                  />
+                ))}
+              </box>
+            </box>
           ))
         )}
       </box>

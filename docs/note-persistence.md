@@ -104,14 +104,18 @@ deliberately NOT used. Code is dense with near-identical lines (`}`,
 ## 4. Surfacing
 
 - Inline: `anchored` and `moved` notes render as today, at their resolved line.
-- `n` opens **All notes** for the file: a right sidebar, not a modal, so it
+- `a` opens **All notes** for the review: a right sidebar, not a modal, so it
   stays open while moving through the diff, mirroring the existing left
-  sidebar. `n` is currently unbound.
-- The list shows every note. `unanchored` and `orphaned` entries render dimmed
+  sidebar. Opening it reveals that pane alone, without pulling the file
+  sidebar back on. Inline notes move to `i` to free `a`, and `n` stays unbound.
+- The list is an index of the whole review, grouped by file in review order; a
+  file with no notes contributes no group, and an orphan is grouped under the
+  path it was stored against. `unanchored` and `orphaned` entries render dimmed
   with an explicit marker, and show their stored `anchorText` so the note
   still means something.
-- Selecting a note jumps the diff to it and places the line cursor there.
-  Notes with no position do not jump.
+- Selecting a note jumps the diff to it and places the line cursor there,
+  switching files first when the note belongs to another one. Notes with no
+  position do not jump.
 - View menu: "Agent notes" becomes "Inline notes"; "All notes" is added. The
   command id `hunk.view.toggleAgentNotes` keeps its name, because renaming a
   command id silently breaks any `[keybindings]` entry using it.

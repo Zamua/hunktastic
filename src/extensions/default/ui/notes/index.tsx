@@ -19,16 +19,16 @@ import type { ExtensionFactory } from "../../../types";
  */
 export const BUNDLED_NOTES_VIEW_ID = "notes";
 
-/** Render the all-notes list the host built for the selected file. */
+/** Render the all-notes list the host built for the whole review. */
 export function BuiltInNotesView({
-  noteEntries,
+  noteGroups,
   theme,
   width,
   onSelectNote,
 }: BundledPaneHostProps): ReactNode {
   return (
     <AllNotesPane
-      entries={noteEntries ?? []}
+      groups={noteGroups ?? []}
       width={width}
       theme={theme}
       onSelectNote={onSelectNote ?? (() => {})}

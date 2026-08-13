@@ -2763,7 +2763,6 @@ describe("UI components", () => {
         filterFocused={true}
         terminalWidth={60}
         theme={theme}
-        onCloseMenu={() => {}}
         onFilterInput={() => {}}
         onFilterSubmit={() => {}}
       />,
@@ -2784,7 +2783,6 @@ describe("UI components", () => {
         noticeText="Update available: 9.9.9 • npm i -g hunkdiff"
         terminalWidth={60}
         theme={theme}
-        onCloseMenu={() => {}}
         onFilterInput={() => {}}
         onFilterSubmit={() => {}}
       />,
@@ -2805,7 +2803,6 @@ describe("UI components", () => {
         noticeText="Update available"
         terminalWidth={80}
         theme={theme}
-        onCloseMenu={() => {}}
         onFilterInput={() => {}}
         onFilterSubmit={() => {}}
         onExitMode={() => {}}
@@ -2820,7 +2817,6 @@ describe("UI components", () => {
         modeText="Vim navigation — ext vim:normal — Esc exits"
         terminalWidth={80}
         theme={theme}
-        onCloseMenu={() => {}}
         onFilterInput={() => {}}
         onFilterSubmit={() => {}}
         onExitMode={() => {}}
@@ -2836,7 +2832,7 @@ describe("UI components", () => {
     expect(filterFrame).toContain("Vim navigation");
   });
 
-  test("StatusBar mode badge uses the host exit callback and stops the outer click", () => {
+  test("StatusBar mode badge uses the host exit callback and keeps the click to itself", () => {
     const theme = resolveTheme("github-dark-default", null);
     let exits = 0;
     let stopped = 0;
@@ -2846,7 +2842,6 @@ describe("UI components", () => {
       modeText: "Vim navigation",
       terminalWidth: 80,
       theme,
-      onCloseMenu: () => {},
       onFilterInput: () => {},
       onFilterSubmit: () => {},
       onExitMode: () => {
@@ -2876,7 +2871,6 @@ describe("UI components", () => {
         noticeText="Update available: 9.9.9 • npm i -g hunkdiff"
         terminalWidth={60}
         theme={theme}
-        onCloseMenu={() => {}}
         onFilterInput={() => {}}
         onFilterSubmit={() => {}}
       />,
@@ -2898,7 +2892,6 @@ describe("UI components", () => {
         noticeText="Update available: 9.9.9 • npm i -g hunkdiff"
         terminalWidth={60}
         theme={theme}
-        onCloseMenu={() => {}}
         onFilterInput={() => {}}
         onFilterSubmit={() => {}}
       />,
@@ -2944,7 +2937,7 @@ describe("UI components", () => {
       "View",
       "1 / 2 / 0                split / stack / auto",
       "s / t                    sidebar / theme selector",
-      "a                        toggle AI notes",
+      "i / a                    inline notes / all notes",
       "z                        toggle unchanged context",
       "l / w / m / M            lines / wrap / metadata / menu",
       "e                        open file in $EDITOR",
