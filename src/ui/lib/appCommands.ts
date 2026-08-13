@@ -148,8 +148,6 @@ const PUBLIC_EXTENSION_COMMAND_IDS = new Set([
   "hunk.review.halfPageUp",
   "hunk.review.stepDown",
   "hunk.review.stepUp",
-  "hunk.review.scrollLineDown",
-  "hunk.review.scrollLineUp",
   "hunk.review.scrollCodeLeft",
   "hunk.review.scrollCodeRight",
   "hunk.review.alignCurrentLineTop",
@@ -272,21 +270,6 @@ function builtinCommandSpecs(options: BuildAppCommandsOptions): BuiltinCommandSp
       title: "Scroll up one row",
       defaultKeys: ["up", "k"],
       run: (_key, count) => options.stepDiffLine(-count),
-    },
-    {
-      // Vim's Ctrl-E / Ctrl-Y: the view moves and the current line stays put, the opposite of
-      // the step commands above. Pushing the cursor past an edge is what moves it, and the
-      // review clamps it back to the nearest visible row rather than letting it leave.
-      id: "hunk.review.scrollLineDown",
-      title: "Scroll the view down one line",
-      defaultKeys: ["ctrl+e"],
-      run: (_key, count) => options.scrollDiff(count, "step"),
-    },
-    {
-      id: "hunk.review.scrollLineUp",
-      title: "Scroll the view up one line",
-      defaultKeys: ["ctrl+y"],
-      run: (_key, count) => options.scrollDiff(-count, "step"),
     },
     {
       id: "hunk.review.scrollCodeLeft",

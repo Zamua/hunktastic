@@ -22,6 +22,7 @@ export const BUNDLED_NOTES_VIEW_ID = "notes";
 /** Render the all-notes list the host built for the whole review. */
 export function BuiltInNotesView({
   noteGroups,
+  currentNoteId,
   theme,
   width,
   onSelectNote,
@@ -29,6 +30,7 @@ export function BuiltInNotesView({
   return (
     <AllNotesPane
       groups={noteGroups ?? []}
+      currentNoteId={currentNoteId ?? null}
       width={width}
       theme={theme}
       onSelectNote={onSelectNote ?? (() => {})}

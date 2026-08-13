@@ -1,12 +1,7 @@
 import type { FileDiffMetadata, Hunk } from "@pierre/diffs";
 import { countDiffStats } from "../../diffFile";
 import type { StartupNotice } from "../../startupNotice";
-import {
-  DEFAULT_NOVELTY_STYLE,
-  type Changeset,
-  type DiffFile,
-  type NoveltyStyle,
-} from "../../types";
+import type { Changeset, DiffFile } from "../../types";
 import { probeDifftVersion, runDifftJson, type DifftasticExecOptions } from "./exec";
 import { isDifftasticMapFallback, mapDifftasticFile } from "./map";
 import { createMaterializeRoot, materializeFilePair, type MaterializeRoot } from "./materialize";
@@ -25,8 +20,6 @@ export interface ApplyDifftasticEngineOptions extends DifftasticExecOptions {
    * single-file changeset, where the pair is unambiguous.
    */
   directPaths?: { old: string; new: string };
-  /** How novel tokens are marked; recorded on each mapped file for the renderer. */
-  novelty?: NoveltyStyle;
 }
 
 export interface DifftasticFileFallback {
@@ -152,7 +145,6 @@ async function overlayFile(
   file.metadata = metadata;
   file.engine = "difftastic";
   file.noveltySpans = mapped.noveltySpans;
-  file.noveltyStyle = options.novelty ?? DEFAULT_NOVELTY_STYLE;
   // Header counts must match the rendered rows, not the baseline patch.
   file.stats = countDiffStats(metadata);
   return undefined;

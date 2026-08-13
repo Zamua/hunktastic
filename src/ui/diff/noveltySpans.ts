@@ -32,13 +32,15 @@ function normalizeColumnSpans(columnSpans: ColumnSpan[], maxColumn: number): Col
 
 /**
  * Style applied to the emphasized column ranges. Absent fields inherit the underlying
- * span's value, so a background-only emphasis keeps syntax foregrounds and a
- * foreground emphasis (difftastic novel tokens) keeps the row background.
+ * span's value, so a foreground emphasis (difftastic novel tokens) keeps the row
+ * background and an attribute-only emphasis (difftastic changed words) keeps both
+ * colors. There is no background field: difftastic leaves the whitespace between its
+ * per-token spans in no span at all, so a painted background shows a hole at every gap.
  */
 export interface NoveltyEmphasis {
   fg?: string;
-  bg?: string;
   bold?: boolean;
+  underline?: boolean;
 }
 
 /**
@@ -70,32 +72,36 @@ export function overlayNoveltySpans(
   }
 
   const result: RenderSpan[] = [];
-  const push = (
-    text: string,
-    fg: string | undefined,
-    bg: string | undefined,
-    bold: boolean | undefined,
-  ) => {
+  const push = (text: string, style: Omit<RenderSpan, "text">) => {
     if (text.length === 0) {
       return;
     }
 
     // Coalesce identical adjacent styling the same way the flattening pass does.
     const previous = result[result.length - 1];
-    if (previous && previous.fg === fg && previous.bg === bg && previous.bold === bold) {
+    if (
+      previous &&
+      previous.fg === style.fg &&
+      previous.bg === style.bg &&
+      previous.bold === style.bold &&
+      previous.underline === style.underline
+    ) {
       previous.text += text;
       return;
     }
 
     const next: RenderSpan = { text };
-    if (fg !== undefined) {
-      next.fg = fg;
+    if (style.fg !== undefined) {
+      next.fg = style.fg;
     }
-    if (bg !== undefined) {
-      next.bg = bg;
+    if (style.bg !== undefined) {
+      next.bg = style.bg;
     }
-    if (bold !== undefined) {
-      next.bold = bold;
+    if (style.bold !== undefined) {
+      next.bold = style.bold;
+    }
+    if (style.underline !== undefined) {
+      next.underline = style.underline;
     }
     result.push(next);
   };
@@ -103,6 +109,20 @@ export function overlayNoveltySpans(
   let offset = 0;
   let rangeIndex = 0;
   for (const span of spans) {
+    const plain: Omit<RenderSpan, "text"> = {
+      fg: span.fg,
+      bg: span.bg,
+      bold: span.bold,
+      underline: span.underline,
+    };
+    // Absent emphasis fields fall through to the span's own value, so stacking a
+    // second emphasis pass keeps whatever the first one applied.
+    const emphasized: Omit<RenderSpan, "text"> = {
+      fg: emphasis.fg ?? span.fg,
+      bg: span.bg,
+      bold: emphasis.bold ? true : span.bold,
+      underline: emphasis.underline ? true : span.underline,
+    };
     const spanStart = offset;
     const spanEnd = offset + span.text.length;
     let cursor = spanStart;
@@ -115,27 +135,17 @@ export function overlayNoveltySpans(
       }
 
       if (!activeRange || activeRange[0] >= spanEnd) {
-        push(span.text.slice(cursor - spanStart), span.fg, span.bg, span.bold);
+        push(span.text.slice(cursor - spanStart), plain);
         break;
       }
 
       if (activeRange[0] > cursor) {
-        push(
-          span.text.slice(cursor - spanStart, activeRange[0] - spanStart),
-          span.fg,
-          span.bg,
-          span.bold,
-        );
+        push(span.text.slice(cursor - spanStart, activeRange[0] - spanStart), plain);
         cursor = activeRange[0];
       }
 
       const emphasisEnd = Math.min(activeRange[1], spanEnd);
-      push(
-        span.text.slice(cursor - spanStart, emphasisEnd - spanStart),
-        emphasis.fg ?? span.fg,
-        emphasis.bg ?? span.bg,
-        emphasis.bold ? true : span.bold,
-      );
+      push(span.text.slice(cursor - spanStart, emphasisEnd - spanStart), emphasized);
       cursor = emphasisEnd;
     }
 

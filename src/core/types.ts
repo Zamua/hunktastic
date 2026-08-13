@@ -37,19 +37,6 @@ export type DiffEngineId = "pierre" | "difftastic";
 /** Structural diffs are the point of this fork, so they are on unless asked otherwise. */
 export const DEFAULT_DIFF_ENGINE: DiffEngineId = "difftastic";
 
-/**
- * How changed tokens are marked on difftastic-engine files.
- *
- * `highlight` keeps every token's syntax colour and marks the change with the
- * word-diff background; `recolor` takes difft's own terminal look, giving novel
- * tokens the addition/deletion foreground plus bold in place of their syntax colour.
- */
-export type NoveltyStyle = "highlight" | "recolor";
-
-export const NOVELTY_STYLES: readonly NoveltyStyle[] = ["highlight", "recolor"];
-
-export const DEFAULT_NOVELTY_STYLE: NoveltyStyle = "highlight";
-
 /** One intraline novelty range: 0-based, end-exclusive column offsets into the line text. */
 export type ColumnSpan = [number, number];
 
@@ -57,10 +44,18 @@ export type ColumnSpan = [number, number];
  * Per-line intraline novelty columns, index-aligned with the flat
  * `FileDiffMetadata.additionLines` / `deletionLines` arrays. Sparse: only
  * novel lines carry entries; a novel line with no token spans carries `[]`.
+ *
+ * `*WordLines` carry difftastic's second novelty tier (`NovelWord`): the
+ * sub-ranges of the same line's novel columns that actually differ from the
+ * opposite side. Same index space and same sparseness as the arrays above, so a
+ * novel line whose atom has no changed word carries `[]`. Absent altogether when
+ * the producer resolved no word tier.
  */
 export interface DiffLineNoveltySpans {
   additionLines: Array<ColumnSpan[] | undefined>;
   deletionLines: Array<ColumnSpan[] | undefined>;
+  additionWordLines?: Array<ColumnSpan[] | undefined>;
+  deletionWordLines?: Array<ColumnSpan[] | undefined>;
 }
 
 export type ReviewNoteSource = "ai" | "agent" | "user";
@@ -92,11 +87,6 @@ export interface DiffFile {
   engine?: DiffEngineId;
   /** Intraline novelty columns attached when `engine` is `"difftastic"`. */
   noveltySpans?: DiffLineNoveltySpans;
-  /**
-   * How `noveltySpans` render. Carried on the file rather than passed down the row
-   * builders because it only has meaning alongside the spans the engine attached.
-   */
-  noveltyStyle?: NoveltyStyle;
   lineMoveKinds?: DiffLineMoveKinds;
   agent: AgentFileContext | null;
   isUntracked?: boolean;
@@ -129,7 +119,6 @@ export interface CommonOptions {
   engine?: DiffEngineId;
   /** difftastic binary path; user config and `HUNKT_DIFFT_PATH` only, never repo config. */
   difftPath?: string;
-  novelty?: NoveltyStyle;
   cursorLine?: CursorLine;
   vcs?: VcsMode;
   theme?: string;

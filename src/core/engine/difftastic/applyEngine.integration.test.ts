@@ -65,6 +65,16 @@ function diffInput(options: CommonOptions): FileCommandInput {
   return { kind: "diff", left: beforePath, right: afterPath, options };
 }
 
+/** Real two-file CLI input over any committed `<name>-before/after.js` pair. */
+function namedDiffInput(name: string, options: CommonOptions): FileCommandInput {
+  return {
+    kind: "diff",
+    left: join(FIXTURES_DIR, `${name}-before.js`),
+    right: join(FIXTURES_DIR, `${name}-after.js`),
+    options,
+  };
+}
+
 afterEach(() => {
   resetDifftVersionCacheForTests();
   while (tempDirs.length > 0) {
@@ -90,9 +100,6 @@ describe("difftastic engine through the two-file loader", () => {
 
       // Engine field reports difftastic produced this file's metadata.
       expect(file.engine).toBe("difftastic");
-      // The resolved novelty style has to survive the trip to the renderer.
-      expect(file.noveltyStyle).toBe("highlight");
-
       // Hunks are the difftastic-mapped shape: one merged hunk spanning the
       // modified pair run, the context run, and the trailing addition run.
       expect(file.metadata.isPartial).toBe(false);
@@ -138,13 +145,6 @@ describe("difftastic engine through the two-file loader", () => {
       // A line past the new file stays uncovered.
       expect(findHunkIndexForLine(file, "new", 12)).toBe(-1);
 
-      // An explicit style has to reach the file too, not just the default.
-      resetDifftVersionCacheForTests();
-      const recolorBootstrap = await loadAppBootstrap(
-        diffInput({ engine: "difftastic", difftPath: stub, novelty: "recolor" }),
-      );
-      expect(recolorBootstrap.changeset.files[0]!.noveltyStyle).toBe("recolor");
-
       // Fallback path: a failing stub keeps the Pierre baseline intact.
       resetDifftVersionCacheForTests();
       const failingStub = createStubDifft("exit 2");
@@ -164,4 +164,19 @@ describe("difftastic engine through the two-file loader", () => {
       expect(fallbackFile.stats).toEqual(pierreFile.stats);
     },
   );
+
+  test.skipIf(isWindows)("carries the changed-word tier through to the file", async () => {
+    const stub = createStubDifft(`cat "${join(FIXTURES_DIR, "novel-comment-0.69.0.json")}"`);
+    const bootstrap = await loadAppBootstrap(
+      namedDiffInput("novel-comment", { engine: "difftastic", difftPath: stub }),
+    );
+    const file = bootstrap.changeset.files[0]!;
+
+    expect(file.engine).toBe("difftastic");
+    // The whole comment is novel; only the word that changed carries the tier,
+    // which is what difft 0.69.0 draws bold plus underline for this pair.
+    expect(file.noveltySpans?.deletionLines[0]).toHaveLength(23);
+    expect(file.noveltySpans?.deletionWordLines?.[0]).toEqual([[57, 62]]);
+    expect(file.noveltySpans?.additionWordLines?.[0]).toEqual([[57, 64]]);
+  });
 });

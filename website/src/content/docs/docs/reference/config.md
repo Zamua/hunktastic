@@ -40,16 +40,6 @@ Select the diff engine. `difftastic` computes structural hunks and falls back to
 
 ---
 
-**`novelty`**
-
-Mark changed tokens on `difftastic` files. `highlight` keeps syntax colors and adds the word-diff background; `recolor` uses difftastic's own addition/deletion foreground instead.
-
-- **Type:** string
-- **Accepted:** `highlight` or `recolor`
-- **Built-in default:** `highlight`
-
----
-
 **`difft_path`**
 
 Locate the difftastic binary for the `difftastic` engine. Honored from user config and `HUNKT_DIFFT_PATH` only; a repo config value is ignored with a notice.
@@ -66,7 +56,7 @@ Mark the current line as a full-row highlight or on its line number. `off` resto
 
 - **Type:** string
 - **Accepted:** `row`, `number`, or `off`
-- **Built-in default:** `row`
+- **Built-in default:** `off`
 
 ---
 

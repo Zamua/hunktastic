@@ -157,8 +157,8 @@ describe("buildAppMenus", () => {
       "]",
       "{",
       "}",
-      "Ctrl+Y",
-      "Ctrl+E",
+      "Up",
+      "Down",
       "u",
       "d",
       "PageUp",
@@ -178,8 +178,8 @@ describe("buildAppMenus", () => {
       "hunk.review.nextHunk",
       "hunk.review.previousAnnotatedHunk",
       "hunk.review.nextAnnotatedHunk",
-      "hunk.review.scrollLineUp",
-      "hunk.review.scrollLineDown",
+      "hunk.review.stepUp",
+      "hunk.review.stepDown",
       "hunk.review.halfPageUp",
       "hunk.review.halfPageDown",
       "hunk.review.pageUp",
@@ -199,9 +199,9 @@ describe("buildAppMenus", () => {
     });
     const menus = buildAppMenus({ commands, ...MENU_STATE });
 
-    entry(menus, "navigate", "Scroll down one line").action();
+    entry(menus, "navigate", "Down one line").action();
     entry(menus, "navigate", "Jump to end").action();
-    expect(scrolls).toEqual(["1,step", "1,content"]);
+    expect(scrolls).toEqual(["1,content"]);
   });
 
   test("the notes entries advertise the keys their commands ship with", () => {

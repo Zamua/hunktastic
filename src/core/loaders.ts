@@ -96,7 +96,6 @@ async function applyConfiguredEngine(
       : undefined;
   const result = await applyDifftasticEngine(changeset, {
     difftPath: input.options.difftPath,
-    novelty: input.options.novelty,
     directPaths,
   });
   for (const fallback of result.fallbacks) {

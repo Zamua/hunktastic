@@ -111,15 +111,18 @@ describe("built-in command chords", () => {
     ]);
   });
 
-  test("ctrl+e and ctrl+y scroll the view a line without touching the current line", () => {
+  test("j and k step the view a line, and no ctrl chord is bound", () => {
     const { commands, ran } = createTestCommands();
     const press = (fields: Partial<ParsedKey>) =>
       dispatchAppCommand(commands, keyEvent(fields))?.id;
 
-    expect(press({ name: "e", sequence: "e", ctrl: true })).toBe("hunk.review.scrollLineDown");
-    expect(press({ name: "y", sequence: "y", ctrl: true })).toBe("hunk.review.scrollLineUp");
-    // The view moves; `stepDiffLine`, which would carry the cursor with it, is never called.
-    expect(ran).toEqual(["scrollDiff:1,step", "scrollDiff:-1,step"]);
+    // j/k are the line scroll: with the current-line marker off by default they
+    // move the viewport, which is why this fork ships no ctrl chords for it.
+    expect(press({ name: "j", sequence: "j" })).toBe("hunk.review.stepDown");
+    expect(press({ name: "k", sequence: "k" })).toBe("hunk.review.stepUp");
+    expect(press({ name: "e", sequence: "e", ctrl: true })).toBeUndefined();
+    expect(press({ name: "y", sequence: "y", ctrl: true })).toBeUndefined();
+    expect(ran).toEqual(["stepDiffLine:1", "stepDiffLine:-1"]);
   });
 
   test("j and k still move the current line rather than the view", () => {

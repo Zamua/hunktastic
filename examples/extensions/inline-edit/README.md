@@ -1,6 +1,6 @@
 # Inline edit extension
 
-A miniature line editor for the file under review. Press `F4`, type into the diff, press `Ctrl-S`, and Hunk writes the file back to your working tree after asking you first.
+A miniature line editor for the file under review. Press `Ctrl-E`, type into the diff, press `Ctrl-S`, and Hunk writes the file back to your working tree after asking you first.
 
 This example is **not bundled or loaded by Hunk**. Install it explicitly if you want it.
 
@@ -10,7 +10,7 @@ It exists to demonstrate that Hunk's interactive extension surfaces compose, so 
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ctx.workspace`                         | `canWriteDocument` gates the affordance, `readDocument("new")` fills the buffer, `writeDocument` performs the consented write and reloads the review.                                                                                                                  |
 | `mode` on a registered file view        | `onKey` claims arrows, editable characters, Backspace, Enter, and `Ctrl-S`, while `]`, `?`, and `q` pass through so navigation, help, and quit keep working. `Ctrl-S` is recognized with `matchesKey`, so the bare control byte terminals send for it matches too.     |
-| `fileViews.enterMode(viewId)`           | One call makes the view the file's presentation _and_ gives its mode the keyboard, so `F4` opens the editor in a single press.                                                                                                                                         |
+| `fileViews.enterMode(viewId)`           | One call makes the view the file's presentation _and_ gives its mode the keyboard, so `Ctrl-E` opens the editor in a single press.                                                                                                                                     |
 | `fileViews.refresh(viewId, { fileId })` | Every buffer or caret change re-derives the layout. A view's layout is a pure function of `(file, width)`, so this is the only way a stateful presentation redraws — and the buffer belongs to one file, so the refresh is scoped to it and no other file re-lays out. |
 
 ## Try it from this checkout
@@ -28,13 +28,13 @@ mkdir -p ~/.config/hunkt/extensions
 cp -R examples/extensions/inline-edit ~/.config/hunkt/extensions/
 ```
 
-Hunk discovers the folder automatically on later launches. Open **View** and choose **File presentation: Inline edit**, or press `F4`. The command is named `inline-edit.edit` for `[keybindings]` customization.
+Hunk discovers the folder automatically on later launches. Open **View** and choose **File presentation: Inline edit**, or press `Ctrl-E`. The command is named `inline-edit.edit` for `[keybindings]` customization.
 
 ## Keys
 
 | Key                           | Does                                                                          |
 | ----------------------------- | ----------------------------------------------------------------------------- |
-| `F4`                          | Starts editing the selected file, showing the view if it was not already.     |
+| `Ctrl-E`                      | Starts editing the selected file, showing the view if it was not already.     |
 | `↑` `↓` `←` `→`               | Move the caret. `←`/`→` wrap across line ends.                                |
 | any other printable character | Types at the caret — including characters bound to Hunk commands, like `z`.   |
 | `Backspace`                   | Deletes back one character, joining with the previous line at column 0.       |
@@ -47,9 +47,9 @@ The header row reads `EDITING — Esc exits · ctrl+s writes`, plus a `MODIFIED`
 
 ## How the pieces fit
 
-`F4` is one press. The command gates on `canWriteDocument`, starts reading the document, and calls `fileViews.enterMode` before awaiting that read. Entry therefore uses the same selected file the command captured; a selection change cannot attach a late buffer to another file. `enterMode` makes the view that file's presentation and gives its mode the keyboard together, then the completed read builds the buffer and refreshes the view. When entry refuses (no `mode`, a file Hunk keeps on raw diff, a view that does not match), it warns by name and returns `false` without installing a buffer.
+`Ctrl-E` is one press. The command gates on `canWriteDocument`, starts reading the document, and calls `fileViews.enterMode` before awaiting that read. Entry therefore uses the same selected file the command captured; a selection change cannot attach a late buffer to another file. `enterMode` makes the view that file's presentation and gives its mode the keyboard together, then the completed read builds the buffer and refreshes the view. When entry refuses (no `mode`, a file Hunk keeps on raw diff, a view that does not match), it warns by name and returns `false` without installing a buffer.
 
-The editor slot is claimed synchronously, before that command's first `await`. Reading the document suspends the handler, so a guard that only checked "is a session live?" would let a second `F4` through the window in between, and one of the two handlers would then be parked forever on a session nothing could end. The claim is released on every way out — an unwritable review, an unreadable document, a refused `enterMode` — and once a session is live it is the live session that answers the next press.
+The editor slot is claimed synchronously, before that command's first `await`. Reading the document suspends the handler, so a guard that only checked "is a session live?" would let a second `Ctrl-E` through the window in between, and one of the two handlers would then be parked forever on a session nothing could end. The claim is released on every way out — an unwritable review, an unreadable document, a refused `enterMode` — and once a session is live it is the live session that answers the next press.
 
 `onKey` has to answer synchronously — its return value _is_ the routing decision — and the mode context carries only `file` and `fileViews`. So a keystroke can never write anything itself. What `Ctrl-S` does instead is post a request into the edit session, and the command handler that entered the mode is still awaiting that session: `ctx.workspace` is valid for the whole life of a command handler's promise, so the handler is the mode's async runtime.
 

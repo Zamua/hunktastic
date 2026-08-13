@@ -10,19 +10,17 @@ import {
 } from "@pierre/diffs";
 import { formatHunkHeader } from "../../core/hunkHeader";
 import { DEFAULT_TAB_WIDTH } from "../../core/tabWidth";
-import {
-  DEFAULT_NOVELTY_STYLE,
-  type ColumnSpan,
-  type DiffFile,
-  type DiffLineMoveKind,
-  type NoveltyStyle,
-} from "../../core/types";
+import type { ColumnSpan, DiffFile, DiffLineMoveKind } from "../../core/types";
 import { blendHex, hexColorDistance } from "../lib/color";
 import { measureTextWidth } from "../lib/text";
 import { sanitizeTerminalLine } from "../../lib/terminalText";
 import { TRANSPARENT_BACKGROUND, type AppTheme } from "../themes";
 import { expandDiffTabs } from "./codeColumns";
-import { overlayNoveltySpans, remapColumnSpansThroughTabs } from "./noveltySpans";
+import {
+  overlayNoveltySpans,
+  remapColumnSpansThroughTabs,
+  type NoveltyEmphasis,
+} from "./noveltySpans";
 import {
   createSourceBackedHighlightPlan,
   remapSourceBackedHighlight,
@@ -89,6 +87,16 @@ export interface RenderSpan {
   fg?: string;
   bg?: string;
   bold?: boolean;
+  underline?: boolean;
+}
+
+/**
+ * One line's difftastic novelty columns: every novel column range, plus the
+ * changed-word ranges nested inside them. Both index the raw source line.
+ */
+interface LineNoveltyColumns {
+  spans: ColumnSpan[];
+  words?: ColumnSpan[];
 }
 
 export interface SplitLineCell {
@@ -296,7 +304,8 @@ function mergeSpan(target: RenderSpan[], next: RenderSpan) {
     previous &&
     previous.fg === next.fg &&
     previous.bg === next.bg &&
-    previous.bold === next.bold
+    previous.bold === next.bold &&
+    previous.underline === next.underline
   ) {
     previous.text += next.text;
     return;
@@ -382,23 +391,51 @@ function cleanDiffLine(line: string | undefined, tabWidth: number) {
 }
 
 /**
+ * difftastic's changed-word tier (`NovelWord`), which it draws as bold plus
+ * underline. Carries no color, so it inherits the novel foreground applied first.
+ */
+const CHANGED_WORD_EMPHASIS: NoveltyEmphasis = { bold: true, underline: true };
+
+/** Read one line's novelty columns off a file; undefined when the line is not novel. */
+function lineNoveltyColumns(
+  file: DiffFile,
+  side: "addition" | "deletion",
+  index: number,
+): LineNoveltyColumns | undefined {
+  const novelty = file.noveltySpans;
+  if (!novelty) {
+    return undefined;
+  }
+
+  const spans = side === "addition" ? novelty.additionLines[index] : novelty.deletionLines[index];
+  if (spans == null) {
+    return undefined;
+  }
+
+  const words =
+    side === "addition" ? novelty.additionWordLines?.[index] : novelty.deletionWordLines?.[index];
+  return { spans, words };
+}
+
+/**
  * Apply difftastic intraline novelty emphasis to one cell's flattened spans.
  *
- * `highlight` keeps each token's syntax foreground and marks the change with the
- * word-diff background. `recolor` mirrors difft's native terminal output instead,
- * giving novel tokens the deletion/addition foreground plus bold. Either way the row
- * background is untouched, so syntax highlighting survives on non-novel text.
+ * Mirrors difft's own terminal output: a novel token takes the deletion/addition
+ * foreground, and the changed words inside it take a second pass of bold plus
+ * underline. Emphasis is foreground-only because difftastic's JSON leaves the
+ * whitespace between tokens in no span at all, so any background would paint with a
+ * hole at every gap. Row backgrounds stay untouched, so syntax highlighting survives
+ * on every non-novel token.
  */
 function overlayCellNoveltySpans(
   spans: RenderSpan[],
-  noveltyColumns: ColumnSpan[] | undefined,
+  novelty: LineNoveltyColumns | undefined,
   kind: SplitLineCell["kind"],
   rawLine: string | undefined,
   theme: AppTheme,
   tabWidth: number,
-  noveltyStyle: NoveltyStyle = DEFAULT_NOVELTY_STYLE,
 ) {
-  if (!noveltyColumns || noveltyColumns.length === 0 || spans.length === 0) {
+  if (!novelty || novelty.spans.length === 0 || spans.length === 0) {
     return spans;
   }
 
@@ -410,12 +447,20 @@ function overlayCellNoveltySpans(
   }
 
   // difftastic columns index the source text, but rendered spans hold tab-expanded text.
-  const renderColumns = remapColumnSpansThroughTabs(lineText, noveltyColumns, tabWidth);
-  const emphasis =
-    noveltyStyle === "recolor"
-      ? { fg: kind === "deletion" ? theme.removedSignColor : theme.addedSignColor, bold: true }
-      : { bg: wordDiffHighlightBg(kind, theme) };
-  return overlayNoveltySpans(spans, renderColumns, emphasis);
+  const emphasized = overlayNoveltySpans(
+    spans,
+    remapColumnSpansThroughTabs(lineText, novelty.spans, tabWidth),
+    { fg: kind === "deletion" ? theme.removedSignColor : theme.addedSignColor },
+  );
+  if (!novelty.words || novelty.words.length === 0) {
+    return emphasized;
+  }
+
+  return overlayNoveltySpans(
+    emphasized,
+    remapColumnSpansThroughTabs(lineText, novelty.words, tabWidth),
+    CHANGED_WORD_EMPHASIS,
+  );
 }
 
 /** Build the normalized render model for one split-view cell. */
@@ -427,9 +472,8 @@ function makeSplitCell(
   theme: AppTheme,
   tabWidth: number,
   moveKind?: DiffLineMoveKind,
-  noveltyColumns?: ColumnSpan[],
+  novelty?: LineNoveltyColumns,
   difftasticStyle = false,
-  noveltyStyle?: NoveltyStyle,
 ) {
   if (kind === "empty") {
     const emptyCell: SplitLineCell = {
@@ -464,15 +508,7 @@ function makeSplitCell(
     }
   }
 
-  spans = overlayCellNoveltySpans(
-    spans,
-    noveltyColumns,
-    kind,
-    rawLine,
-    theme,
-    tabWidth,
-    noveltyStyle,
-  );
+  spans = overlayCellNoveltySpans(spans, novelty, kind, rawLine, theme, tabWidth);
 
   const cell: SplitLineCell = {
     kind,
@@ -498,9 +534,8 @@ function makeStackCell(
   theme: AppTheme,
   tabWidth: number,
   moveKind?: DiffLineMoveKind,
-  noveltyColumns?: ColumnSpan[],
+  novelty?: LineNoveltyColumns,
   difftasticStyle = false,
-  noveltyStyle?: NoveltyStyle,
 ) {
   // Same lazy-fallback strategy as split cells: only normalize the raw source line when we really
   // need the plain-text fallback, not when highlighted spans are already ready to reuse.
@@ -522,15 +557,7 @@ function makeStackCell(
     }
   }
 
-  spans = overlayCellNoveltySpans(
-    spans,
-    noveltyColumns,
-    kind,
-    rawLine,
-    theme,
-    tabWidth,
-    noveltyStyle,
-  );
+  spans = overlayCellNoveltySpans(spans, novelty, kind, rawLine, theme, tabWidth);
 
   const cell: StackLineCell = {
     kind,
@@ -867,7 +894,6 @@ export function buildSplitRows(
   const additionLines = highlighted?.additionLines ?? [];
   // Same derivation as fileLineDiffType: difftastic files get difft's native cell styling.
   const difftasticStyle = file.engine === "difftastic";
-  const noveltyStyle = file.noveltyStyle;
 
   for (const [hunkIndex, hunk] of file.metadata.hunks.entries()) {
     if (hunk.collapsedBefore > 0) {
@@ -913,7 +939,6 @@ export function buildSplitRows(
               undefined,
               undefined,
               difftasticStyle,
-              noveltyStyle,
             ),
             right: makeSplitCell(
               "context",
@@ -925,7 +950,6 @@ export function buildSplitRows(
               undefined,
               undefined,
               difftasticStyle,
-              noveltyStyle,
             ),
           });
         }
@@ -957,9 +981,8 @@ export function buildSplitRows(
                 theme,
                 tabWidth,
                 file.lineMoveKinds?.deletionLines[deletionLineIndex + offset],
-                file.noveltySpans?.deletionLines[deletionLineIndex + offset],
+                lineNoveltyColumns(file, "deletion", deletionLineIndex + offset),
                 difftasticStyle,
-                noveltyStyle,
               )
             : makeSplitCell(
                 "empty",
@@ -971,7 +994,6 @@ export function buildSplitRows(
                 undefined,
                 undefined,
                 difftasticStyle,
-                noveltyStyle,
               ),
           right: hasAddition
             ? makeSplitCell(
@@ -982,9 +1004,8 @@ export function buildSplitRows(
                 theme,
                 tabWidth,
                 file.lineMoveKinds?.additionLines[additionLineIndex + offset],
-                file.noveltySpans?.additionLines[additionLineIndex + offset],
+                lineNoveltyColumns(file, "addition", additionLineIndex + offset),
                 difftasticStyle,
-                noveltyStyle,
               )
             : makeSplitCell(
                 "empty",
@@ -996,7 +1017,6 @@ export function buildSplitRows(
                 undefined,
                 undefined,
                 difftasticStyle,
-                noveltyStyle,
               ),
         });
       }
@@ -1037,7 +1057,6 @@ export function buildStackRows(
   const additionLines = highlighted?.additionLines ?? [];
   // Same derivation as fileLineDiffType: difftastic files get difft's native cell styling.
   const difftasticStyle = file.engine === "difftastic";
-  const noveltyStyle = file.noveltyStyle;
 
   for (const [hunkIndex, hunk] of file.metadata.hunks.entries()) {
     if (hunk.collapsedBefore > 0) {
@@ -1084,7 +1103,6 @@ export function buildStackRows(
               undefined,
               undefined,
               difftasticStyle,
-              noveltyStyle,
             ),
           });
         }
@@ -1111,9 +1129,8 @@ export function buildStackRows(
             theme,
             tabWidth,
             file.lineMoveKinds?.deletionLines[deletionLineIndex + offset],
-            file.noveltySpans?.deletionLines[deletionLineIndex + offset],
+            lineNoveltyColumns(file, "deletion", deletionLineIndex + offset),
             difftasticStyle,
-            noveltyStyle,
           ),
         });
       }
@@ -1133,9 +1150,8 @@ export function buildStackRows(
             theme,
             tabWidth,
             file.lineMoveKinds?.additionLines[additionLineIndex + offset],
-            file.noveltySpans?.additionLines[additionLineIndex + offset],
+            lineNoveltyColumns(file, "addition", additionLineIndex + offset),
             difftasticStyle,
-            noveltyStyle,
           ),
         });
       }

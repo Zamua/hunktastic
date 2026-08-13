@@ -1,5 +1,5 @@
 import { describe, expect, mock, spyOn, test } from "bun:test";
-import type { ScrollBoxRenderable } from "@opentui/core";
+import { TextAttributes, type ScrollBoxRenderable } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act, createRef, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { AppBootstrap, DiffFile } from "../../core/types";
@@ -780,6 +780,79 @@ describe("UI components", () => {
         });
       }
     }
+  });
+
+  test("DiffRowView carries span bold and underline into the rendered attributes", async () => {
+    const theme = resolveTheme("github-dark-default", null);
+    const renderSpans = async (
+      spans: Array<{ text: string; bold?: boolean; underline?: boolean }>,
+    ) => {
+      const setup = await testRender(
+        <DiffRowView
+          row={{
+            type: "stack-line",
+            key: "alpha:line:changed-word",
+            fileId: "alpha",
+            hunkIndex: 0,
+            cell: { kind: "addition", sign: "+", newLineNumber: 2, spans },
+          }}
+          width={40}
+          lineNumberDigits={1}
+          showLineNumbers={true}
+          showHunkHeaders={true}
+          wrapLines={false}
+          codeHorizontalOffset={0}
+          theme={theme}
+          selected={false}
+        />,
+        { width: 48, height: 3 },
+      );
+
+      try {
+        await act(async () => {
+          await setup.renderOnce();
+        });
+        return setup
+          .captureSpans()
+          .lines.find((candidate) => candidate.spans.some((span) => span.text.includes("plain")))
+          ?.spans;
+      } finally {
+        await act(async () => {
+          setup.renderer.destroy();
+        });
+      }
+    };
+    const spanNamed = (
+      captured: Array<{ text: string; attributes: number }> | undefined,
+      text: string,
+    ) => captured?.find((span) => span.text.includes(text));
+
+    // One attribute each, so the two bits are told apart. The underlined span is
+    // last, so row padding would otherwise be appended to it and drag the
+    // underline across the rest of the row.
+    const trailing = await renderSpans([
+      { text: "plain ", bold: true },
+      { text: "word", underline: true },
+    ]);
+    expect(spanNamed(trailing, "plain")!.attributes & TextAttributes.BOLD).toBe(
+      TextAttributes.BOLD,
+    );
+    expect(spanNamed(trailing, "plain")!.attributes & TextAttributes.UNDERLINE).toBe(0);
+    expect(spanNamed(trailing, "word")!.attributes & TextAttributes.UNDERLINE).toBe(
+      TextAttributes.UNDERLINE,
+    );
+    expect(spanNamed(trailing, "word")!.attributes & TextAttributes.BOLD).toBe(0);
+    expect(spanNamed(trailing, "word")!.text).toBe("word");
+
+    // Neighbouring text of the same color differs only in the attribute, which is
+    // exactly the shape a changed word inside a novel region produces.
+    const neighboured = await renderSpans([
+      { text: "plain " },
+      { text: "word", underline: true },
+      { text: "tail" },
+    ]);
+    expect(spanNamed(neighboured, "word")!.text).toBe("word");
+    expect(spanNamed(neighboured, "tail")!.attributes & TextAttributes.UNDERLINE).toBe(0);
   });
 
   test("DiffRowView height matches geometry for repeated composing scalars", async () => {

@@ -224,7 +224,7 @@ function createInlineEditTestHost({
 describe("inline edit example extension", () => {
   test("registers one interactive file view and one command on a free chord", () => {
     const host = createInlineEditTestHost();
-    expect(host.command).toMatchObject({ id: "edit", key: "f4" });
+    expect(host.command).toMatchObject({ id: "edit", key: "ctrl+e" });
     expect(host.view.id).toBe("inline-edit");
     expect(typeof host.view.mode?.onKey).toBe("function");
     expect(host.view.matches({ path: "alpha.ts" } as never)).toBe(true);

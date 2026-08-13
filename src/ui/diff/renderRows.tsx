@@ -94,7 +94,8 @@ function appendRenderSpan(target: RenderSpan[], span: RenderSpan) {
     previous &&
     previous.fg === span.fg &&
     previous.bg === span.bg &&
-    previous.bold === span.bold
+    previous.bold === span.bold &&
+    previous.underline === span.underline
   ) {
     previous.text += span.text;
   } else {
@@ -103,8 +104,10 @@ function appendRenderSpan(target: RenderSpan[], span: RenderSpan) {
 }
 
 /** OpenTUI attribute bits for one render span. */
-function spanTextAttributes(span: Pick<RenderSpan, "bold">) {
-  return span.bold ? TextAttributes.BOLD : undefined;
+function spanTextAttributes(span: Pick<RenderSpan, "bold" | "underline">) {
+  const attributes =
+    (span.bold ? TextAttributes.BOLD : 0) | (span.underline ? TextAttributes.UNDERLINE : 0);
+  return attributes === TextAttributes.NONE ? undefined : attributes;
 }
 
 /** Return the first or last scalar in one non-empty string. */
@@ -309,6 +312,7 @@ function appendFixedInlineChunks(
     paddingAmount > 0 &&
     lastSpan &&
     !lastSpan.bold &&
+    !lastSpan.underline &&
     (lastSpan.fg ?? fallbackColor) === fallbackColor &&
     (lastSpan.bg ?? fallbackBg) === fallbackBg
   ) {
@@ -420,6 +424,7 @@ function renderInlineSpans(
     paddingAmount > 0 &&
     lastSpan &&
     !lastSpan.bold &&
+    !lastSpan.underline &&
     (lastSpan.fg ?? fallbackColor) === fallbackColor &&
     (lastSpan.bg ?? fallbackBg) === fallbackBg
   ) {

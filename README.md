@@ -51,10 +51,9 @@ The difftastic engine is the default: that is the point of the fork. `--engine p
 switches back to hunk's line engine for one run, and `engine = "pierre"` in
 `~/.config/hunkt/config.toml` makes that permanent.
 
-Changed tokens keep their syntax colour and are marked with the word-diff background.
-Pass `--novelty recolor` (or `novelty = "recolor"`) to take difftastic's own look
-instead, where novel tokens turn addition-green or deletion-red in place of their
-syntax colour.
+Novel tokens render the way difftastic renders them: addition-green or deletion-red in
+place of their syntax colour, with the changed word inside bold and underlined. Every
+other token on the line keeps its syntax highlighting, and no row is tinted.
 
 Structural diffs need both file bodies, so the engine applies to hunk's own loaders
 (`hunkt diff`, `hunkt show`). Git pager mode only ever receives a finished unified patch,

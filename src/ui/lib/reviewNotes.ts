@@ -185,6 +185,42 @@ export function buildReviewNoteGroups({
   return [...groups, ...orphanGroups(restoredNotes)];
 }
 
+/**
+ * Name the one note the review is currently showing.
+ *
+ * Policy: the note anchored on the review's current line owns the selection, and the
+ * first such note in file order wins when several share the line. That is the same
+ * rule `annotatedHunkLineTarget` uses to place the current line when a jump lands on
+ * an annotated hunk, so every way of reaching a note — a list row, note-to-note
+ * stepping, the keyboard — highlights the row the review actually moved to, with no
+ * second selection state to keep in sync.
+ */
+export function currentReviewNoteId(
+  files: readonly DiffFile[],
+  cursor: { fileId: string; target: UserNoteLineTarget } | null,
+): string | null {
+  if (!cursor) {
+    return null;
+  }
+
+  const file = files.find((candidate) => candidate.id === cursor.fileId);
+  if (!file?.agent) {
+    return null;
+  }
+
+  const index = file.agent.annotations.findIndex((annotation: ReviewNoteAnnotation) => {
+    if (!isPlaceableReviewNote(annotation)) {
+      return false;
+    }
+
+    const anchor = annotationAnchor(annotation);
+    return anchor?.side === cursor.target.side && anchor.lineNumber === cursor.target.line;
+  });
+
+  const annotation = file.agent.annotations[index];
+  return annotation ? reviewNoteId(file.id, annotation, index) : null;
+}
+
 /** Where selecting one note should take the review. */
 export interface ReviewNoteJumpTarget {
   hunkIndex: number;

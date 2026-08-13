@@ -6,7 +6,6 @@ import type {
   CommonOptions,
   CursorLine,
   DiffEngineId,
-  NoveltyStyle,
   ExtensionManageCommandInput,
   HelpCommandInput,
   LayoutMode,
@@ -46,14 +45,7 @@ import { resolveCliVersion } from "./version";
 export interface CliReferenceOption {
   readonly flag: string;
   readonly description: string;
-  readonly parse?:
-    | "layout"
-    | "cursorLine"
-    | "engine"
-    | "novelty"
-    | "positiveInt"
-    | "tabWidth"
-    | "collect";
+  readonly parse?: "layout" | "cursorLine" | "engine" | "positiveInt" | "tabWidth" | "collect";
   readonly defaultValue?: string;
   /** Default applied directly by Commander (as opposed to a config-resolved default). */
   readonly commanderDefault?: string;
@@ -75,11 +67,6 @@ export interface CliReferenceCommand {
 export const COMMON_REVIEW_OPTIONS = [
   { flag: "--mode <mode>", description: "layout mode: auto, split, stack", parse: "layout" },
   { flag: "--engine <engine>", description: "diff engine: pierre, difftastic", parse: "engine" },
-  {
-    flag: "--novelty <style>",
-    description: "difftastic change marking: highlight, recolor",
-    parse: "novelty",
-  },
   {
     flag: "--cursor-line <style>",
     description: "current-line marker: row, number, off",
@@ -264,15 +251,6 @@ function parseEngine(value: string): DiffEngineId {
   throw new Error(`Invalid diff engine: ${value}`);
 }
 
-/** Validate one requested novelty style from CLI input. */
-function parseNovelty(value: string): NoveltyStyle {
-  if (value === "highlight" || value === "recolor") {
-    return value;
-  }
-
-  throw new Error(`Invalid novelty style: ${value}`);
-}
-
 /** Validate one requested current-line style from CLI input. */
 function parseCursorLine(value: string): CursorLine {
   if (value === "row" || value === "number" || value === "off") {
@@ -324,7 +302,6 @@ function buildCommonOptions(
   options: {
     mode?: LayoutMode;
     engine?: DiffEngineId;
-    novelty?: NoveltyStyle;
     cursorLine?: CursorLine;
     theme?: string;
     agentContext?: string;
@@ -340,7 +317,6 @@ function buildCommonOptions(
   return {
     mode: options.mode,
     engine: options.engine,
-    novelty: options.novelty,
     cursorLine: options.cursorLine,
     theme: options.theme,
     agentContext: options.agentContext,
@@ -374,8 +350,6 @@ function applyReferenceOption(command: Command, option: CliReferenceOption) {
   const commanderOption = new Option(option.flag, option.description);
   if (option.parse === "layout") {
     commanderOption.argParser(parseLayoutMode);
-  } else if (option.parse === "novelty") {
-    commanderOption.argParser(parseNovelty);
   } else if (option.parse === "engine") {
     commanderOption.argParser(parseEngine);
   } else if (option.parse === "cursorLine") {
@@ -473,7 +447,6 @@ function renderCliHelp() {
     "Common review options:",
     "  --mode <mode>                           layout mode: auto, split, stack",
     "  --engine <engine>                       diff engine: pierre, difftastic",
-    "  --novelty <style>                       difftastic change marking: highlight, recolor",
     "  --watch                                 auto-reload when the current diff input changes",
     "  --agent-context <path>                  JSON sidecar with agent rationale",
     "  --pager                                 use pager-style chrome",

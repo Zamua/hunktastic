@@ -133,7 +133,7 @@ The handler fires when the key is pressed outside modal UI (dialogs, menus, and 
 
 ```ts
 hunk.registerCommand(
-  { id: "show-selection", title: "Show the selected file", key: "ctrl+o" },
+  { id: "show-selection", title: "Show the selected file", key: "ctrl+y" },
   (ctx) => {
     const { file, hunkIndex } = ctx.selection;
     if (!file) {

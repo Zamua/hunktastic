@@ -1,0 +1,1 @@
+{"aligned_lines":[[0,0],[1,1]],"chunks":[[{"lhs":{"line_number":0,"changes":[{"start":14,"end":26,"content":"\"alpha beta\"","highlight":"string"}]},"rhs":{"line_number":0,"changes":[{"start":14,"end":27,"content":"\"gamma delta\"","highlight":"string"}]}}]],"language":"JavaScript","path":"test/fixtures/difftastic/novel-dissimilar-after.js","status":"changed"}

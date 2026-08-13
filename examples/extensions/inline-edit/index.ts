@@ -750,7 +750,7 @@ const inlineEditExtension: ExtensionFactory = (hunk) => {
   });
 
   hunk.registerCommand(
-    { id: "edit", title: "Edit the selected file inline", key: "f4" },
+    { id: "edit", title: "Edit the selected file inline", key: "ctrl+e" },
     async (ctx) => {
       const file = ctx.selection.file;
       if (!file) {

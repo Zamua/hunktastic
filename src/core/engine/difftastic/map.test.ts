@@ -96,6 +96,17 @@ function mapPairEdits(lineCount: number, changedLines: number[]): DifftasticMapp
 function expectRenderInvariants(mapped: DifftasticMappedFile) {
   expect(mapped.noveltySpans.deletionLines).toHaveLength(mapped.deletionLines.length);
   expect(mapped.noveltySpans.additionLines).toHaveLength(mapped.additionLines.length);
+  expect(mapped.noveltySpans.deletionWordLines).toHaveLength(mapped.deletionLines.length);
+  expect(mapped.noveltySpans.additionWordLines).toHaveLength(mapped.additionLines.length);
+  // The changed-word tier is a subset of the novel columns, so it is present on
+  // exactly the lines that carry novel columns.
+  for (const side of ["deletion", "addition"] as const) {
+    const lines = mapped.noveltySpans[`${side}Lines`];
+    const words = mapped.noveltySpans[`${side}WordLines`];
+    for (const [index, spans] of lines.entries()) {
+      expect(words?.[index] == null).toBe(spans == null);
+    }
+  }
   for (const hunk of mapped.hunks) {
     let deletions = 0;
     let additions = 0;
@@ -753,6 +764,232 @@ describe("EOF newline flags", () => {
     if (isDifftasticMapFallback(result)) throw new Error("expected a mapped result");
     expect(result.hunks[0]?.noEOFCRDeletions).toBe(true);
     expect(result.hunks[0]?.noEOFCRAdditions).toBe(true);
+    expectRenderInvariants(result);
+  });
+});
+
+/**
+ * difftastic's second novelty tier (`NovelWord`, drawn bold plus underline),
+ * recovered from payloads that dropped the tier label. Every expectation here is
+ * the real `difft 0.69.0` terminal output for the same fixture pair.
+ */
+describe("changed-word tier", () => {
+  function mapNovelFixture(name: string, extension = "js") {
+    return mapFixture(
+      `${name}-0.69.0.json`,
+      `${name}-before.${extension}`,
+      `${name}-after.${extension}`,
+    );
+  }
+
+  /** Changed-word ranges on one line, read back as the words they cover. */
+  function changedWords(
+    text: string,
+    words: Array<[number, number][] | undefined> | undefined,
+    line: number,
+  ) {
+    const lineText = text.split("\n")[line] ?? "";
+    return (words?.[line] ?? []).map(([start, end]) => lineText.slice(start, end));
+  }
+
+  test("marks only the word that changed inside a modified string literal", () => {
+    const { result, oldText, newText } = mapNovelFixture("novel-string");
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([[33, 36]]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([[33, 36]]);
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["fox"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["cat"]);
+    // The novel columns still cover the whole atom, one span per token.
+    expect(result.noveltySpans.deletionLines[0]).toHaveLength(19);
+    expectRenderInvariants(result);
+  });
+
+  test("marks the changed word inside a modified comment", () => {
+    const { result, oldText, newText } = mapNovelFixture("novel-comment");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["error"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["failure"]);
+    // The words differ in length, so the two sides end at different columns.
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([[57, 62]]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([[57, 64]]);
+  });
+
+  test("a changed identifier is out of word-split scope and gets no changed word", () => {
+    const { result } = mapNovelFixture("novel-identifier");
+    expect(result.noveltySpans.deletionLines[0]).toEqual([[14, 24]]);
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([]);
+  });
+
+  test("a string too dissimilar for the gate stays whole-atom novel", () => {
+    const { result } = mapNovelFixture("novel-dissimilar");
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([]);
+  });
+
+  test("the hole difft leaves at a whitespace-only change does not split the atom", () => {
+    // difft emits no span for a changed word that is all whitespace, so the added
+    // space leaves a one-byte gap mid-atom. Treating that gap as an atom boundary
+    // would misalign the two sides and lose the real changed word.
+    const { result, oldText, newText } = mapNovelFixture("novel-whitespace-word");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["epsilon"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["omega"]);
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([[36, 43]]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([[37, 42]]);
+  });
+
+  test("two changed atoms on one line pair in source order", () => {
+    const { result, oldText, newText } = mapNovelFixture("novel-two-strings");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["fox", "dog"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["cat", "pig"]);
+  });
+
+  test("changed-word columns are code units, not the payload's bytes", () => {
+    const { result, oldText } = mapNovelFixture("novel-multibyte");
+    // "fox" sits at byte column 40 in a line opening with Japanese text.
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([[34, 37]]);
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["fox"]);
+  });
+
+  test("a multi-line comment marks the tier only on the line whose word changed", () => {
+    const { result, oldText, newText } = mapNovelFixture("novel-block-comment");
+    for (const line of [0, 1, 3]) {
+      expect(changedWords(oldText, result.noveltySpans.deletionWordLines, line)).toEqual([]);
+      expect(changedWords(newText, result.noveltySpans.additionWordLines, line)).toEqual([]);
+    }
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 2)).toEqual(["error"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 2)).toEqual(["failure"]);
+  });
+
+  test("an atom keeps its own kind, so a changed keyword cannot swallow the string after it", () => {
+    // "return" (keyword) and the literal (string) are separated by one space, so
+    // only the kind tells the two atoms apart.
+    const { result, oldText, newText } = mapNovelFixture("novel-keyword-string");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 1)).toEqual(["fox"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 1)).toEqual(["cat"]);
+  });
+
+  test("the similarity gate is decided per atom, not per line", () => {
+    // Two string atoms on one line: the short pair fails the gate and stays whole
+    // -atom novel while the long pair passes and marks its changed word.
+    const { result, oldText, newText } = mapNovelFixture("novel-per-atom-gate");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["fox"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["cat"]);
+  });
+
+  test("a plain-text atom is out of scope, the one place we under-emphasize", () => {
+    // difftastic word-splits markdown prose (a Text atom) but reports it as
+    // `normal`, indistinguishable from a changed identifier. Withholding emphasis
+    // is the safe half of that ambiguity.
+    const { result } = mapNovelFixture("novel-text-atom", "md");
+    expect(result.noveltySpans.deletionLines[0]).toHaveLength(18);
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([]);
+  });
+
+  test("a whole-atom novel item gets no changed word, whatever its lines look like", () => {
+    // difft's own gate rejected this comment, so it emitted one span per line and
+    // draws the whole thing plain novel. Line 1 reads similar enough that a
+    // line-local decision would disagree; the span count is what settles it.
+    const { result } = mapNovelFixture("novel-whole-atom-plain");
+    for (const [index, spans] of result.noveltySpans.deletionLines.entries()) {
+      if (spans == null) continue;
+      expect(spans).toHaveLength(1);
+      expect(result.noveltySpans.deletionWordLines?.[index]).toEqual([]);
+      expect(result.noveltySpans.additionWordLines?.[index]).toEqual([]);
+    }
+  });
+
+  test("a multi-line atom is one atom, so its gate is decided over every line at once", () => {
+    // Lines 2 and 3 share too little to pass the gate on their own, but difft
+    // word-split the whole comment as one atom and marks a changed word on all
+    // three prose lines. Ground truth: `difft --color always` draws exactly these
+    // 18 words with SGR 1;4.
+    const { result, oldText, newText } = mapNovelFixture("novel-block-rewrite");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 1)).toEqual(["fox"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 1)).toEqual(["cat"]);
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 2)).toEqual([
+      "aaa",
+      "bbb",
+      "ccc",
+      "ddd",
+    ]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 2)).toEqual([
+      "zzz",
+      "yyy",
+      "xxx",
+      "www",
+    ]);
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 3)).toEqual([
+      "eee",
+      "fff",
+      "ggg",
+      "hhh",
+    ]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 3)).toEqual([
+      "vvv",
+      "uuu",
+      "ttt",
+      "sss",
+    ]);
+    expectRenderInvariants(result);
+  });
+
+  test("two line comments on consecutive lines stay two atoms", () => {
+    // The line break is what separates them, and difft says so by emitting no
+    // position for it. Joining them would run one token diff over both comments,
+    // whose shared words would carry the second comment past a gate difft failed
+    // it on: difft draws only "fox" and "cat".
+    const { result, oldText, newText } = mapNovelFixture("novel-adjacent-comments");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["fox"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["cat"]);
+    expect(result.noveltySpans.deletionLines[1]).toHaveLength(1);
+    expect(result.noveltySpans.deletionWordLines?.[1]).toEqual([]);
+    expect(result.noveltySpans.additionWordLines?.[1]).toEqual([]);
+  });
+
+  test("an indented multi-line atom reports columns against its own lines", () => {
+    const { result, oldText, newText } = mapNovelFixture("novel-indented-block");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 2)).toEqual(["fox"]);
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 3)).toEqual([
+      "aaa",
+      "bbb",
+      "ccc",
+      "ddd",
+    ]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 3)).toEqual([
+      "zzz",
+      "yyy",
+      "xxx",
+      "www",
+    ]);
+    // The comment opens at column 2, so the second line's words sit past it.
+    expect(result.noveltySpans.deletionWordLines?.[3]).toEqual([
+      [5, 8],
+      [9, 12],
+      [13, 16],
+      [17, 20],
+    ]);
+    expectRenderInvariants(result);
+  });
+
+  test("a repeated phrase marks the one word that changed", () => {
+    // "set the" appears three times, so the token LCS has repeats to pair.
+    const { result, oldText, newText } = mapNovelFixture("novel-repeated-token");
+    expect(changedWords(oldText, result.noveltySpans.deletionWordLines, 0)).toEqual(["value"]);
+    expect(changedWords(newText, result.noveltySpans.additionWordLines, 0)).toEqual(["total"]);
+    expect(result.noveltySpans.deletionWordLines?.[0]).toEqual([[37, 42]]);
+    expect(result.noveltySpans.additionWordLines?.[0]).toEqual([[37, 42]]);
+  });
+
+  test("unpaired deletion rows carry an empty changed-word list", () => {
+    const { result } = mapFixture(
+      "deleted-lines-0.69.0.json",
+      "deleted-lines-before.js",
+      "deleted-lines-after.js",
+    );
+    for (const [index, spans] of result.noveltySpans.deletionLines.entries()) {
+      if (spans == null) continue;
+      expect(result.noveltySpans.deletionWordLines?.[index]).toEqual([]);
+    }
     expectRenderInvariants(result);
   });
 });

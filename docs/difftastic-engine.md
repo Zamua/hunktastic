@@ -26,13 +26,13 @@ Tested against difftastic 0.69.0. Ground-truth fixture:
 - Split and stack layouts, including difftastic's explicit lhs/rhs row
   alignment in split view.
 - Intraline novelty spans from difftastic's per-line column ranges, rendered
-  via the existing emphasis-background span mechanism.
+  with difft's own novel-token foreground (section 5.5).
+- Word-level novelty emphasis: difftastic's two-tier novelty decision, ported
+  and re-run over the payload's own spans, rendered bold plus underline
+  (section 5.6).
 
 ### v1 out of scope (explicit)
 
-- Word-level novelty emphasis PARITY with difftastic's own terminal display.
-  The JSON strips display-level novelty emphasis (difftastic issue #658); v1
-  renders the token spans the JSON does carry and accepts visual divergence.
 - difftastic for `patch` and `pager` inputs (no file contents available;
   Pierre always, one notice if `engine = "difftastic"` is configured).
 - Watch-mode performance edge cases. Watch re-runs the full load pipeline;
@@ -55,10 +55,9 @@ The built-in default is `difftastic` (`DEFAULT_DIFF_ENGINE` in
 are on unless a layer above turns them off. A missing difft therefore surfaces
 the unavailable notice on a default run rather than only when opted in.
 
-A second option `novelty` (`"highlight" | "recolor"`, default `highlight`,
-`DEFAULT_NOVELTY_STYLE`) selects how changed tokens are marked, and layers the
-same way with `HUNKT_NOVELTY` as its env hook. It applies only to
-difftastic-engine files, since only they carry novelty spans. See section 5.5.
+Novelty rendering has no option. difftastic's own foreground-only marking is the
+one rendering path, for the reason section 5.5 gives, so there is nothing to
+select between.
 
 Touch list (mirrors the `layout` option shape):
 
@@ -329,25 +328,140 @@ Bridge with the established sidecar precedent (`DiffLineMoveKinds`):
 
 - New `DiffFile.noveltySpans?: DiffLineNoveltySpans` in
   `src/core/types.ts`: `{ additionLines: (ColumnSpan[] | undefined)[],
-deletionLines: (ColumnSpan[] | undefined)[] }`, index-aligned with the
-  flat metadata arrays, `ColumnSpan = [start, end]` 0-based end-exclusive
-  UTF-16 code-unit offsets, remapped by the mapper from the UTF-8 byte
-  offsets in `changes[].start/end` (section 5.1). Sparse: only novel lines
-  have entries; a modified line with empty `changes` gets `[]` (novel line,
-  no emphasis).
+deletionLines: (ColumnSpan[] | undefined)[], additionWordLines?, deletionWordLines? }`,
+  index-aligned with the flat metadata arrays, `ColumnSpan = [start, end]`
+  0-based end-exclusive UTF-16 code-unit offsets, remapped by the mapper from
+  the UTF-8 byte offsets in `changes[].start/end` (section 5.1). Sparse: only
+  novel lines have entries; a modified line with empty `changes` gets `[]`
+  (novel line, no emphasis). The `*WordLines` arrays carry the changed-word
+  tier (section 5.6) in the same index space and the same sparse pattern.
 - Render: in `src/ui/diff/pierre.ts`, where cells are built (the same sites
   that consult `lineMoveKinds`), apply
-  `overlayNoveltySpans(spans, columnSpans, emphasisBg)`: split the flattened
-  `RenderSpan[]` at the column boundaries and set the emphasis `bg`
-  (reuse `wordDiffHighlightBg`). The renderer receives code-unit spans (the
-  mapper already remapped the byte offsets), so they slice line text and
-  `RenderSpan.text` directly.
+  `overlayNoveltySpans(spans, columnSpans, emphasis)`: split the flattened
+  `RenderSpan[]` at the column boundaries and set the emphasis. The renderer
+  receives code-unit spans (the mapper already remapped the byte offsets), so
+  they slice line text and `RenderSpan.text` directly. A second
+  `overlayNoveltySpans` pass adds the changed-word tier; because a
+  `NoveltyEmphasis` field that is absent falls through to the underlying span,
+  the attribute-only second pass keeps whatever colors the first one applied.
+- The emphasis is a FOREGROUND, `theme.removedSignColor` or
+  `theme.addedSignColor`, and nothing else: no bold on the novel span, no
+  emphasis background, and no row tint (difftastic rows already suppress it).
+  This is forced by the payload, not chosen for looks. difftastic emits one span
+  per token and leaves the whitespace between them in no span at all, so a
+  background paints with a hole at every gap; a foreground has no edges, which is
+  why difft itself never shows the problem. `NoveltyEmphasis` carries no background
+  field at all, so the type enforces this rather than a convention. There is exactly
+  one rendering path, with no option to select another.
 - For difftastic-engine files, pass Pierre `lineDiffType: "none"`
   (supported: `LineDiffTypes = 'word-alt' | 'word' | 'char' | 'none'`) so
   Pierre's own word-diff decorations do not double-highlight. Make
   `pierreRenderOptions` per-file instead of module-const.
 
-### 5.6 File status handling
+### 5.6 Changed-word tier (word-level parity)
+
+difftastic renders changed content in two tiers. `NovelWord` is bold plus
+underline; `UnchangedPartOfNovelItem` is the plain novel color. Its JSON writer
+keeps every span whose `MatchKind::is_novel()` holds, which covers both tiers,
+then drops the tier label (difftastic issue #658). A payload's `changes` array
+is therefore already the output of difftastic's word diff with only the tier
+missing: the span boundaries are correct, and the tier is recoverable by
+re-running the same decision.
+
+The port lives in `src/core/engine/difftastic/novelWords.ts`
+(`src/parse/syntax.rs` `split_atom_words`, plus `src/words.rs` and
+`src/diff/lcs_diff.rs`, difftastic 0.69.0). One rule, no per-language cases:
+
+1. **Scope.** Word splitting happens only when both sides are comment atoms or
+   both are string atoms of the same kind (`ReplacedComment` / `ReplacedString`).
+   Everything else, a changed identifier or keyword included, stays whole-atom
+   novel with no inner emphasis.
+2. **Tokenize** both atom contents with `split_words_and_numbers`: a token is a
+   maximal run of `isAlphanumeric || '_'` characters, additionally split at every
+   ASCII-digit / non-digit boundary; every other character is its own token.
+   Iteration is by code point.
+3. **Diff** the two token arrays with an LCS.
+4. **Similarity gate** (`has_common_words`): count unchanged tokens that are not
+   exactly a single space, and novel tokens on either side. Unless
+   `unchanged > 2 && unchanged * 2 >= novel`, the whole atom is plain novel.
+5. **Walk** the diff keeping a byte offset per side. A token present only on this
+   side is the changed word, unless it is all whitespace, in which case
+   difftastic emits no position for it at all.
+6. **Render** the changed word bold plus underline over the novel foreground the
+   first pass already applied.
+
+The mapper (`map.ts`) supplies the atom contents, and the unit it must rebuild is
+the ATOM, not the line: a comment or string atom routinely spans several lines,
+and difftastic decides the gate once over the whole thing. Each side's body is
+therefore addressed as one document (lines EOL-stripped, joined by one newline)
+and every span is lifted into that space, so an atom's text is one slice however
+many lines it covers.
+
+Spans group into atom runs by one rule. difftastic emits one span per word for an
+atom it word-split and one span per line for every other novel atom, so every
+span of a single atom carries that atom's highlight, and the only source text
+such a run steps over is a token `split_atom_words` dropped, which is a changed
+whitespace-only word. A run therefore continues while the highlight matches and
+the gap to the next span holds nothing but whitespace that is not a line break.
+
+The line-break exclusion is what separates two atoms that merely sit on
+consecutive lines, and it is safe because an in-atom line break is never bare.
+`split_atom_words` positions each word with
+`content_newlines.from_region_relative_to(pos[0], ...)[0]`, and the newline token
+is the one token whose region crosses a line, so that `[0]` keeps a ZERO-WIDTH
+position at the end of the line. `toDocumentSpan` restores that token's real
+width, which is what lets a run cross into the next line; a line break with no
+position of its own is difftastic saying the two spans are in different atoms.
+Two adjacent line comments prove both halves at once: difft draws a changed word
+only in the first, and joining them would carry the second past the gate difft
+failed it on.
+
+That same tiling fact settles step 1 from the other direction: a run of ONE span
+is a whole-atom novel item, which is difftastic reporting that it did not
+word-split the atom, so the decision is not re-run there. That is not only
+faithfulness. It also bounds the work, since the rejected atoms are exactly the
+long dissimilar ones the token diff is slowest on: a one-span 4000-word string
+atom maps in 3 ms with the check and 4 s without it.
+
+Runs pair positionally within the chunk entry each one begins in. An entry naming
+both an lhs and an rhs line is difftastic's own statement that those two lines
+are counterparts, and a multi-line atom begins on counterpart lines, so anchoring
+to the starting entry keeps a mispairing from leaking past the line pair it
+started on.
+
+Two divergences, both measured against `difft 0.69.0` rather than assumed:
+
+- **LCS tie-breaking.** difftastic runs Wu's O(NP) algorithm; the port uses the
+  `diff` package's Myers implementation. Both produce a maximal common
+  subsequence, so the gate counts agree, but when a token repeats the two can
+  pair different occurrences and place a changed word one repeat away.
+- **Multi-atom pairing.** The payload carries no atom identity, so an entry
+  holding more than one changed atom pairs its runs positionally, in source
+  order. When the two sides hold different numbers of atoms the surplus runs go
+  unpaired and simply carry no changed word.
+
+One further limit is not a divergence in the port but a ceiling in the payload:
+`Highlight::from_match` maps `AtomKind::String(StringKind::Text)` to `normal`, so
+plain-text and markdown bodies are word-split by difftastic yet indistinguishable
+in the JSON from a changed identifier. The scope check keyed on `highlight`
+therefore withholds emphasis there. That is the safe half of the ambiguity: it
+can only withhold emphasis difftastic would draw, never invent emphasis it would
+not.
+
+The same boundary is why rendering the tier as bold PLUS underline is right
+everywhere it can apply. difftastic underlines `NovelWord` only for
+`FileFormat::SupportedLanguage`, bolding alone on plain text. But
+`AtomKind::Comment` and `AtomKind::String(StringKind::StringLiteral)` come only
+from the tree-sitter parser (`line_parser.rs` emits `AtomKind::Normal` and
+nothing else), so a payload can never report `comment` or `string` for a file
+difftastic parsed as text. Whenever the scope check accepts, difftastic's own
+renderer is in the underlining branch.
+
+Ground truth for every fixture named `novel-*` in `test/fixtures/difftastic/` is
+the real `difft --color always --display side-by-side-show-both` output for the
+same pair; the assertions reproduce which words it draws with SGR `1;4`.
+
+### 5.7 File status handling
 
 | difftastic `status`                     | Mapping                                                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -412,6 +526,14 @@ Fixtures (committed, so tests never need the difft binary):
 - `test/fixtures/difftastic/unicode-{before,after}.js` +
   `unicode-0.69.0.json` (multibyte line; pins the byte-offset ground truth
   of section 5.1)
+- `test/fixtures/difftastic/novel-*-{before,after}.{js,md}` +
+  `novel-*-0.69.0.json`: one captured pair per rule in section 5.6, a changed
+  word in a string and in a comment, a changed identifier (out of scope), a
+  dissimilar string (gate rejects), a whitespace-only change (difft leaves a
+  hole mid-atom), that hole alongside a real changed word, two atoms on one
+  line, a per-atom gate verdict, a keyword next to a string, a multi-line
+  comment, a rewritten multi-line comment difft word-split, one it rejected
+  whole, a multibyte line, and a markdown Text atom.
 - plus small synthetic JSON fixtures for edge cases the pair does not
   exercise (mixed del/pair/add run, added blank line, `unchanged` status,
   non-monotonic `aligned_lines`, schema violations).
@@ -430,7 +552,13 @@ Unit tests (colocated `*.test.ts`, repo convention):
   - context reconstruction equals file bodies; mismatch -> fallback result.
   - monotonicity/bounds violations -> fallback result, never throw.
   - `unchanged` status -> empty hunks; unknown status -> fallback.
-  - noveltySpans arrays index-align with the flat line arrays.
+  - noveltySpans arrays index-align with the flat line arrays, changed-word
+    arrays included.
+  - changed-word tier per rule in section 5.6, asserted against what difft
+    itself draws bold plus underline for the same pair.
+- `src/core/engine/difftastic/novelWords.test.ts` covers the ported decision in
+  isolation: difftastic's own `split_words_and_numbers` unit cases, the scope
+  gate, and the similarity gate's floor, ratio, and single-space exclusion.
 - `src/core/engine/difftastic/schema.test.ts` — accepts the captured
   sample; rejects the synthetic malformed payloads; tolerates unknown extra
   keys.
@@ -441,8 +569,16 @@ Unit tests (colocated `*.test.ts`, repo convention):
   parsing (rejects unknown engine), TOML key + per-command section layering,
   `HUNKT_ENGINE` precedence below `--engine`, `difft_path` ignored from repo
   config with notice.
-- `src/ui/diff/pierre.test.ts` addition — `overlayNoveltySpans` splits
-  spans at column boundaries and preserves text.
+- `src/ui/diff/noveltySpans.test.ts` pins that `overlayNoveltySpans` splits spans at
+  column boundaries, preserves text, and stacks a second attribute-only pass
+  without losing the first pass's colors.
+- `src/ui/diff/pierre.test.ts` addition: the row builders paint novel tokens with
+  the sign foreground and no background at all, leaving the unspanned gap between
+  two novel tokens unpainted, and mark the changed word bold plus underline over
+  that foreground, through tab expansion.
+- `src/ui/components/ui-components.test.tsx` addition: `DiffRowView` carries
+  both attributes into the rendered terminal buffer and keeps row padding out
+  of an underlined span.
 
 Integration (one PTY case, only because it is cheap):
 
@@ -461,10 +597,12 @@ Docs: `bun run generate:docs` after the config table change;
 
 - **Upstream difftastic asks** (Wilfred solicits JSON-consumer feedback in
   issues #216 / #916): stable hunk/chunk IDs in the JSON (today only array
-  order exists, which blocks durable hunk anchors); word-level novelty
-  emphasis in the JSON (issue #658) so v1's "parity out of scope" caveat can
-  close; a schema version field so consumers can gate on payload shape
-  instead of binary version.
+  order exists, which blocks durable hunk anchors); the novelty tier label in
+  the JSON (issue #658), which would retire the ported decision in section 5.6
+  along with its divergences; an atom id per span, which would retire the
+  positional multi-atom pairing and the per-line recovery of multi-line atoms; a
+  schema version field so consumers can gate on payload shape instead of binary
+  version.
 - **Nix packaging**: add `difftastic` to `flake.nix` devShell so
   contributors get the pinned tested version; consider an optional wrapper
   that bakes `difft_path` for nix-installed hunk.

@@ -12,7 +12,8 @@ const changeSpanSchema = z.looseObject({
   start: z.int().nonnegative(),
   end: z.int().nonnegative(),
   content: z.string(),
-  // Syntax kind, not novelty emphasis; the mapper ignores it.
+  // Syntax kind, not novelty emphasis. Shiki owns syntax color, so the mapper
+  // reads it only to group spans into atoms and to scope the changed-word tier.
   highlight: z.string(),
 });
 

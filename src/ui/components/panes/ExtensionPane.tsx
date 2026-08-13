@@ -65,6 +65,8 @@ class ExtensionPaneErrorBoundary extends Component<
 export interface BundledPaneHostProps extends ExtensionPaneProps {
   /** The all-notes list for the whole review, including notes with no resolved line. */
   readonly noteGroups?: readonly ReviewNoteGroup[];
+  /** The note the review is currently on, so its list row can read as selected. */
+  readonly currentNoteId?: string | null;
   /** Move the review to one note's own anchor line. */
   readonly onSelectNote?: (fileId: string, noteId: string) => void;
 }
@@ -85,6 +87,8 @@ export interface ExtensionPaneHostProps {
   notify: ExtensionNotifySink;
   /** The all-notes list; reaches bundled Hunk panes only. */
   noteGroups?: readonly ReviewNoteGroup[];
+  /** The review's current note; reaches bundled Hunk panes only. */
+  currentNoteId?: string | null;
   onSelectFile: (fileId: string) => void;
   onSelectHunk: (fileId: string, hunkIndex: number) => void;
   /** Jump to one note's own line; reaches bundled Hunk panes only. */
@@ -107,6 +111,7 @@ function ExtensionPaneHostView({
   showTopChrome = false,
   keybindings,
   noteGroups,
+  currentNoteId,
   notify,
   onSelectFile,
   onSelectHunk,
@@ -192,7 +197,9 @@ function ExtensionPaneHostView({
         onRenderFailure?.();
       }}
     >
-      {box(<View {...viewProps} {...(bundled ? { noteGroups, onSelectNote } : {})} />)}
+      {box(
+        <View {...viewProps} {...(bundled ? { noteGroups, currentNoteId, onSelectNote } : {})} />,
+      )}
     </ExtensionPaneErrorBoundary>
   );
 }
@@ -213,5 +220,6 @@ export const ExtensionPaneHost = memo(
     previous.showTopChrome === next.showTopChrome &&
     previous.keybindings === next.keybindings &&
     previous.noteGroups === next.noteGroups &&
+    previous.currentNoteId === next.currentNoteId &&
     (!next.registered.pane.currentLine || previous.currentLine === next.currentLine),
 );

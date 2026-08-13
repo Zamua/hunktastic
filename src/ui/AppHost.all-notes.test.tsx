@@ -145,15 +145,40 @@ function notesPaneLines(setup: Awaited<ReturnType<typeof testRender>>) {
     .filter((row) => row.length > 0 && !row.startsWith("─"));
 }
 
+/**
+ * Read the background painted behind one note row of the all-notes pane.
+ *
+ * Matching only where the text sits right of the last divider keeps this off the inline
+ * note card, which draws the same summary inside the review stream.
+ */
+function noteRowBackground(setup: Awaited<ReturnType<typeof testRender>>, needle: string) {
+  const rows = setup.captureCharFrame().split("\n");
+  const dividerColumn = Math.max(...rows.map((row) => row.lastIndexOf("\u2502")));
+  const y = rows.findIndex((row) => row.indexOf(needle) > dividerColumn);
+  const span = setup
+    .captureSpans()
+    .lines[y]?.spans.find((candidate) => candidate.text.includes(needle));
+  if (!span) {
+    throw new Error(`The all-notes pane rendered no row containing ${JSON.stringify(needle)}.`);
+  }
+
+  return `${span.bg.r},${span.bg.g},${span.bg.b}`;
+}
+
+/** Count how many times the whole frame draws one string. */
+function frameOccurrences(setup: Awaited<ReturnType<typeof testRender>>, needle: string) {
+  return setup.captureCharFrame().split(needle).length - 1;
+}
+
 /** Report whether the file sidebar is on screen; only its rows carry the status prefix. */
 function fileSidebarVisible(setup: Awaited<ReturnType<typeof testRender>>) {
   return setup.captureCharFrame().includes("M noted.ts");
 }
 
-async function renderNotesApp(width = 200) {
+async function renderNotesApp(width = 200, height = 22) {
   const setup = await testRender(<AppHost bootstrap={createNotesBootstrap() as never} />, {
     width,
-    height: 22,
+    height,
   });
   await flush(setup);
   await act(async () => {
@@ -197,6 +222,8 @@ describe("all notes sidebar", () => {
       });
       await flush(setup);
 
+      // Each row is its location plus its summary. The path belongs to the group heading
+      // above it, so repeating it on the row would only spend width.
       expect(notesPaneLines(setup)).toEqual([
         "noted.ts",
         "R6 Bump the omega constant",
@@ -250,8 +277,75 @@ describe("all notes sidebar", () => {
     }
   });
 
+  test("selecting a note turns the inline note layer on and keeps it on", async () => {
+    const setup = await renderNotesApp(200, 40);
+
+    try {
+      await act(async () => {
+        await setup.mockInput.typeText("a");
+      });
+      await flush(setup);
+      // The layer starts off, so the only copy on screen is the list row.
+      expect(frameOccurrences(setup, "Bump the omega constant")).toBe(1);
+
+      const omega = locate(setup, "Bump the omega constant");
+      await act(async () => {
+        await setup.mockMouse.click(omega.x, omega.y);
+      });
+      await flush(setup);
+      expect(frameOccurrences(setup, "Bump the omega constant")).toBe(2);
+
+      // A second selection must not toggle the layer back off.
+      const kappa = locate(setup, "Rename the kappa constant");
+      await act(async () => {
+        await setup.mockMouse.click(kappa.x, kappa.y);
+      });
+      await flush(setup);
+      expect(frameOccurrences(setup, "Rename the kappa constant")).toBe(2);
+      expect(frameOccurrences(setup, "Bump the omega constant")).toBe(2);
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("highlights the row of the note the review is on", async () => {
+    const setup = await renderNotesApp(200, 40);
+
+    try {
+      await act(async () => {
+        await setup.mockInput.typeText("a");
+      });
+      await flush(setup);
+      const unselected = noteRowBackground(setup, "Bump the omega constant");
+      expect(noteRowBackground(setup, "Rename the kappa constant")).toBe(unselected);
+
+      const omega = locate(setup, "Bump the omega constant");
+      await act(async () => {
+        await setup.mockMouse.click(omega.x, omega.y);
+      });
+      await flush(setup);
+      expect(noteRowBackground(setup, "Bump the omega constant")).not.toBe(unselected);
+      expect(noteRowBackground(setup, "Rename the kappa constant")).toBe(unselected);
+
+      // The highlight follows the review rather than accumulating.
+      const kappa = locate(setup, "Rename the kappa constant");
+      await act(async () => {
+        await setup.mockMouse.click(kappa.x, kappa.y);
+      });
+      await flush(setup);
+      expect(noteRowBackground(setup, "Bump the omega constant")).toBe(unselected);
+      expect(noteRowBackground(setup, "Rename the kappa constant")).not.toBe(unselected);
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
   test("selecting a note from another file moves the review onto that file", async () => {
-    const setup = await renderNotesApp();
+    const setup = await renderNotesApp(200, 40);
 
     try {
       await act(async () => {
@@ -281,7 +375,7 @@ describe("all notes sidebar", () => {
   });
 
   test("selecting a note puts the current line on the line the note is about", async () => {
-    const setup = await renderNotesApp();
+    const setup = await renderNotesApp(200, 40);
 
     try {
       await act(async () => {

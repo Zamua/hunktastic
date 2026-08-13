@@ -132,7 +132,11 @@ import { maxFileHeaderStatsWidth } from "./lib/fileHeader";
 import { verifyWorkspaceWriteTarget } from "./lib/workspaceWriteGuard";
 import { openSelectedFileInEditor } from "./lib/openInEditor";
 import { resolveResponsiveLayout } from "./lib/responsive";
-import { buildReviewNoteGroups, resolveReviewNoteJumpTarget } from "./lib/reviewNotes";
+import {
+  buildReviewNoteGroups,
+  currentReviewNoteId,
+  resolveReviewNoteJumpTarget,
+} from "./lib/reviewNotes";
 import { resizeSidebarWidth } from "./lib/sidebar";
 import { availableThemes, resolveTheme, withTransparentSurfaces } from "./themes";
 
@@ -421,6 +425,12 @@ export function App({
   const noteGroups = useMemo(
     () => buildReviewNoteGroups({ files: filteredFiles, restoredNotes: review.restoredNotes }),
     [filteredFiles, review.restoredNotes],
+  );
+  // Derived from the current line rather than stored on selection, so a note reached by
+  // keyboard stepping highlights the same row a clicked one does.
+  const currentNoteId = useMemo(
+    () => currentReviewNoteId(filteredFiles, review.lineCursor),
+    [filteredFiles, review.lineCursor],
   );
   const currentLinePaintMatchesCursor = extensionCurrentLinePaintMatchesCursor(
     currentLinePaintState,
@@ -1775,6 +1785,9 @@ export function App({
     }
 
     focusFiles();
+    // The jump is only useful if the note is readable when it lands, so a hidden inline layer
+    // comes on. Never the reverse: picking a note cannot hide the layer it just needed.
+    openAgentNotes();
     review.selectNoteTarget(fileId, target.hunkIndex, target.lineTarget);
   };
 
@@ -2101,6 +2114,7 @@ export function App({
           showTopChrome={showMenuBar}
           keybindings={paneKeybindings}
           noteGroups={noteGroups}
+          currentNoteId={currentNoteId}
           notify={(message, type) => extensions?.context.notify(message, type)}
           onSelectNote={(fileId, noteId) => selectNoteRef.current(fileId, noteId)}
           onSelectFile={(fileId) => {

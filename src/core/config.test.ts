@@ -257,7 +257,7 @@ describe("config resolution", () => {
       env: { HOME: home },
     });
 
-    expect(resolved.input.options.cursorLine).toBe("row");
+    expect(resolved.input.options.cursorLine).toBe("off");
   });
 
   test("starts pager mode with the menu bar hidden unless a later layer asks for it", () => {

@@ -1,5 +1,6 @@
 import type { ChangeContent, ChangeTypes, ContextContent, Hunk } from "@pierre/diffs";
 import type { ColumnSpan, DiffLineNoveltySpans } from "../../types";
+import { classifyNovelWords, isWordSplitScope } from "./novelWords";
 import type { DifftasticFile } from "./schema";
 
 /**
@@ -85,10 +86,15 @@ function stripWhitespace(line: string): string {
   return line.replace(/\s+/g, "");
 }
 
-function emptyNovelty(deletionCount: number, additionCount: number): DiffLineNoveltySpans {
+function emptyNovelty(
+  deletionCount: number,
+  additionCount: number,
+): Required<DiffLineNoveltySpans> {
   return {
     additionLines: Array.from<ColumnSpan[] | undefined>({ length: additionCount }),
     deletionLines: Array.from<ColumnSpan[] | undefined>({ length: deletionCount }),
+    additionWordLines: Array.from<ColumnSpan[] | undefined>({ length: additionCount }),
+    deletionWordLines: Array.from<ColumnSpan[] | undefined>({ length: deletionCount }),
   };
 }
 
@@ -117,6 +123,215 @@ function buildByteToCodeUnitMap(line: string): Map<number, number> {
     map.set(byte, unit);
   }
   return map;
+}
+
+/**
+ * One side's whole body as a single document: every line with its EOL stripped,
+ * joined by one newline.
+ *
+ * difftastic's unit is the atom, and a comment or string atom can span lines, so
+ * the atom text has to be addressable across line boundaries. `lineStart` holds
+ * each line's document offset plus a trailing sentinel, so line `i` occupies
+ * `[lineStart[i], lineStart[i + 1] - 1)`.
+ */
+interface SideDocument {
+  text: string;
+  lineStart: number[];
+}
+
+/** One novel range in document coordinates, tagged with its kind and originating entry. */
+interface NovelSpan {
+  start: number;
+  end: number;
+  highlight: string;
+  /** Index of the chunk entry this span came from, the unit run pairing is anchored to. */
+  entry: number;
+}
+
+/** The novel document range of one atom, as one contiguous region. */
+interface AtomRun {
+  start: number;
+  end: number;
+  highlight: string;
+  /** Spans difftastic emitted here: one for a whole-atom novel item, one per word otherwise. */
+  spanCount: number;
+  entry: number;
+}
+
+/** Changed-word columns recovered for one chunk, keyed by 0-based file line. */
+interface NovelWordColumns {
+  lhs: Map<number, ColumnSpan[]>;
+  rhs: Map<number, ColumnSpan[]>;
+}
+
+/**
+ * Whitespace that is not a line break: everything a run may step over inside one
+ * atom.
+ *
+ * `split_atom_words` emits a position for every token of an atom it word-split
+ * except a changed whitespace-only one, so the only source text between two spans
+ * of the same atom is such a dropped token. A line break is the one whitespace
+ * character that carries its own position when it is inside the atom (see
+ * `toDocumentSpan`), so a line break left bare here separates two atoms.
+ */
+const INTRA_ATOM_GAP = /^(?:(?!\n)\p{White_Space})*$/u;
+
+/** Build the joined document for one side's flat line array. */
+function buildSideDocument(lines: string[]): SideDocument {
+  const stripped = lines.map(stripEol);
+  const lineStart: number[] = [];
+  let offset = 0;
+  for (const line of stripped) {
+    lineStart.push(offset);
+    offset += line.length + 1;
+  }
+  lineStart.push(offset);
+  return { text: stripped.join("\n"), lineStart };
+}
+
+/** Text of one line, without its EOL. */
+function documentLine(document: SideDocument, line: number): string {
+  const start = document.lineStart[line] ?? 0;
+  const end = (document.lineStart[line + 1] ?? start + 1) - 1;
+  return document.text.slice(start, end);
+}
+
+/** Line a document offset falls on. */
+function documentLineAt(document: SideDocument, offset: number): number {
+  let low = 0;
+  let high = document.lineStart.length - 2;
+  while (low < high) {
+    const mid = (low + high + 1) >> 1;
+    if ((document.lineStart[mid] ?? 0) <= offset) low = mid;
+    else high = mid - 1;
+  }
+  return low;
+}
+
+/**
+ * Lift one line-relative column range into document coordinates.
+ *
+ * difftastic positions the newline token of a multi-line atom as a zero-width
+ * span at the end of the line: `split_atom_words` calls
+ * `from_region_relative_to`, which returns one span per line the token covers,
+ * and keeps only the first. Restoring that token's real width is what lets a run
+ * cross the line break, and it is why a bare line break in a gap means the spans
+ * belong to different atoms.
+ */
+function toDocumentSpan(
+  document: SideDocument,
+  line: number,
+  span: ColumnSpan,
+  highlight: string,
+  entry: number,
+): NovelSpan {
+  const base = document.lineStart[line] ?? 0;
+  const isNewlineToken = span[0] === span[1] && span[0] === documentLine(document, line).length;
+  return {
+    start: base + span[0],
+    end: base + span[1] + (isNewlineToken ? 1 : 0),
+    highlight,
+    entry,
+  };
+}
+
+/**
+ * Group one side's novel spans into the atoms they came from.
+ *
+ * difftastic emits one span per word for an atom it word-split and one span per
+ * line for every other novel atom, so every span of a single atom carries that
+ * atom's highlight and the run is contiguous apart from the tokens
+ * `split_atom_words` dropped. A run therefore continues while the highlight
+ * matches and the gap to the next span holds nothing but non-breaking whitespace;
+ * any other gap starts the next atom.
+ */
+function groupAtomRuns(spans: NovelSpan[], text: string): AtomRun[] {
+  const runs: AtomRun[] = [];
+  for (const span of spans) {
+    const current = runs[runs.length - 1];
+    if (
+      current != null &&
+      current.highlight === span.highlight &&
+      span.start >= current.end &&
+      INTRA_ATOM_GAP.test(text.slice(current.end, span.start))
+    ) {
+      current.end = span.end;
+      current.spanCount += 1;
+      continue;
+    }
+    runs.push({
+      start: span.start,
+      end: span.end,
+      highlight: span.highlight,
+      spanCount: 1,
+      entry: span.entry,
+    });
+  }
+  return runs;
+}
+
+/** Record one recovered changed-word range against the line it sits on. */
+function collectWordRange(
+  target: Map<number, ColumnSpan[]>,
+  document: SideDocument,
+  start: number,
+  end: number,
+) {
+  const line = documentLineAt(document, start);
+  const base = document.lineStart[line] ?? 0;
+  // A changed word is never whitespace, and every newline is its own token, so a
+  // recovered range always sits inside one line.
+  if (end > base + documentLine(document, line).length) return;
+  const spans = target.get(line);
+  if (spans == null) target.set(line, [[start - base, end - base]]);
+  else spans.push([start - base, end - base]);
+}
+
+/**
+ * Recover difftastic's changed-word tier for one chunk.
+ *
+ * The JSON keeps every novel span but drops which tier each one is (difftastic
+ * issue #658), so the atom contents are rebuilt from the spans and the word diff
+ * is re-run over them. The payload carries no atom identity, so runs are paired
+ * positionally within the entry each one begins in: an entry naming both sides is
+ * difftastic's own statement that those two lines are counterparts, and a
+ * multi-line atom begins on counterpart lines.
+ *
+ * A run of one span is a whole-atom novel item, which is difftastic saying it did
+ * not word-split that atom. Re-running the decision there could only contradict
+ * it, so those runs are left alone. That also bounds the work: the token diff
+ * never runs over an atom difftastic already rejected.
+ */
+function classifyChunkWords(
+  lhs: { document: SideDocument; spans: NovelSpan[] },
+  rhs: { document: SideDocument; spans: NovelSpan[] },
+  pairedEntries: Set<number>,
+): NovelWordColumns {
+  const words: NovelWordColumns = { lhs: new Map(), rhs: new Map() };
+  const lhsRuns = groupAtomRuns(lhs.spans, lhs.document.text);
+  const rhsRuns = groupAtomRuns(rhs.spans, rhs.document.text);
+  for (const entry of pairedEntries) {
+    const lhsEntryRuns = lhsRuns.filter((run) => run.entry === entry);
+    const rhsEntryRuns = rhsRuns.filter((run) => run.entry === entry);
+    for (let index = 0; index < Math.min(lhsEntryRuns.length, rhsEntryRuns.length); index++) {
+      const lhsRun = lhsEntryRuns[index]!;
+      const rhsRun = rhsEntryRuns[index]!;
+      if (lhsRun.spanCount < 2 || rhsRun.spanCount < 2) continue;
+      if (!isWordSplitScope(lhsRun.highlight, rhsRun.highlight)) continue;
+      const ranges = classifyNovelWords(
+        lhs.document.text.slice(lhsRun.start, lhsRun.end),
+        rhs.document.text.slice(rhsRun.start, rhsRun.end),
+      );
+      if (ranges == null) continue;
+      for (const [start, end] of ranges.lhs) {
+        collectWordRange(words.lhs, lhs.document, lhsRun.start + start, lhsRun.start + end);
+      }
+      for (const [start, end] of ranges.rhs) {
+        collectWordRange(words.rhs, rhs.document, rhsRun.start + start, rhsRun.start + end);
+      }
+    }
+  }
+  return words;
 }
 
 /** Sort spans, then merge every pair that overlaps or touches into one span. */
@@ -227,17 +442,31 @@ export function mapDifftasticFile(
   // spans (those force modified-pair rows).
   const lhsSpans = new Map<number, ColumnSpan[]>();
   const rhsSpans = new Map<number, ColumnSpan[]>();
+  const lhsWords = new Map<number, ColumnSpan[]>();
+  const rhsWords = new Map<number, ColumnSpan[]>();
   const novelLhs = new Set<number>();
   const novelRhs = new Set<number>();
+  const documents = {
+    lhs: buildSideDocument(deletionLines),
+    rhs: buildSideDocument(additionLines),
+  };
   const byteMaps = {
     lhs: new Map<number, Map<number, number>>(),
     rhs: new Map<number, Map<number, number>>(),
+  };
+  const appendSpans = (store: Map<number, ColumnSpan[]>, line: number, spans: ColumnSpan[]) => {
+    store.set(line, [...(store.get(line) ?? []), ...spans]);
   };
   const chunkSpans: RowSpan[] = [];
   for (const chunk of chunks) {
     let minRow = Number.POSITIVE_INFINITY;
     let maxRow = Number.NEGATIVE_INFINITY;
-    for (const entry of chunk) {
+    // An atom can span lines, so the changed-word tier is recovered per chunk
+    // rather than per entry; entries that name both sides anchor run pairing.
+    const chunkNovel = { lhs: [] as NovelSpan[], rhs: [] as NovelSpan[] };
+    const pairedEntries = new Set<number>();
+    for (const [entryIndex, entry] of chunk.entries()) {
+      let sidesPresent = 0;
       for (const side of ["lhs", "rhs"] as const) {
         const sideEntry = entry[side];
         if (sideEntry == null) continue;
@@ -250,12 +479,10 @@ export function mapDifftasticFile(
         if (rowIndex == null) {
           return fallback("chunk-out-of-bounds", `${side} line ${sideEntry.line_number} unaligned`);
         }
+        const document = documents[side];
         let byteMap = byteMaps[side].get(sideEntry.line_number);
         if (byteMap == null) {
-          const lineText = stripEol(
-            (side === "lhs" ? deletionLines : additionLines)[sideEntry.line_number] ?? "",
-          );
-          byteMap = buildByteToCodeUnitMap(lineText);
+          byteMap = buildByteToCodeUnitMap(documentLine(document, sideEntry.line_number));
           byteMaps[side].set(sideEntry.line_number, byteMap);
         }
         const spans: ColumnSpan[] = [];
@@ -269,32 +496,54 @@ export function mapDifftasticFile(
             );
           }
           spans.push([start, end]);
+          chunkNovel[side].push(
+            toDocumentSpan(
+              document,
+              sideEntry.line_number,
+              [start, end],
+              change.highlight,
+              entryIndex,
+            ),
+          );
         }
-        const store = side === "lhs" ? lhsSpans : rhsSpans;
-        store.set(sideEntry.line_number, [...(store.get(sideEntry.line_number) ?? []), ...spans]);
+        appendSpans(side === "lhs" ? lhsSpans : rhsSpans, sideEntry.line_number, spans);
         if (spans.length > 0) (side === "lhs" ? novelLhs : novelRhs).add(sideEntry.line_number);
         minRow = Math.min(minRow, rowIndex);
         maxRow = Math.max(maxRow, rowIndex);
+        sidesPresent += 1;
       }
+      if (sidesPresent === 2) pairedEntries.add(entryIndex);
     }
+    const words = classifyChunkWords(
+      { document: documents.lhs, spans: chunkNovel.lhs },
+      { document: documents.rhs, spans: chunkNovel.rhs },
+      pairedEntries,
+    );
+    for (const [line, spans] of words.lhs) appendSpans(lhsWords, line, spans);
+    for (const [line, spans] of words.rhs) appendSpans(rhsWords, line, spans);
     if (minRow <= maxRow) chunkSpans.push({ start: minRow, end: maxRow });
   }
 
   const noveltySpans = emptyNovelty(oldLen, newLen);
   for (const row of rows) {
     if (row.lhs != null && row.rhs == null) {
-      // Deleted line: novel by position even without a chunk entry.
+      // Deleted line: novel by position even without a chunk entry. No opposite
+      // line means no atom pair, so the changed-word tier is empty by definition.
       row.kind = "deletion";
       noveltySpans.deletionLines[row.lhs] = lhsSpans.get(row.lhs) ?? [];
+      noveltySpans.deletionWordLines[row.lhs] = lhsWords.get(row.lhs) ?? [];
     } else if (row.lhs == null && row.rhs != null) {
       row.kind = "addition";
       noveltySpans.additionLines[row.rhs] = rhsSpans.get(row.rhs) ?? [];
+      noveltySpans.additionWordLines[row.rhs] = rhsWords.get(row.rhs) ?? [];
     } else if (row.lhs != null && row.rhs != null) {
       if (novelLhs.has(row.lhs) || novelRhs.has(row.rhs)) {
         // Modified pair; a side with an empty `changes` entry is still novel.
         row.kind = "pair";
         noveltySpans.deletionLines[row.lhs] = lhsSpans.get(row.lhs) ?? [];
         noveltySpans.additionLines[row.rhs] = rhsSpans.get(row.rhs) ?? [];
+        noveltySpans.deletionWordLines[row.lhs] = lhsWords.get(row.lhs) ?? [];
+        noveltySpans.additionWordLines[row.rhs] = rhsWords.get(row.rhs) ?? [];
       } else {
         row.kind = "context";
         // difftastic aligns reformatted lines as non-novel (whitespace is not a

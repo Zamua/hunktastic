@@ -3,7 +3,11 @@ import { createTestDiffFile, lines } from "../../../test/helpers/diff-helpers";
 import type { ResolvedReviewNote } from "../../core/notes/session";
 import type { StoredNote } from "../../core/notes/types";
 import type { AgentAnnotation, DiffFile } from "../../core/types";
-import { buildReviewNoteGroups, resolveReviewNoteJumpTarget } from "./reviewNotes";
+import {
+  buildReviewNoteGroups,
+  currentReviewNoteId,
+  resolveReviewNoteJumpTarget,
+} from "./reviewNotes";
 
 function createNotedFile(id = "file:noted", path = "src/noted.ts") {
   const before = Array.from({ length: 20 }, (_, index) => `line${index + 1}`);
@@ -226,5 +230,61 @@ describe("resolveReviewNoteJumpTarget", () => {
     expect(resolveReviewNoteJumpTarget([withNotes], file.id, "rangeless")).toBeNull();
     expect(resolveReviewNoteJumpTarget([withNotes], file.id, "missing")).toBeNull();
     expect(resolveReviewNoteJumpTarget([withNotes], "other:file", "unanchored")).toBeNull();
+  });
+});
+
+describe("currentReviewNoteId", () => {
+  const file = createNotedFile();
+  // Untyped on purpose: `restored` rides structurally on annotations, as the review does it.
+  const withNotes = {
+    ...file,
+    agent: {
+      path: file.path,
+      annotations: [
+        { id: "first", summary: "About the insert", newRange: [13, 13] as [number, number] },
+        {
+          id: "same-line",
+          summary: "Also about the insert",
+          newRange: [13, 13] as [number, number],
+        },
+        { id: "old-side", summary: "About the removed side", oldRange: [4, 4] as [number, number] },
+        {
+          id: "unplaceable",
+          summary: "Line is gone",
+          newRange: [18, 18] as [number, number],
+          restored: {
+            state: "unanchored" as const,
+            confidence: "high" as const,
+            anchorText: "line17",
+          },
+        },
+      ],
+    },
+  };
+  const cursorOn = (side: "old" | "new", line: number) => ({
+    fileId: file.id,
+    target: { side, line },
+  });
+
+  test("names the note anchored on the current line, on either side", () => {
+    expect(currentReviewNoteId([withNotes], cursorOn("new", 13))).toBe("first");
+    expect(currentReviewNoteId([withNotes], cursorOn("old", 4))).toBe("old-side");
+  });
+
+  test("gives the line to the first note on it, matching where a jump lands the cursor", () => {
+    expect(currentReviewNoteId([withNotes], cursorOn("new", 13))).not.toBe("same-line");
+  });
+
+  test("names nothing when the current line carries no placeable note", () => {
+    expect(currentReviewNoteId([withNotes], null)).toBeNull();
+    // A line no note anchors, the other side of an anchored line, an unplaceable note's
+    // stored line, and a file outside the review all resolve to no selection.
+    expect(currentReviewNoteId([withNotes], cursorOn("new", 14))).toBeNull();
+    expect(currentReviewNoteId([withNotes], cursorOn("old", 13))).toBeNull();
+    expect(currentReviewNoteId([withNotes], cursorOn("new", 18))).toBeNull();
+    expect(
+      currentReviewNoteId([withNotes], { fileId: "other:file", target: { side: "new", line: 13 } }),
+    ).toBeNull();
+    expect(currentReviewNoteId([file], cursorOn("new", 13))).toBeNull();
   });
 });

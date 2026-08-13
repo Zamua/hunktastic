@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
+import { capturedTestColorToHex } from "../../../../test/helpers/test-color-helpers";
 import { toExtensionPaintTheme } from "../../lib/extensionPaintTheme";
 import type { ReviewNoteGroup } from "../../lib/reviewNotes";
 import { resolveTheme } from "../../themes";
@@ -55,10 +56,12 @@ async function withPane(
   groups: readonly ReviewNoteGroup[],
   selections: Array<[string, string]>,
   body: (setup: Awaited<ReturnType<typeof testRender>>) => Promise<void>,
+  currentNoteId: string | null = null,
 ) {
   const setup = await testRender(
     <AllNotesPane
       groups={groups}
+      currentNoteId={currentNoteId}
       width={40}
       theme={THEME}
       onSelectNote={(fileId, noteId) => selections.push([fileId, noteId])}
@@ -135,6 +138,72 @@ describe("all notes pane", () => {
         ["file:noted", "placed"],
         ["file:other", "elsewhere"],
       ]);
+    });
+  });
+
+  test("marks the current note with the file sidebar's selected-row treatment", async () => {
+    await withPane(
+      GROUPS,
+      [],
+      async (setup) => {
+        const backgrounds = (needle: string) => {
+          const spans = setup.captureSpans().lines[rowOf(setup, needle)]?.spans ?? [];
+          // Column 0 is the pane's own inset; the row's accent column is the next one.
+          let end = 0;
+          const accent = spans.find((span) => {
+            end += span.text.length;
+            return end > 1;
+          });
+          return {
+            accentColumn: capturedTestColorToHex(accent?.bg)?.toLowerCase(),
+            row: capturedTestColorToHex(
+              spans.find((span) => span.text.includes(needle))?.bg,
+            )?.toLowerCase(),
+          };
+        };
+
+        // Same two tokens a selected file row uses: the accent bar in the first column,
+        // panelAlt behind the rest of the row.
+        expect(backgrounds("Guard the empty case")).toEqual({
+          accentColumn: THEME.accent.toLowerCase(),
+          row: THEME.panelAlt.toLowerCase(),
+        });
+        expect(backgrounds("Rename this helper")).toEqual({
+          accentColumn: THEME.panel.toLowerCase(),
+          row: THEME.panel.toLowerCase(),
+        });
+      },
+      "placed",
+    );
+  });
+
+  test("keeps every row inside the pane's own right inset", async () => {
+    const long: ReviewNoteGroup[] = [
+      {
+        fileId: "file:noted",
+        label: "src/noted.ts",
+        entries: [
+          {
+            id: "gone",
+            fileId: "file:noted",
+            state: "unanchored",
+            placeable: false,
+            source: "agent",
+            summary: "A summary long enough to run past the right edge of this pane",
+            anchorText: "if (items.length === 0) return earlyExit(alpha, bravo, charlie);",
+          },
+        ],
+      },
+    ];
+
+    await withPane(long, [], async (setup) => {
+      const rows = setup.captureCharFrame().split("\n");
+      const lastColumn = (needle: string) =>
+        rows.find((row) => row.includes(needle))?.replace(/\s+$/, "").length ?? 0;
+
+      // The accent column is an indent, not extra room: the wrapped anchor line has to stop
+      // where the summary line stops rather than eating the pane's right inset.
+      expect(lastColumn("if (items.length")).toBe(lastColumn("A summary long enough"));
     });
   });
 

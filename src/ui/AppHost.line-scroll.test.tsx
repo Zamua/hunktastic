@@ -47,7 +47,7 @@ function isMarked(setup: Awaited<ReturnType<typeof testRender>>, needle: string,
 }
 
 /** Render one file tall enough that the review has somewhere to scroll. */
-async function renderLongFileApp() {
+async function renderLongFileApp(cursorLine: "row" | "off") {
   const bootstrap = {
     ...createTestVcsAppBootstrap({
       files: [
@@ -62,7 +62,7 @@ async function renderLongFileApp() {
       ],
       initialMode: "stack",
     }),
-    initialCursorLine: "row",
+    initialCursorLine: cursorLine,
   };
   const setup = await testRender(<AppHost bootstrap={bootstrap as never} />, {
     width: 120,
@@ -72,7 +72,7 @@ async function renderLongFileApp() {
   return setup;
 }
 
-/** Press one chord and let the resulting scroll land. */
+/** Press one key and let the resulting move land. */
 async function press(
   setup: Awaited<ReturnType<typeof testRender>>,
   key: string,
@@ -80,64 +80,44 @@ async function press(
 ) {
   for (let count = 0; count < times; count += 1) {
     await act(async () => {
-      setup.mockInput.pressKey(key, { ctrl: true });
+      setup.mockInput.pressKey(key);
     });
     await settle(setup, 2);
   }
 }
 
-describe("ctrl+e and ctrl+y", () => {
-  test("move the view and leave the current line where it is", async () => {
-    const setup = await renderLongFileApp();
+describe("j and k", () => {
+  test("move the view when the current-line marker is off, which is the default", async () => {
+    const setup = await renderLongFileApp("off");
 
     try {
       expect(setup.captureCharFrame()).toContain("@@ -1,40 +1,40 @@");
-      expect(isMarked(setup, "const line1 = 1;", "const line2 = 2;")).toBe(true);
 
-      await press(setup, "e");
+      await press(setup, "j");
 
-      // The hunk header scrolled off the top, so the view moved; the marker did not.
+      // The hunk header scrolled off the top, so the viewport moved rather than
+      // a cursor walking down it.
       expect(setup.captureCharFrame()).not.toContain("@@ -1,40 +1,40 @@");
+
+      await press(setup, "k");
+      expect(setup.captureCharFrame()).toContain("@@ -1,40 +1,40 @@");
+    } finally {
+      await act(async () => {
+        setup.renderer.destroy();
+      });
+    }
+  });
+
+  test("move the marker instead once the current line is turned on", async () => {
+    const setup = await renderLongFileApp("row");
+
+    try {
       expect(isMarked(setup, "const line1 = 1;", "const line2 = 2;")).toBe(true);
-    } finally {
-      await act(async () => {
-        setup.renderer.destroy();
-      });
-    }
-  });
 
-  test("clamp the current line to the nearest still-visible row", async () => {
-    const setup = await renderLongFileApp();
+      await press(setup, "j");
 
-    try {
-      await press(setup, "e", 4);
-
-      // The row the marker started on left the viewport, so the marker moved down to the top
-      // row rather than leaving the screen with it.
-      expect(setup.captureCharFrame()).not.toContain("const line1 = 1;");
-      expect(isMarked(setup, "const line4 = 4;", "const line5 = 5;")).toBe(true);
-
-      // Scrolling back up reveals the row above again and still leaves the marker alone.
-      await press(setup, "y");
-      expect(setup.captureCharFrame()).toContain("const line3 = 3;");
-      expect(isMarked(setup, "const line4 = 4;", "const line5 = 5;")).toBe(true);
-    } finally {
-      await act(async () => {
-        setup.renderer.destroy();
-      });
-    }
-  });
-
-  test("j still carries the current line rather than scrolling under it", async () => {
-    const setup = await renderLongFileApp();
-
-    try {
-      await act(async () => {
-        await setup.mockInput.typeText("j");
-      });
-      await settle(setup, 2);
-
-      // The view has not moved, and the marker stepped onto the next row.
+      // The marker advanced and the view stayed put: turning the marker on is
+      // what swaps j/k from scrolling to stepping.
       expect(setup.captureCharFrame()).toContain("@@ -1,40 +1,40 @@");
       expect(isMarked(setup, "const line2 = 2;", "const line3 = 3;")).toBe(true);
     } finally {

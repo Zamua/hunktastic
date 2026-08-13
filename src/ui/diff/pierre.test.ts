@@ -29,10 +29,10 @@ function joinSpanText(spans: RenderSpan[]) {
   return spans.map((span) => span.text).join("");
 }
 
-/** Concatenate the text of spans carrying difftastic novelty emphasis (bold foreground). */
-function emphasizedSpanText(spans: RenderSpan[]) {
+/** Concatenate the text of the spans a novelty overlay repainted with one foreground. */
+function novelSpanText(spans: RenderSpan[], fg: string) {
   return spans
-    .filter((span) => span.bold === true)
+    .filter((span) => span.fg === fg)
     .map((span) => span.text)
     .join("");
 }
@@ -1029,7 +1029,6 @@ describe("Pierre diff rows", () => {
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
-      noveltyStyle: "recolor",
       // difftastic columns index the raw source: "\tlet a = 2;" holds the literal at [9, 10].
       noveltySpans: {
         deletionLines: [[[9, 10]]],
@@ -1047,12 +1046,12 @@ describe("Pierre diff rows", () => {
       }
       return {
         text: joinSpanText(row.cell.spans),
-        emphasized: emphasizedSpanText(row.cell.spans),
+        novel: novelSpanText(row.cell.spans, theme.addedSignColor),
       };
     };
 
-    expect(additionCell(4)).toEqual({ text: "    let a = 2;", emphasized: "2" });
-    expect(additionCell(2)).toEqual({ text: "  let a = 2;", emphasized: "2" });
+    expect(additionCell(4)).toEqual({ text: "    let a = 2;", novel: "2" });
+    expect(additionCell(2)).toEqual({ text: "  let a = 2;", novel: "2" });
 
     const splitRow = buildSplitRows(file, null, theme).find(
       (row) =>
@@ -1061,8 +1060,8 @@ describe("Pierre diff rows", () => {
     if (!splitRow || splitRow.type !== "split-line") {
       throw new Error("Expected a split change row");
     }
-    expect(emphasizedSpanText(splitRow.left.spans)).toBe("1");
-    expect(emphasizedSpanText(splitRow.right.spans)).toBe("2");
+    expect(novelSpanText(splitRow.left.spans, theme.removedSignColor)).toBe("1");
+    expect(novelSpanText(splitRow.right.spans, theme.addedSignColor)).toBe("2");
   });
 
   test("recolors spans without changing row plans when noveltySpans are attached", () => {
@@ -1079,7 +1078,6 @@ describe("Pierre diff rows", () => {
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
-      noveltyStyle: "recolor",
       agent: null,
     };
     const theme = resolveTheme("github-dark-default", null);
@@ -1137,8 +1135,9 @@ describe("Pierre diff rows", () => {
       throw new Error("Expected stacked deletion and addition rows");
     }
 
-    expect(emphasizedSpanText(additionRow.cell.spans)).toBe("!");
+    expect(novelSpanText(additionRow.cell.spans, theme.addedSignColor)).toBe("!");
     // An empty novelty entry marks a novel line with no emphasis columns.
+    expect(deletionRow.cell.spans.every((span) => span.fg === undefined)).toBe(true);
     expect(deletionRow.cell.spans.every((span) => span.bg === undefined)).toBe(true);
   });
 
@@ -1157,7 +1156,6 @@ describe("Pierre diff rows", () => {
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
-      noveltyStyle: "recolor",
       agent: null,
     };
     const theme = resolveTheme("github-dark-default", null);
@@ -1186,49 +1184,60 @@ describe("Pierre diff rows", () => {
     };
     const overlaid = changedRow(file);
 
-    expect(emphasizedSpanText(overlaid.left.spans)).toBe("41");
-    expect(emphasizedSpanText(overlaid.right.spans)).toBe("42");
+    expect(novelSpanText(overlaid.left.spans, theme.removedSignColor)).toBe("41");
+    expect(novelSpanText(overlaid.right.spans, theme.addedSignColor)).toBe("42");
     expect(joinSpanText(overlaid.left.spans)).toBe("const answer = 41;");
     expect(joinSpanText(overlaid.right.spans)).toBe("const answer = 42;");
-    // Novel tokens take the sign foregrounds plus bold; the row background stays untouched.
-    expect(overlaid.left.spans.find((span) => span.bold)?.fg).toBe(theme.removedSignColor);
-    expect(overlaid.right.spans.find((span) => span.bold)?.fg).toBe(theme.addedSignColor);
+    // Foreground only: no bold on the novel region, and no background anywhere. A background
+    // would show a hole at every gap difftastic leaves between its per-token spans.
+    expect(overlaid.left.spans.every((span) => span.bold === undefined)).toBe(true);
+    expect(overlaid.right.spans.every((span) => span.bold === undefined)).toBe(true);
     expect(overlaid.left.spans.every((span) => span.bg === undefined)).toBe(true);
     expect(overlaid.right.spans.every((span) => span.bg === undefined)).toBe(true);
-    // Syntax colors survive the overlay split.
-    expect(
-      overlaid.right.spans.some(
-        (span) => span.text.includes("const") && typeof span.fg === "string",
-      ),
-    ).toBe(true);
+    // Syntax colors survive the overlay split on every token outside the novel columns.
+    const keyword = overlaid.right.spans.find((span) => span.text.includes("const"));
+    expect(typeof keyword?.fg).toBe("string");
+    expect(keyword?.fg).not.toBe(theme.addedSignColor);
   });
 
-  test("the default novelty style keeps syntax colors and marks changes with a background", async () => {
+  test("leaves the gap between two novel tokens unpainted", async () => {
     const metadata = parseDiffFromFile(
       {
         name: "example.ts",
-        contents: "const answer = 41;\n",
-        cacheKey: "novelty-highlight-before",
+        contents: "const a = 1, b = 2;\n",
+        cacheKey: "novelty-gap-before",
       },
       {
         name: "example.ts",
-        contents: "const answer = 42;\n",
-        cacheKey: "novelty-highlight-after",
+        contents: "const a = 3, b = 4;\n",
+        cacheKey: "novelty-gap-after",
       },
       { context: 3 },
+      true,
     );
     const file: DiffFile = {
-      id: "novelty-highlight",
+      id: "novelty-gap",
       path: "example.ts",
       patch: "",
       language: "typescript",
       stats: { additions: 1, deletions: 1 },
       metadata,
       engine: "difftastic",
-      // No noveltyStyle: this pins what an engine-produced file renders by default.
+      // difftastic emits one span per token, so the ", b = " between the two literals
+      // belongs to no span at all.
       noveltySpans: {
-        deletionLines: [[[15, 17]]],
-        additionLines: [[[15, 17]]],
+        deletionLines: [
+          [
+            [10, 11],
+            [17, 18],
+          ],
+        ],
+        additionLines: [
+          [
+            [10, 11],
+            [17, 18],
+          ],
+        ],
       },
       agent: null,
     };
@@ -1244,18 +1253,14 @@ describe("Pierre diff rows", () => {
       throw new Error("Expected a split change row");
     }
 
-    for (const [cell, expected] of [
-      [row.left, "41"],
-      [row.right, "42"],
-    ] as const) {
-      const emphasized = cell.spans.filter((span) => span.bg !== undefined);
-      expect(emphasized.map((span) => span.text).join("")).toBe(expected);
-      // Marked by background alone: no recolor, and the syntax foreground survives.
-      expect(emphasized.every((span) => span.bold !== true)).toBe(true);
-      expect(emphasized.every((span) => typeof span.fg === "string")).toBe(true);
-    }
-    expect(joinSpanText(row.left.spans)).toBe("const answer = 41;");
-    expect(joinSpanText(row.right.spans)).toBe("const answer = 42;");
+    expect(novelSpanText(row.left.spans, theme.removedSignColor)).toBe("12");
+    expect(novelSpanText(row.right.spans, theme.addedSignColor)).toBe("34");
+    // A foreground has no edges, so the unspanned gap is invisible. A background would
+    // have drawn a hole through it.
+    expect(row.left.spans.every((span) => span.bg === undefined)).toBe(true);
+    expect(row.right.spans.every((span) => span.bg === undefined)).toBe(true);
+    expect(joinSpanText(row.left.spans)).toBe("const a = 1, b = 2;");
+    expect(joinSpanText(row.right.spans)).toBe("const a = 3, b = 4;");
   });
 
   test("difftastic files drop +/- signs and mark every cell with the difftastic style", () => {
@@ -1387,5 +1392,161 @@ describe("Pierre diff rows", () => {
     );
     expect(contextLine).toContain("export const stable = true;");
     expect(contextLine).not.toContain("▌.");
+  });
+});
+
+/**
+ * difftastic's changed-word tier renders as bold plus underline over the novel
+ * foreground, matching what `difft` draws in its own terminal output.
+ */
+describe("changed-word rendering", () => {
+  /** A one-line difftastic file whose novel region is the string literal. */
+  function createNovelWordFile(): DiffFile {
+    const metadata = parseDiffFromFile(
+      {
+        name: "words.ts",
+        contents: 'const line = "the quick brown fox";\n',
+        cacheKey: "novel-word-before",
+      },
+      {
+        name: "words.ts",
+        contents: 'const line = "the quick brown feline";\n',
+        cacheKey: "novel-word-after",
+      },
+      { context: 3 },
+      true,
+    );
+    return {
+      id: "novel-word",
+      path: "words.ts",
+      patch: "",
+      language: "typescript",
+      stats: { additions: 1, deletions: 1 },
+      metadata,
+      engine: "difftastic",
+      // The whole literal is novel. The changed word is "fox" at [30, 33] on the
+      // old side and "feline" at [30, 36] on the new one; the two sides differ so
+      // a side mix-up cannot pass.
+      noveltySpans: {
+        deletionLines: [[[13, 34]]],
+        additionLines: [[[13, 37]]],
+        deletionWordLines: [[[30, 33]]],
+        additionWordLines: [[[30, 36]]],
+      },
+      agent: null,
+    };
+  }
+
+  function changeRow(file: DiffFile) {
+    const theme = resolveTheme("github-dark-default", null);
+    const row = buildSplitRows(file, null, theme).find(
+      (candidate) =>
+        candidate.type === "split-line" &&
+        candidate.left.kind === "deletion" &&
+        candidate.right.kind === "addition",
+    );
+    if (!row || row.type !== "split-line") {
+      throw new Error("Expected a split change row");
+    }
+    return row;
+  }
+
+  /** Text of the spans carrying both changed-word attributes. */
+  function changedWordText(spans: RenderSpan[]) {
+    return spans
+      .filter((span) => span.bold === true && span.underline === true)
+      .map((span) => span.text)
+      .join("");
+  }
+
+  test("marks the changed word bold plus underline over the novel foreground", () => {
+    const theme = resolveTheme("github-dark-default", null);
+    const row = changeRow(createNovelWordFile());
+
+    expect(changedWordText(row.left.spans)).toBe("fox");
+    expect(changedWordText(row.right.spans)).toBe("feline");
+    expect(joinSpanText(row.left.spans)).toBe('const line = "the quick brown fox";');
+    // The changed word keeps the novel foreground rather than replacing it.
+    expect(row.left.spans.find((span) => span.underline === true)?.fg).toBe(theme.removedSignColor);
+    expect(row.right.spans.find((span) => span.underline === true)?.fg).toBe(theme.addedSignColor);
+    // The rest of the novel region carries that foreground with no attributes at all.
+    const plainNovel = row.left.spans.filter(
+      (span) => span.fg === theme.removedSignColor && span.underline !== true,
+    );
+    expect(plainNovel.map((span) => span.text).join("")).toBe('"the quick brown "');
+    expect(plainNovel.every((span) => span.bold !== true)).toBe(true);
+    expect(row.left.spans.every((span) => span.bg === undefined)).toBe(true);
+  });
+
+  test("changed-word columns pass through tab expansion like novel columns", () => {
+    const metadata = parseDiffFromFile(
+      { name: "tabs.ts", contents: '\tconst a = "one two";\n', cacheKey: "novel-word-tabs-before" },
+      { name: "tabs.ts", contents: '\tconst a = "one six";\n', cacheKey: "novel-word-tabs-after" },
+      { context: 3 },
+      true,
+    );
+    const file: DiffFile = {
+      id: "novel-word-tabs",
+      path: "tabs.ts",
+      patch: "",
+      language: "typescript",
+      stats: { additions: 1, deletions: 1 },
+      metadata,
+      engine: "difftastic",
+      // Raw source columns: the literal is [11, 20], the changed word [16, 19].
+      noveltySpans: {
+        deletionLines: [[[11, 20]]],
+        additionLines: [[[11, 20]]],
+        deletionWordLines: [[[16, 19]]],
+        additionWordLines: [[[16, 19]]],
+      },
+      agent: null,
+    };
+    const theme = resolveTheme("github-dark-default", null);
+    const additionCell = (tabWidth: number) => {
+      const row = buildStackRows(file, null, theme, tabWidth).find(
+        (candidate) => candidate.type === "stack-line" && candidate.cell.kind === "addition",
+      );
+      if (!row || row.type !== "stack-line") {
+        throw new Error("Expected one addition row");
+      }
+      return {
+        text: joinSpanText(row.cell.spans),
+        changedWord: changedWordText(row.cell.spans),
+      };
+    };
+
+    expect(additionCell(4)).toEqual({ text: '    const a = "one six";', changedWord: "six" });
+    expect(additionCell(2)).toEqual({ text: '  const a = "one six";', changedWord: "six" });
+  });
+
+  test("a novel line with no changed word renders no attributes", () => {
+    const file = createNovelWordFile();
+    file.noveltySpans = {
+      deletionLines: [[[13, 34]]],
+      additionLines: [[[13, 37]]],
+      deletionWordLines: [[]],
+      additionWordLines: [[]],
+    };
+    const row = changeRow(file);
+
+    expect(row.left.spans.every((span) => span.underline === undefined)).toBe(true);
+    expect(row.left.spans.every((span) => span.bold === undefined)).toBe(true);
+    expect(joinSpanText(row.left.spans)).toBe('const line = "the quick brown fox";');
+  });
+
+  test("a file with no changed-word arrays renders exactly as before", () => {
+    const withWords = createNovelWordFile();
+    const withoutWords = createNovelWordFile();
+    withoutWords.noveltySpans = {
+      deletionLines: [[[13, 34]]],
+      additionLines: [[[13, 37]]],
+    };
+
+    const emphasisOnly = changeRow(withoutWords);
+    expect(emphasisOnly.left.spans.every((span) => span.underline === undefined)).toBe(true);
+    expect(joinSpanText(emphasisOnly.left.spans)).toBe(
+      joinSpanText(changeRow(withWords).left.spans),
+    );
   });
 });
