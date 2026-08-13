@@ -2,7 +2,7 @@ import { AGENT_ERROR_DOCS } from "../session/agent/errors";
 import { SESSION_AGENT_COMMANDS, type AgentCommandSpec } from "../session/agent/surface";
 
 /**
- * Deterministic renderer for `skills/hunk-review/SKILL.md`.
+ * Deterministic renderer for `skills/hunkt-review/SKILL.md`.
  *
  * The command reference blocks and the "Common errors" section are derived from
  * `agentSurface.ts` and `agentErrors.ts` so the skill can never disagree with the parser or the
@@ -31,7 +31,7 @@ function navigateExamples(kind: "absolute" | "relative") {
 
 const FRONTMATTER = [
   "---",
-  "name: hunk-review",
+  "name: hunkt-review",
   "description: Interacts with live Hunk diff review sessions via CLI. Inspects review focus, navigates files and hunks, reloads session contents, and adds inline review comments. Use when the user has a Hunk session running or wants to review diffs interactively.",
   "---",
 ];
@@ -208,7 +208,7 @@ function commonErrorsSection() {
   ];
 }
 
-/** Render the complete hunk-review SKILL.md content. */
+/** Render the complete hunkt-review SKILL.md content. */
 export function renderHunkReviewSkill() {
   const sections = [
     [...FRONTMATTER, "", ...INTRO],

@@ -1,7 +1,7 @@
 /**
  * Agent-facing error messages for the `hunkt session` surface.
  *
- * Every message quoted by the generated `skills/hunk-review/SKILL.md` "Common errors" section is
+ * Every message quoted by the generated `skills/hunkt-review/SKILL.md` "Common errors" section is
  * defined (or contract-tested) here, so the skill can never quote wording the CLI no longer
  * throws. Throw sites import these builders instead of repeating string literals.
  */

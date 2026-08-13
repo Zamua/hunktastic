@@ -22,7 +22,7 @@ export default function (hunk: HunkExtensionAPI) {
 > changes will be called out in release notes, and `hunk.apiVersion` identifies
 > the surface an extension was written against.
 
-Writing one with a coding agent? `hunkt skill path hunk-extensions` prints a
+Writing one with a coding agent? `hunkt skill path hunkt-extensions` prints a
 bundled skill that maps the touchpoints below for agents, the way
 `hunkt skill path` does for reviewing.
 

@@ -181,7 +181,7 @@ Hunk 0.18.0 makes reviews more precise, customizable, and extensible—while imp
 
 - [#630](https://github.com/modem-dev/hunk/pull/630) - Document the supported scrollbox ref, stable row IDs, selection following, and pane geometry APIs for custom sidebars.
 
-- [#596](https://github.com/modem-dev/hunk/pull/596) - Generate the hunk-review skill from typed session commands and document missing note, markup, rationale, and author flags.
+- [#596](https://github.com/modem-dev/hunk/pull/596) - Generate the hunkt-review skill from typed session commands and document missing note, markup, rationale, and author flags.
 
 - [#652](https://github.com/modem-dev/hunk/pull/652) - Skip inactive custom file-view preparation to reduce rerenders and retained memory in raw-diff reviews.
 
@@ -252,7 +252,7 @@ Hunk 0.18.0 makes reviews more precise, customizable, and extensible—while imp
 ### Minor Changes
 
 - 6cd39c9: Add a configurable menu bar toggle so keyboard-driven reviews can reclaim one row of terminal space.
-- 8945272: Add an `enableClaudeIntegration` home-manager option that links the packaged `hunk-review` skill into `~/.claude/skills`, so Nix users get the Claude Code review skill without manual setup.
+- 8945272: Add an `enableClaudeIntegration` home-manager option that links the packaged `hunkt-review` skill into `~/.claude/skills`, so Nix users get the Claude Code review skill without manual setup.
 - d2be4e7: Add an `enableJujutsuIntegration` home-manager option that sets hunk as the jujutsu pager and switches `ui.diff-formatter` to `:git` so jj emits diffs hunk can render.
 
 ### Patch Changes

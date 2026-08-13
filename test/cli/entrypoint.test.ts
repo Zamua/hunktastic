@@ -155,7 +155,7 @@ describe("CLI entrypoint contracts", () => {
 
     expect(proc.exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(resolvedPath).toEndWith(join("skills", "hunk-review", "SKILL.md"));
+    expect(resolvedPath).toEndWith(join("skills", "hunkt-review", "SKILL.md"));
     expect(existsSync(resolvedPath)).toBe(true);
     expect(stdout).not.toContain("\u001b[?1049h");
   });
@@ -175,7 +175,7 @@ describe("CLI entrypoint contracts", () => {
 
     expect(proc.exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(resolvedPath).toEndWith(join("skills", "hunk-review", "SKILL.md"));
+    expect(resolvedPath).toEndWith(join("skills", "hunkt-review", "SKILL.md"));
     expect(existsSync(resolvedPath)).toBe(true);
   });
 
@@ -209,7 +209,7 @@ describe("CLI entrypoint contracts", () => {
       expect(proc.exitCode).toBe(1);
       expect(stdout).toBe("");
       expect(stderr).toContain("hunkt: could not locate the bundled Hunk review skill");
-      expect(stderr).toContain(join("skills", "hunk-review", "SKILL.md"));
+      expect(stderr).toContain(join("skills", "hunkt-review", "SKILL.md"));
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

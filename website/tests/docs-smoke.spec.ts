@@ -90,7 +90,7 @@ test("key human and machine-readable routes load", async ({ page, request }) => 
     await expect(page.locator("h1")).toBeVisible();
   }
 
-  const skill = await request.get("/docs/hunk-review-skill.md");
+  const skill = await request.get("/docs/hunkt-review-skill.md");
   expect(skill.ok()).toBe(true);
   expect(await skill.text()).toContain("# Hunk Review");
 });
@@ -154,7 +154,7 @@ test("docs pages serve their Markdown source at .md URLs", async ({ request }) =
   expect(await html.text()).toContain("<!DOCTYPE html");
 
   // The plugin must not shadow the hand-authored skill file served from public/.
-  const skill = await request.get("/docs/hunk-review-skill.md");
+  const skill = await request.get("/docs/hunkt-review-skill.md");
   expect(skill.ok()).toBe(true);
-  expect(await skill.text()).toContain("name: hunk-review");
+  expect(await skill.text()).toContain("name: hunkt-review");
 });

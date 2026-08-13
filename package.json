@@ -29,8 +29,8 @@
   "files": [
     "bin",
     "dist/npm",
-    "skills/hunk-review",
-    "skills/hunk-extensions",
+    "skills/hunkt-review",
+    "skills/hunkt-extensions",
     "README.md",
     "LICENSE"
   ],

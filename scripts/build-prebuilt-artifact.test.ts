@@ -49,19 +49,19 @@ describe("stagePrebuiltArtifact", () => {
 
   test("rejects a missing bundled skill with an actionable error", () => {
     const { repoRoot } = createTestRepo();
-    rmSync(path.join(repoRoot, "skills", "hunk-review", "SKILL.md"), { force: true });
+    rmSync(path.join(repoRoot, "skills", "hunkt-review", "SKILL.md"), { force: true });
 
     expect(() => stagePrebuiltArtifact({ repoRoot })).toThrow(
-      "Missing bundled Hunk hunk-review skill",
+      "Missing bundled Hunk hunkt-review skill",
     );
   });
 
   test("rejects a missing bundled skill added after the first one", () => {
     const { repoRoot } = createTestRepo();
-    rmSync(path.join(repoRoot, "skills", "hunk-extensions", "SKILL.md"), { force: true });
+    rmSync(path.join(repoRoot, "skills", "hunkt-extensions", "SKILL.md"), { force: true });
 
     expect(() => stagePrebuiltArtifact({ repoRoot })).toThrow(
-      "Missing bundled Hunk hunk-extensions skill",
+      "Missing bundled Hunk hunkt-extensions skill",
     );
   });
 

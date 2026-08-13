@@ -160,9 +160,9 @@ try {
   // The bare command keeps naming the review skill; every bundled skill must
   // also resolve by name, since the install is what users discover them through.
   const skillPathChecks: [args: string[], skillName: string][] = [
-    [["skill", "path"], "hunk-review"],
-    [["skill", "path", "hunk-review"], "hunk-review"],
-    [["skill", "path", "hunk-extensions"], "hunk-extensions"],
+    [["skill", "path"], "hunkt-review"],
+    [["skill", "path", "hunkt-review"], "hunkt-review"],
+    [["skill", "path", "hunkt-extensions"], "hunkt-extensions"],
   ];
 
   for (const [args, skillName] of skillPathChecks) {

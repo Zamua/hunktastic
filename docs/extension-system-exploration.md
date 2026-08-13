@@ -49,7 +49,7 @@ The mechanics that matter for us:
 - **Packages bundle extensions + skills + prompts + themes** and are installed
   with `pi install`. Notably, Hunk already participates in this ecosystem from
   the other side: our `package.json` declares `"pi": { "skills": ["./skills"] }`
-  so pi users get the `hunk-review` skill automatically.
+  so pi users get the `hunkt-review` skill automatically.
 
 ## 2. Why this fits Hunk
 
@@ -241,7 +241,7 @@ of the same structure for free.
    hot-reload for extension development, and a docs page whose real audience is
    coding agents (pi ships an `extending-pi` guidance extension; our equivalent
    is a `hunk-extension-authoring` skill — same trick we already use for
-   `hunk-review`).
+   `hunkt-review`).
 
 ## 7. Open questions
 

@@ -14,7 +14,7 @@ import {
   CONFIG_REFERENCE_EXTENSIONS,
   CONFIG_REFERENCE_OPTIONS,
 } from "../src/core/config";
-import { renderHunkReviewSkill } from "../src/hunk-review/skillDocument";
+import { renderHunkReviewSkill } from "../src/hunkt-review/skillDocument";
 import { type AgentCommandOption, SESSION_AGENT_COMMAND_LIST } from "../src/session/agent/surface";
 import {
   DEFAULT_SESSION_BROKER_HOST,
@@ -31,7 +31,7 @@ const GENERATED_NOTICE =
 export const GENERATED_DOC_PATHS = {
   cli: resolve(REPO_ROOT, "website", "src", "content", "docs", "docs", "reference", "cli.md"),
   config: resolve(REPO_ROOT, "website", "src", "content", "docs", "docs", "reference", "config.md"),
-  agentSkill: resolve(REPO_ROOT, "website", "public", "docs", "hunk-review-skill.md"),
+  agentSkill: resolve(REPO_ROOT, "website", "public", "docs", "hunkt-review-skill.md"),
 } as const;
 
 /** Escape prose that Markdown would otherwise parse as inline HTML tags. */

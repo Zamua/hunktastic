@@ -5,7 +5,7 @@ import type { SessionDaemonAction } from "../protocol";
  *
  * This module is the single source of truth for what agents can invoke: the Commander commands in
  * `src/core/cli.ts`, the `hunkt session --help` usage text, and the generated
- * `skills/hunk-review/SKILL.md` reference sections are all derived from these specs, so the parser
+ * `skills/hunkt-review/SKILL.md` reference sections are all derived from these specs, so the parser
  * and the docs cannot drift apart. Keep it pure data with no runtime dependencies.
  */
 

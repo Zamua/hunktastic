@@ -436,8 +436,8 @@ function renderSkillHelp() {
     "Load or symlink that file in your coding agent to keep it in sync across Hunk upgrades.",
     "",
     "Skills:",
-    `  hunk-review (default, "review")   review a live Hunk session with \`hunkt session\` commands`,
-    `  hunk-extensions ("extensions")    build extensions against the hunkdiff/extension API`,
+    `  hunkt-review (default, "review")   review a live Hunk session with \`hunkt session\` commands`,
+    `  hunkt-extensions ("extensions")    build extensions against the hunkdiff/extension API`,
     "",
   ].join("\n");
 }

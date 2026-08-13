@@ -54,7 +54,7 @@ in
     enableClaudeIntegration = mkOption {
       type = types.bool;
       default = false;
-      description = "Whether to link the hunk-review skill under ~/.claude/skills.";
+      description = "Whether to link the hunkt-review skill under ~/.claude/skills.";
     };
 
     installDifftastic = mkOption {
@@ -85,7 +85,7 @@ in
     };
 
     home.file = mkIf cfg.enableClaudeIntegration {
-      ".claude/skills/hunk-review".source = "${cfg.package}/skills/hunk-review";
+      ".claude/skills/hunkt-review".source = "${cfg.package}/skills/hunkt-review";
     };
   };
 }
