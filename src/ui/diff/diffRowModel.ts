@@ -13,6 +13,8 @@ export interface RenderSpan {
   text: string;
   fg?: string;
   bg?: string;
+  bold?: boolean;
+  underline?: boolean;
 }
 
 export interface SplitLineCell {
@@ -20,6 +22,8 @@ export interface SplitLineCell {
   sign: string;
   lineNumber?: number;
   moveKind?: DiffLineMoveKind;
+  /** Set for difftastic-engine files: dot line-number convention, no sign, no row tint. */
+  difftasticStyle?: true;
   spans: RenderSpan[];
 }
 
@@ -29,6 +33,8 @@ export interface StackLineCell {
   oldLineNumber?: number;
   newLineNumber?: number;
   moveKind?: DiffLineMoveKind;
+  /** Set for difftastic-engine files: dot line-number convention, no sign, no row tint. */
+  difftasticStyle?: true;
   spans: RenderSpan[];
 }
 

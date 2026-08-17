@@ -63,14 +63,15 @@ function ansiColor(kind: "fg" | "bg", hex: string | undefined) {
   return `\x1b[${kind === "fg" ? 38 : 48};2;${red};${green};${blue}m`;
 }
 
-/** Wrap one terminal text fragment in ANSI colors. */
-function colorText(text: string, fg?: string, bg?: string) {
+/** Wrap one terminal text fragment in ANSI colors and attributes. */
+function colorText(text: string, fg?: string, bg?: string, bold = false, underline = false) {
   const safeText = sanitizeTerminalLine(text);
   if (!safeText) {
     return "";
   }
 
-  const prefix = `${ansiColor("fg", fg)}${ansiColor("bg", bg)}`;
+  const attributes = `${bold ? "\x1b[1m" : ""}${underline ? "\x1b[4m" : ""}`;
+  const prefix = `${attributes}${ansiColor("fg", fg)}${ansiColor("bg", bg)}`;
   return prefix ? `${prefix}${safeText}${RESET}` : safeText;
 }
 
@@ -82,7 +83,9 @@ function fillRemainingLine(bg: string) {
 
 /** Serialize highlighted code spans into ANSI text, preserving a row background when present. */
 function serializeSpans(spans: RenderSpan[], rowBg: string) {
-  return spans.map((span) => colorText(span.text, span.fg, span.bg ?? rowBg)).join("");
+  return spans
+    .map((span) => colorText(span.text, span.fg, span.bg ?? rowBg, span.bold, span.underline))
+    .join("");
 }
 
 /** Serialize spans into one fixed-width pane so split rows keep both sides aligned. */
@@ -98,7 +101,7 @@ function serializeSpansFixedWidth(spans: RenderSpan[], rowBg: string, width: num
 
     const visible = sliceTextByWidth(span.text, 0, remaining);
     if (visible.text) {
-      output += colorText(visible.text, span.fg, span.bg ?? rowBg);
+      output += colorText(visible.text, span.fg, span.bg ?? rowBg, span.bold, span.underline);
       usedWidth += visible.width;
       remaining -= visible.width;
     }
@@ -164,7 +167,7 @@ function renderStaticStackRow(
   }
 
   const { cell } = row;
-  const palette = stackCellPalette(cell.kind, theme, cell.moveKind);
+  const palette = stackCellPalette(cell.kind, theme, cell.moveKind, cell.difftasticStyle);
   return `${colorText(marker(), stackRailColor(cell.kind, theme, true), theme.panel)}${colorText(
     staticStackGutterText(cell, lineNumberWidth, options.lineNumbers !== false),
     palette.numberColor,
@@ -180,7 +183,7 @@ function renderStaticSplitCell(
   lineNumberWidth: number,
   options: CommonOptions,
 ) {
-  const palette = splitCellPalette(cell.kind, theme, cell.moveKind);
+  const palette = splitCellPalette(cell.kind, theme, cell.moveKind, cell.difftasticStyle);
   const { gutterWidth, contentWidth } = resolveSplitCellGeometry(
     width,
     lineNumberWidth,

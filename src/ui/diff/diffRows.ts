@@ -13,6 +13,7 @@ import {
   renderFileWithHighlighter,
   type FileContents,
   type FileDiffMetadata,
+  type LineDiffTypes,
 } from "@pierre/diffs";
 import { formatHunkHeader } from "../../core/hunkHeader";
 import {
@@ -21,13 +22,20 @@ import {
   type ReviewGapAddress,
 } from "../../core/review/expansion";
 import { DEFAULT_TAB_WIDTH } from "../../core/tabWidth";
-import type { DiffFile, DiffLineMoveKind } from "../../core/types";
+import type { ColumnSpan, DiffFile, DiffLineMoveKind } from "../../core/types";
 import { blendHex, hexColorDistance } from "../lib/color";
 import { measureTextWidth } from "../lib/text";
 import { sanitizeTerminalLine } from "../../lib/terminalText";
 import { TRANSPARENT_BACKGROUND, type AppTheme } from "../themes";
 import { expandDiffTabs } from "./codeColumns";
 import type { DiffRow, RenderSpan, SplitLineCell, StackLineCell } from "./diffRowModel";
+import { rawOffsetToSanitizedOffset, snapToClusterBoundary } from "./lineHighlightPaint";
+import {
+  overlayNoveltySpans,
+  remapColumnSpansThroughTabs,
+  type NoveltyEmphasis,
+} from "./noveltySpans";
+import { difftasticNoveltyFg } from "./rowStyle";
 import {
   aliasContextHighlightLines,
   collectHastHighlightRuns,
@@ -63,13 +71,18 @@ function highlightThemeAppearance(theme: HighlightThemeInput) {
   return typeof theme === "string" ? theme : theme.appearance;
 }
 
-/** Build render options for the active syntax theme. */
-function pierreRenderOptions(theme: HighlightThemeInput) {
+/** Pierre intraline diff mode for one file: difftastic novelty spans replace Pierre word-diff. */
+function fileLineDiffType(file: DiffFile): LineDiffTypes {
+  return file.engine === "difftastic" ? "none" : "word-alt";
+}
+
+/** Build render options for the active syntax theme and one file's intraline diff mode. */
+function pierreRenderOptions(theme: HighlightThemeInput, lineDiffType: LineDiffTypes = "word-alt") {
   return {
     theme: syntaxHighlightThemeName(theme),
     useTokenTransformer: false,
     tokenizeMaxLineLength: 1_000,
-    lineDiffType: "word-alt" as const,
+    lineDiffType,
     maxLineDiffLength: 10_000,
   };
 }
@@ -203,7 +216,13 @@ function mergeSpan(target: RenderSpan[], next: RenderSpan) {
   }
 
   const previous = target[target.length - 1];
-  if (previous && previous.fg === next.fg && previous.bg === next.bg) {
+  if (
+    previous &&
+    previous.fg === next.fg &&
+    previous.bg === next.bg &&
+    previous.bold === next.bold &&
+    previous.underline === next.underline
+  ) {
     previous.text += next.text;
     return;
   }
@@ -315,6 +334,104 @@ function cleanDiffLine(line: string | undefined, tabWidth: number) {
   return tabify(cleanLastNewline(line ?? ""), tabWidth);
 }
 
+/**
+ * One line's difftastic novelty columns: every novel column range, plus the
+ * changed-word ranges nested inside them. Both index the raw source line.
+ */
+interface LineNoveltyColumns {
+  spans: ColumnSpan[];
+  words?: ColumnSpan[];
+}
+
+/**
+ * difftastic's changed-word tier (`NovelWord`), which it draws as bold plus
+ * underline. Carries no color, so it inherits the novel foreground applied first.
+ */
+const CHANGED_WORD_EMPHASIS: NoveltyEmphasis = { bold: true, underline: true };
+
+/** Read one line's novelty columns off a file; undefined when the line is not novel. */
+function lineNoveltyColumns(
+  file: DiffFile,
+  side: "addition" | "deletion",
+  index: number,
+): LineNoveltyColumns | undefined {
+  const novelty = file.noveltySpans;
+  if (!novelty) {
+    return undefined;
+  }
+
+  const spans = side === "addition" ? novelty.additionLines[index] : novelty.deletionLines[index];
+  if (spans == null) {
+    return undefined;
+  }
+
+  const words =
+    side === "addition" ? novelty.additionWordLines?.[index] : novelty.deletionWordLines?.[index];
+  return { spans, words };
+}
+
+/**
+ * Apply difftastic intraline novelty emphasis to one cell's flattened spans.
+ *
+ * Mirrors difft's own terminal output: a novel token takes the deletion/addition
+ * foreground, and the changed words inside it take a second pass of bold plus
+ * underline. Emphasis is foreground-only because difftastic's JSON leaves the
+ * whitespace between tokens in no span at all, so any painted background shows a
+ * hole at every gap. Row backgrounds stay untouched, so syntax highlighting survives
+ * on every non-novel token.
+ */
+function overlayCellNoveltySpans(
+  spans: RenderSpan[],
+  novelty: LineNoveltyColumns | undefined,
+  kind: SplitLineCell["kind"],
+  rawLine: string | undefined,
+  theme: AppTheme,
+  tabWidth: number,
+) {
+  if (!novelty || novelty.spans.length === 0 || spans.length === 0) {
+    return spans;
+  }
+
+  const rawText = cleanLastNewline(rawLine ?? "");
+  const sanitized = sanitizeTerminalLine(rawText);
+  if (sanitized.length === 0) {
+    return spans;
+  }
+
+  // difftastic columns index the raw source line, but rendered spans hold sanitized,
+  // tab-expanded text: remap through sanitization, snapped to whole glyphs, then
+  // through tab expansion.
+  const remap = (columnSpans: ColumnSpan[]) =>
+    remapColumnSpansThroughTabs(
+      sanitized,
+      columnSpans.map(
+        ([start, end]) =>
+          [
+            snapToClusterBoundary(
+              sanitized,
+              rawOffsetToSanitizedOffset(rawText, sanitized, start),
+              "down",
+            ),
+            snapToClusterBoundary(
+              sanitized,
+              rawOffsetToSanitizedOffset(rawText, sanitized, end),
+              "up",
+            ),
+          ] as ColumnSpan,
+      ),
+      tabWidth,
+    );
+
+  const emphasized = overlayNoveltySpans(spans, remap(novelty.spans), {
+    fg: difftasticNoveltyFg(kind === "deletion" ? "deletion" : "addition", theme),
+  });
+  if (!novelty.words || novelty.words.length === 0) {
+    return emphasized;
+  }
+
+  return overlayNoveltySpans(emphasized, remap(novelty.words), CHANGED_WORD_EMPHASIS);
+}
+
 /** Build the normalized render model for one split-view cell. */
 function makeSplitCell(
   kind: SplitLineCell["kind"],
@@ -325,13 +442,19 @@ function makeSplitCell(
   tabWidth: number,
   moveKind?: DiffLineMoveKind,
   compactRuns?: CompactHighlightRun[],
+  novelty?: LineNoveltyColumns,
+  difftasticStyle = false,
 ) {
   if (kind === "empty") {
-    return {
+    const emptyCell: SplitLineCell = {
       kind,
       sign: " ",
       spans: [],
-    } satisfies SplitLineCell;
+    };
+    if (difftasticStyle) {
+      emptyCell.difftasticStyle = true;
+    }
+    return emptyCell;
   }
 
   // Startup renders often build rows before any highlight result exists, so keep that plain-text
@@ -360,13 +483,20 @@ function makeSplitCell(
     spans = fallbackText.length > 0 ? [{ text: fallbackText }] : [];
   }
 
-  return {
+  spans = overlayCellNoveltySpans(spans, novelty, kind, rawLine, theme, tabWidth);
+
+  const cell: SplitLineCell = {
     kind,
-    sign: kind === "addition" ? "+" : kind === "deletion" ? "-" : " ",
+    // difftastic style drops the +/- sign but keeps the column so alignment is stable.
+    sign: difftasticStyle ? " " : kind === "addition" ? "+" : kind === "deletion" ? "-" : " ",
     lineNumber,
     moveKind,
     spans,
-  } satisfies SplitLineCell;
+  };
+  if (difftasticStyle) {
+    cell.difftasticStyle = true;
+  }
+  return cell;
 }
 
 /** Build the normalized render model for one stack-view cell. */
@@ -380,6 +510,8 @@ function makeStackCell(
   tabWidth: number,
   moveKind?: DiffLineMoveKind,
   compactRuns?: CompactHighlightRun[],
+  novelty?: LineNoveltyColumns,
+  difftasticStyle = false,
 ) {
   // Same lazy-fallback strategy as split cells: only normalize raw text when no HAST or compact
   // syntax run is available, or the selected highlighter produced no spans.
@@ -407,14 +539,21 @@ function makeStackCell(
     spans = fallbackText.length > 0 ? [{ text: fallbackText }] : [];
   }
 
-  return {
+  spans = overlayCellNoveltySpans(spans, novelty, kind, rawLine, theme, tabWidth);
+
+  const cell: StackLineCell = {
     kind,
-    sign: kind === "addition" ? "+" : kind === "deletion" ? "-" : " ",
+    // difftastic style drops the +/- sign but keeps the column so alignment is stable.
+    sign: difftasticStyle ? " " : kind === "addition" ? "+" : kind === "deletion" ? "-" : " ",
     oldLineNumber,
     newLineNumber,
     moveKind,
     spans,
-  } satisfies StackLineCell;
+  };
+  if (difftasticStyle) {
+    cell.difftasticStyle = true;
+  }
+  return cell;
 }
 
 /** Describe one collapsed unchanged region in the diff stream. */
@@ -555,7 +694,7 @@ function renderHighlightedDiff(
     const highlighted = renderDiffWithHighlighter(
       metadata,
       highlighter,
-      pierreRenderOptions(theme),
+      pierreRenderOptions(theme, fileLineDiffType(file)),
     );
     return finalizeHighlightedDiff(file, sourcePlan, highlighted);
   });
@@ -666,7 +805,13 @@ export async function loadHighlightedDiff(
     sourcePlan && shouldHighlightMetadata(sourcePlan.metadata) ? sourcePlan : null;
   const metadata = highlightSourcePlan?.metadata ?? file.metadata;
 
-  if (typeof theme !== "string" && shouldOffloadHighlight(metadata, theme, options)) {
+  // The worker path pins Pierre word-diff on; difftastic files replace word diff with
+  // novelty spans, so they highlight on the main thread with it disabled.
+  if (
+    file.engine !== "difftastic" &&
+    typeof theme !== "string" &&
+    shouldOffloadHighlight(metadata, theme, options)
+  ) {
     try {
       return await loadWorkerHighlightedDiff(file, metadata, theme, highlightSourcePlan);
     } catch {
@@ -718,7 +863,7 @@ export async function loadHighlightedSourceLines({
       const highlighted = renderFileWithHighlighter(
         sourceFileContents(file, text, file.language),
         highlighter,
-        pierreRenderOptions(theme),
+        pierreRenderOptions(theme, fileLineDiffType(file)),
       );
       return {
         lines: highlighted.code as Array<HastNode | undefined>,
@@ -731,7 +876,7 @@ export async function loadHighlightedSourceLines({
       const highlighted = renderFileWithHighlighter(
         sourceFileContents(file, text, "text"),
         highlighter,
-        pierreRenderOptions(fallbackTheme),
+        pierreRenderOptions(fallbackTheme, fileLineDiffType(file)),
       );
       return {
         lines: highlighted.code as Array<HastNode | undefined>,
@@ -771,6 +916,8 @@ export function buildSplitRows(
   const rows: DiffRow[] = [];
   const deletionLines = highlighted?.deletionLines ?? [];
   const additionLines = highlighted?.additionLines ?? [];
+  // Same derivation as fileLineDiffType: difftastic files get difft's native cell styling.
+  const difftasticStyle = file.engine === "difftastic";
 
   for (const [hunkIndex, hunk] of file.metadata.hunks.entries()) {
     const leadingGap = reviewLeadingGap(file.metadata, hunkIndex);
@@ -808,6 +955,8 @@ export function buildSplitRows(
               tabWidth,
               undefined,
               compactRunsForHighlightedLine(highlighted, "deletion", deletionLineIndex + offset),
+              undefined,
+              difftasticStyle,
             ),
             right: makeSplitCell(
               "context",
@@ -818,6 +967,8 @@ export function buildSplitRows(
               tabWidth,
               undefined,
               compactRunsForHighlightedLine(highlighted, "addition", additionLineIndex + offset),
+              undefined,
+              difftasticStyle,
             ),
           });
         }
@@ -850,8 +1001,21 @@ export function buildSplitRows(
                 tabWidth,
                 file.lineMoveKinds?.deletionLines[deletionLineIndex + offset],
                 compactRunsForHighlightedLine(highlighted, "deletion", deletionLineIndex + offset),
+                lineNoveltyColumns(file, "deletion", deletionLineIndex + offset),
+                difftasticStyle,
               )
-            : makeSplitCell("empty", undefined, undefined, undefined, theme, tabWidth),
+            : makeSplitCell(
+                "empty",
+                undefined,
+                undefined,
+                undefined,
+                theme,
+                tabWidth,
+                undefined,
+                undefined,
+                undefined,
+                difftasticStyle,
+              ),
           right: hasAddition
             ? makeSplitCell(
                 "addition",
@@ -862,8 +1026,21 @@ export function buildSplitRows(
                 tabWidth,
                 file.lineMoveKinds?.additionLines[additionLineIndex + offset],
                 compactRunsForHighlightedLine(highlighted, "addition", additionLineIndex + offset),
+                lineNoveltyColumns(file, "addition", additionLineIndex + offset),
+                difftasticStyle,
               )
-            : makeSplitCell("empty", undefined, undefined, undefined, theme, tabWidth),
+            : makeSplitCell(
+                "empty",
+                undefined,
+                undefined,
+                undefined,
+                theme,
+                tabWidth,
+                undefined,
+                undefined,
+                undefined,
+                difftasticStyle,
+              ),
         });
       }
 
@@ -892,6 +1069,8 @@ export function buildStackRows(
   const rows: DiffRow[] = [];
   const deletionLines = highlighted?.deletionLines ?? [];
   const additionLines = highlighted?.additionLines ?? [];
+  // Same derivation as fileLineDiffType: difftastic files get difft's native cell styling.
+  const difftasticStyle = file.engine === "difftastic";
 
   for (const [hunkIndex, hunk] of file.metadata.hunks.entries()) {
     const leadingGap = reviewLeadingGap(file.metadata, hunkIndex);
@@ -930,6 +1109,8 @@ export function buildStackRows(
               tabWidth,
               undefined,
               compactRunsForHighlightedLine(highlighted, "addition", additionLineIndex + offset),
+              undefined,
+              difftasticStyle,
             ),
           });
         }
@@ -957,6 +1138,8 @@ export function buildStackRows(
             tabWidth,
             file.lineMoveKinds?.deletionLines[deletionLineIndex + offset],
             compactRunsForHighlightedLine(highlighted, "deletion", deletionLineIndex + offset),
+            lineNoveltyColumns(file, "deletion", deletionLineIndex + offset),
+            difftasticStyle,
           ),
         });
       }
@@ -977,6 +1160,8 @@ export function buildStackRows(
             tabWidth,
             file.lineMoveKinds?.additionLines[additionLineIndex + offset],
             compactRunsForHighlightedLine(highlighted, "addition", additionLineIndex + offset),
+            lineNoveltyColumns(file, "addition", additionLineIndex + offset),
+            difftasticStyle,
           ),
         });
       }

@@ -1,5 +1,5 @@
 import { Fragment, isValidElement, memo, type ReactNode } from "react";
-import { parseColor, StyledText, type TextChunk } from "@opentui/core";
+import { parseColor, StyledText, TextAttributes, type TextChunk } from "@opentui/core";
 import type { DiffFile, UserNoteLineTarget } from "../../core/types";
 import type { AppTheme } from "../themes";
 import {
@@ -97,11 +97,24 @@ export function fitText(text: string, width: number) {
 /** Append a styled span while preserving color-run coalescing. */
 function appendRenderSpan(target: RenderSpan[], span: RenderSpan) {
   const previous = target.at(-1);
-  if (previous && previous.fg === span.fg && previous.bg === span.bg) {
+  if (
+    previous &&
+    previous.fg === span.fg &&
+    previous.bg === span.bg &&
+    previous.bold === span.bold &&
+    previous.underline === span.underline
+  ) {
     previous.text += span.text;
   } else {
     target.push(span);
   }
+}
+
+/** OpenTUI attribute bits for one render span. */
+function spanTextAttributes(span: Pick<RenderSpan, "bold" | "underline">) {
+  const attributes =
+    (span.bold ? TextAttributes.BOLD : 0) | (span.underline ? TextAttributes.UNDERLINE : 0);
+  return attributes === TextAttributes.NONE ? undefined : attributes;
 }
 
 /** Return the first or last scalar in one non-empty string. */
@@ -244,7 +257,7 @@ function styledTextColor(value: string | undefined) {
 /** Convert a React span fragment into OpenTUI's direct styled-text run list. */
 function styledTextFromSpanNodes(nodes: ReactNode[]) {
   const chunks: TextChunk[] = [];
-  const collect = (node: ReactNode, fg?: string, bg?: string) => {
+  const collect = (node: ReactNode, fg?: string, bg?: string, attributes?: number) => {
     if (node === null || node === undefined || typeof node === "boolean") {
       return;
     }
@@ -254,24 +267,32 @@ function styledTextFromSpanNodes(nodes: ReactNode[]) {
         text: String(node),
         fg: styledTextColor(fg),
         bg: styledTextColor(bg),
+        attributes,
       });
       return;
     }
     if (Array.isArray(node)) {
       for (const child of node) {
-        collect(child, fg, bg);
+        collect(child, fg, bg, attributes);
       }
       return;
     }
-    if (!isValidElement<{ children?: ReactNode; fg?: string; bg?: string }>(node)) {
+    if (
+      !isValidElement<{ children?: ReactNode; fg?: string; bg?: string; attributes?: number }>(node)
+    ) {
       return;
     }
     if (node.type === Fragment) {
-      collect(node.props.children, fg, bg);
+      collect(node.props.children, fg, bg, attributes);
       return;
     }
     if (node.type === "span") {
-      collect(node.props.children, node.props.fg ?? fg, node.props.bg ?? bg);
+      collect(
+        node.props.children,
+        node.props.fg ?? fg,
+        node.props.bg ?? bg,
+        node.props.attributes ?? attributes,
+      );
     }
   };
 
@@ -297,6 +318,8 @@ function appendFixedInlineChunks(
   if (
     paddingAmount > 0 &&
     lastSpan &&
+    !lastSpan.bold &&
+    !lastSpan.underline &&
     (lastSpan.fg ?? fallbackColor) === fallbackColor &&
     (lastSpan.bg ?? fallbackBg) === fallbackBg
   ) {
@@ -310,6 +333,7 @@ function appendFixedInlineChunks(
       text: span.text,
       fg: styledTextColor(span.fg ?? fallbackColor),
       bg: styledTextColor(renderedBackground(span.bg ?? fallbackBg)),
+      attributes: spanTextAttributes(span),
     });
   }
   if (!paddingMerged && paddingAmount > 0) {
@@ -406,6 +430,8 @@ function renderInlineSpans(
     !needsBlending &&
     paddingAmount > 0 &&
     lastSpan &&
+    !lastSpan.bold &&
+    !lastSpan.underline &&
     (lastSpan.fg ?? fallbackColor) === fallbackColor &&
     (lastSpan.bg ?? fallbackBg) === fallbackBg
   ) {
@@ -427,6 +453,7 @@ function renderInlineSpans(
           key={`${keyPrefix}:${elementIndex++}`}
           fg={span.fg ?? fallbackColor}
           bg={renderedBackground(span.bg ?? fallbackBg)}
+          attributes={spanTextAttributes(span)}
         >
           {span.text}
         </span>,
@@ -446,6 +473,7 @@ function renderInlineSpans(
           key={`${keyPrefix}:${elementIndex++}`}
           fg={span.fg ?? fallbackColor}
           bg={span.bg ?? fallbackBg}
+          attributes={spanTextAttributes(span)}
         >
           {span.text}
         </span>,
@@ -464,6 +492,7 @@ function renderInlineSpans(
           key={`${keyPrefix}:${elementIndex++}`}
           fg={span.fg ?? fallbackColor}
           bg={span.bg ?? fallbackBg}
+          attributes={spanTextAttributes(span)}
         >
           {span.text}
         </span>,
@@ -482,6 +511,7 @@ function renderInlineSpans(
           key={`${keyPrefix}:${elementIndex++}`}
           fg={span.fg ?? fallbackColor}
           bg={span.bg ?? fallbackBg}
+          attributes={spanTextAttributes(span)}
         >
           {prefix}
         </span>,
@@ -493,6 +523,7 @@ function renderInlineSpans(
           key={`${keyPrefix}:${elementIndex++}`}
           fg={span.fg ?? fallbackColor}
           bg={highlightBg(span.bg ?? fallbackBg)}
+          attributes={spanTextAttributes(span)}
         >
           {selected}
         </span>,
@@ -504,6 +535,7 @@ function renderInlineSpans(
           key={`${keyPrefix}:${elementIndex++}`}
           fg={span.fg ?? fallbackColor}
           bg={span.bg ?? fallbackBg}
+          attributes={spanTextAttributes(span)}
         >
           {suffix}
         </span>,
@@ -726,7 +758,7 @@ function buildWrappedSplitCell(
   prefixWidth: number,
   theme: AppTheme,
 ) {
-  const palette = splitCellPalette(cell.kind, theme);
+  const palette = splitCellPalette(cell.kind, theme, undefined, cell.difftasticStyle);
   const { gutterWidth, contentWidth } = resolveSplitCellGeometry(
     width,
     lineNumberDigits,
@@ -758,7 +790,7 @@ function buildWrappedStackCell(
   prefixWidth: number,
   theme: AppTheme,
 ) {
-  const palette = stackCellPalette(cell.kind, theme);
+  const palette = stackCellPalette(cell.kind, theme, undefined, cell.difftasticStyle);
   const { gutterWidth, contentWidth } = resolveStackCellGeometry(
     width,
     lineNumberDigits,
@@ -1245,7 +1277,7 @@ function renderSplitCell(
   highlight?: RowHighlight,
   paneOffset = 0,
 ) {
-  const basePalette = splitCellPalette(cell.kind, theme, cell.moveKind);
+  const basePalette = splitCellPalette(cell.kind, theme, cell.moveKind, cell.difftasticStyle);
   const palette = highlight ? applyHighlightPalette(basePalette, highlight.bg) : basePalette;
   const resolvedPrefix = highlight && prefix ? applyHighlightPrefix(prefix, highlight.bg) : prefix;
   const prefixWidth = resolvedPrefix?.text.length ?? 0;
@@ -1308,7 +1340,7 @@ function renderStackCell(
   },
   highlight?: RowHighlight,
 ) {
-  const basePalette = stackCellPalette(cell.kind, theme, cell.moveKind);
+  const basePalette = stackCellPalette(cell.kind, theme, cell.moveKind, cell.difftasticStyle);
   const palette = highlight ? applyHighlightPalette(basePalette, highlight.bg) : basePalette;
   const resolvedPrefix = highlight && prefix ? applyHighlightPrefix(prefix, highlight.bg) : prefix;
   const prefixWidth = resolvedPrefix?.text.length ?? 0;
@@ -1479,13 +1511,20 @@ export const DIFF_MESSAGES: Record<ReviewEmptyDiffReason, string> = {
 
 /** Explain why a file still appears in the review stream even when it has no textual hunks. */
 export function diffMessage(file: DiffFile) {
-  return DIFF_MESSAGES[
-    reviewEmptyDiffReason({
-      changeKind: file.metadata.type,
-      binary: Boolean(file.isBinary),
-      tooLarge: Boolean(file.isTooLarge),
-    })
-  ];
+  const reason = reviewEmptyDiffReason({
+    changeKind: file.metadata.type,
+    binary: Boolean(file.isBinary),
+    tooLarge: Boolean(file.isTooLarge),
+  });
+
+  // A hunkless difftastic file is structurally unchanged: difft can report
+  // `unchanged` for edits it considers non-semantic even when git saw a
+  // textual diff. Mark it so the empty body reads as intentional.
+  if (reason === "no-hunks" && file.engine === "difftastic") {
+    return "difftastic: no structural changes";
+  }
+
+  return DIFF_MESSAGES[reason];
 }
 
 /** Build the rendered label text for one collapsed gap row. */

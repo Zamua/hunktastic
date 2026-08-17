@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { createTestDiffFile, lines } from "../../../test/helpers/diff-helpers";
+import { isDifftasticMapFallback, mapDifftasticFile } from "../../core/engine/difftastic/map";
+import { validateDifftasticFile } from "../../core/engine/difftastic/schema";
 import { DEFAULT_TAB_WIDTH } from "../../core/tabWidth";
+import type { DiffFile } from "../../core/types";
 import type { ValidatedLineHighlight } from "../highlights/validate";
 import { measureTextWidth } from "../lib/text";
 import { expandDiffTabs } from "./codeColumns";
@@ -20,6 +25,42 @@ function mark(
   tone: ValidatedLineHighlight["tone"] = "match",
 ): ValidatedLineHighlight {
   return { side, line, start, end, tone };
+}
+
+const DIFFT_FIXTURES_DIR = resolve(
+  import.meta.dir,
+  "..",
+  "..",
+  "..",
+  "test",
+  "fixtures",
+  "difftastic",
+);
+
+/** A difftastic-engine file rebuilt the way the engine attaches a mapped fixture. */
+function createDifftasticUnicodeFile(): DiffFile {
+  const parsed = validateDifftasticFile(
+    JSON.parse(readFileSync(join(DIFFT_FIXTURES_DIR, "unicode-0.69.0.json"), "utf8")),
+  );
+  if (!parsed.ok) throw new Error(parsed.error.message);
+  const before = readFileSync(join(DIFFT_FIXTURES_DIR, "unicode-before.js"), "utf8");
+  const after = readFileSync(join(DIFFT_FIXTURES_DIR, "unicode-after.js"), "utf8");
+  const mapped = mapDifftasticFile(parsed.file, before, after);
+  if (isDifftasticMapFallback(mapped)) {
+    throw new Error(`unexpected fallback: ${mapped.fallback} (${mapped.detail})`);
+  }
+
+  const file = createTestDiffFile({ before, after, id: "unicode", path: "unicode.js" });
+  file.metadata = {
+    ...file.metadata,
+    hunks: mapped.hunks,
+    isPartial: false,
+    deletionLines: mapped.deletionLines,
+    additionLines: mapped.additionLines,
+  };
+  file.engine = "difftastic";
+  file.noveltySpans = mapped.noveltySpans;
+  return file;
 }
 
 describe("buildLineHighlightPaintIndex", () => {
@@ -164,6 +205,37 @@ describe("buildLineHighlightPaintIndex", () => {
     const file = createTestDiffFile();
     expect(buildLineHighlightPaintIndex({ file, marks: [] })).toBeUndefined();
   });
+
+  test("paints extension marks through difftastic-synthesized hunks at code-unit offsets", () => {
+    const file = createDifftasticUnicodeFile();
+    // difft reported the changed tokens at UTF-8 bytes [35, 38); the mapper's
+    // code-unit spans are directly usable as extension mark offsets.
+    const newSpan = file.noveltySpans?.additionLines[1]?.[0];
+    const oldSpan = file.noveltySpans?.deletionLines[1]?.[0];
+    if (!newSpan || !oldSpan) {
+      throw new Error("Expected novelty spans on the changed line");
+    }
+    expect(newSpan).toEqual([21, 24]);
+    expect(oldSpan).toEqual([21, 24]);
+    expect((file.metadata.additionLines[1] ?? "").slice(newSpan[0], newSpan[1])).toBe("neo");
+    expect((file.metadata.deletionLines[1] ?? "").slice(oldSpan[0], oldSpan[1])).toBe("old");
+
+    const index = buildLineHighlightPaintIndex({
+      file,
+      marks: [
+        mark("new", 2, newSpan[0], newSpan[1]),
+        mark("old", 2, oldSpan[0], oldSpan[1], "error"),
+      ],
+    });
+
+    // The seven double-width CJK glyphs before the token add seven columns.
+    expect(index?.get(lineHighlightPaintKey("new", 2))).toEqual([
+      { startCol: 28, endCol: 31, tone: "match" },
+    ]);
+    expect(index?.get(lineHighlightPaintKey("old", 2))).toEqual([
+      { startCol: 28, endCol: 31, tone: "error" },
+    ]);
+  });
 });
 
 describe("applyLineHighlightsToSpans", () => {
@@ -182,6 +254,28 @@ describe("applyLineHighlightsToSpans", () => {
       { text: "const ", fg: "#ffffff" },
       { text: "alpha", fg: "#ffffff", bg: "bg-match" },
       { text: " = 10;", fg: "#ffffff" },
+    ]);
+  });
+
+  test("keeps changed-word emphasis distinct from same-color neighbors under a mark", () => {
+    // Difftastic's word tier shares the novel token's fg and differs only by attributes,
+    // so coalescing on color alone would drop or bleed the emphasis.
+    const spans: RenderSpan[] = [
+      { text: "return ", fg: "#3fb950" },
+      { text: "failure", fg: "#3fb950", bold: true, underline: true },
+      { text: ";", fg: "#3fb950" },
+    ];
+
+    const painted = applyLineHighlightsToSpans(
+      spans,
+      [{ startCol: 0, endCol: 14, tone: "match" }],
+      resolveBg,
+    );
+
+    expect(painted).toEqual([
+      { text: "return ", fg: "#3fb950", bg: "bg-match" },
+      { text: "failure", fg: "#3fb950", bold: true, underline: true, bg: "bg-match" },
+      { text: ";", fg: "#3fb950" },
     ]);
   });
 

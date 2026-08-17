@@ -31,7 +31,7 @@ import {
   textClusters,
 } from "../lib/text";
 import { expandDiffTabs } from "./codeColumns";
-import type { RenderSpan } from "./diffRows";
+import type { RenderSpan } from "./diffRowModel";
 
 /** One mark resolved to terminal columns of the rendered (expanded) line. */
 export interface LineHighlightColRange {
@@ -65,7 +65,7 @@ function stripTrailingNewline(text: string) {
  * A mid-cluster offset widens outward (`start` down, `end` up) so a bad offset
  * marks the whole visible glyph instead of tearing it.
  */
-function snapToClusterBoundary(text: string, offset: number, direction: "down" | "up") {
+export function snapToClusterBoundary(text: string, offset: number, direction: "down" | "up") {
   if (offset <= 0) return 0;
   if (offset >= text.length) return text.length;
 
@@ -89,7 +89,7 @@ function snapToClusterBoundary(text: string, offset: number, direction: "down" |
  * sequence straddling the cut can round the answer by a few code units, which
  * cluster snapping then contains to whole glyphs.
  */
-function rawOffsetToSanitizedOffset(raw: string, sanitized: string, offset: number) {
+export function rawOffsetToSanitizedOffset(raw: string, sanitized: string, offset: number) {
   const clamped = Math.max(0, Math.min(offset, raw.length));
   if (raw === sanitized) {
     return clamped;
@@ -324,7 +324,13 @@ export function buildLineHighlightPaintIndex({
 /** Append a span preserving color-run coalescing. */
 function appendSpan(target: RenderSpan[], span: RenderSpan) {
   const previous = target.at(-1);
-  if (previous && previous.fg === span.fg && previous.bg === span.bg) {
+  if (
+    previous &&
+    previous.fg === span.fg &&
+    previous.bg === span.bg &&
+    previous.bold === span.bold &&
+    previous.underline === span.underline
+  ) {
     previous.text += span.text;
   } else {
     target.push(span);
