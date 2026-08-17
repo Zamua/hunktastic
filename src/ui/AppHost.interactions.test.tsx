@@ -612,7 +612,7 @@ describe("App interactions", () => {
     try {
       await flush(setup);
       await act(async () => {
-        await setup.mockInput.typeText("a");
+        await setup.mockInput.typeText("i");
       });
       await flush(setup);
       const frame = setup.captureCharFrame();
@@ -691,7 +691,7 @@ describe("App interactions", () => {
       await flush(setup);
 
       await act(async () => {
-        await setup.mockInput.typeText("a");
+        await setup.mockInput.typeText("i");
       });
       await flush(setup);
 
@@ -700,7 +700,7 @@ describe("App interactions", () => {
       expect(frame).toContain("Why alpha.ts changed");
 
       await act(async () => {
-        await setup.mockInput.typeText("a");
+        await setup.mockInput.typeText("i");
       });
       await flush(setup);
 
@@ -1906,7 +1906,7 @@ describe("App interactions", () => {
       await flush(setup);
 
       await act(async () => {
-        await setup.mockInput.typeText("a");
+        await setup.mockInput.typeText("i");
       });
       await flush(setup);
 

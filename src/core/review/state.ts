@@ -15,10 +15,32 @@ import type { ReviewDocumentV1, ReviewLineAddressV1, ReviewNoteV1, ReviewSide } 
 
 export type ReviewNoteResolution = "active" | "stale" | "orphaned";
 
+/**
+ * The textual quote one note re-anchors by when the document is reconciled.
+ *
+ * Coordinates are the authored ones and are never rewritten; reconciliation reads them
+ * plus the quoted text to recompute the note's anchor, so the quote is also exactly what
+ * a persisted store writes back for the note.
+ */
+export interface ReviewNoteQuote {
+  /** Path the note was authored against, matched against current and previous paths. */
+  filePath: string;
+  side: ReviewSide;
+  line: number;
+  /** The authored line, verbatim. A blank quote cannot re-anchor. */
+  anchorText: string;
+  /** Up to a few lines above the anchor, newline joined. */
+  prefixText?: string;
+  /** Up to a few lines below the anchor, newline joined. */
+  suffixText?: string;
+}
+
 /** One mutable note plus the reconciliation verdict its latest anchor check produced. */
 export interface ReviewStoredNote {
   note: ReviewNoteV1;
   resolution: ReviewNoteResolution;
+  /** Absent for a note no consumer captured a quote for; such a note cannot re-anchor. */
+  quote?: ReviewNoteQuote;
 }
 
 /**

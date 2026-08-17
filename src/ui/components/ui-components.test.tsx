@@ -3177,7 +3177,7 @@ describe("UI components", () => {
       "View",
       "1 / 2 / 0                split / stack / auto",
       "s / t                    sidebar / theme selector",
-      "a                        toggle AI notes",
+      "i / a                    inline notes / all notes",
       "z                        toggle unchanged context",
       "l / w / m / M            lines / wrap / metadata / menu",
       "e                        open file in $EDITOR",

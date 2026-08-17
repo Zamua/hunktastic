@@ -20,6 +20,7 @@ const MENU_STATE: Omit<BuildAppMenusOptions, "commands" | "extensionCommands"> =
   layoutMode: "stack",
   filesPaneVisible: false,
   showAgentNotes: true,
+  showAllNotes: false,
   showHelp: false,
   showHunkHeaders: false,
   showLineNumbers: true,
@@ -54,6 +55,7 @@ function createTestCommands(overrides: Partial<BuildAppCommandsOptions> = {}) {
     selectLayoutMode: noop,
     startUserNote: noop,
     toggleAgentNotes: noop,
+    toggleAllNotes: noop,
     toggleCopyDecorations: record("toggleCopyDecorations"),
     toggleFocusArea: noop,
     toggleGapForSelectedHunk: noop,
@@ -134,7 +136,7 @@ describe("buildAppMenus", () => {
     ).toEqual([
       "Stacked view",
       "Menu bar",
-      "Agent notes",
+      "Inline notes",
       "Line numbers",
       "Line wrapping",
       "Copy decorations",
@@ -142,7 +144,7 @@ describe("buildAppMenus", () => {
     ]);
     expect(items(menus.view).map((item) => item.label)).toContain("Themes…");
     expect(items(menus.agent).map((item) => item.label)).toEqual([
-      "Agent notes",
+      "Inline notes",
       "Agent skill",
       "Next annotated file",
       "Previous annotated file",

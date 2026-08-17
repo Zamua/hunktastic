@@ -3,6 +3,11 @@ export function fileRowId(fileId: string) {
   return `file-row:${fileId}`;
 }
 
+/** Build the stable id used for rows in the all-notes list. */
+export function noteRowId(noteId: string) {
+  return `note-row:${noteId}`;
+}
+
 /** Build the stable id for a file section in the main review stream. */
 export function diffSectionId(fileId: string) {
   return `diff-section:${fileId}`;

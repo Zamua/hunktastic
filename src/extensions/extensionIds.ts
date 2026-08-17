@@ -23,6 +23,8 @@
 export const HUNK_VENDOR_EXTENSION_ID = "hunk";
 /** Stable key of the bundled files pane. */
 export const HUNK_FILES_PANE_KEY = "hunk:files";
+/** Stable key of the bundled all-notes pane. */
+export const HUNK_NOTES_PANE_KEY = "hunk:notes";
 
 /**
  * Characters an extension id may be spelled with.

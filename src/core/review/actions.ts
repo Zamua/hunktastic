@@ -6,8 +6,10 @@
  * keeping the state internally consistent, so anything requiring judgement — "save the
  * current draft", "clear these notes" — is planned in `intents.ts` and lowered to these.
  */
+import type { StoredNote } from "../notes/types";
 import type {
   ReviewDraftNote,
+  ReviewNoteResolution,
   ReviewRevealRequest,
   ReviewSourceStatus,
   ReviewStoredNote,
@@ -27,6 +29,16 @@ export type ReviewAction =
   | { type: "filter/set"; filter: string }
   | { type: "notes/set-visibility"; visible: boolean }
   | { type: "notes/add-live"; notes: readonly ReviewStoredNote[] }
+  /** Adopt persisted notes, re-anchored against the current document; replaces same-id notes. */
+  | { type: "notes/restore"; notes: readonly StoredNote[] }
+  /**
+   * Record one note's reconciliation verdict without moving its anchor.
+   *
+   * Reconcile assigns verdicts wholesale; this per-note transition exists for session
+   * and agent surfaces that adjudicate a single note (dismiss an orphan, re-pin a stale
+   * anchor) without replaying the whole document.
+   */
+  | { type: "notes/set-resolution"; noteId: string; resolution: ReviewNoteResolution }
   | { type: "notes/remove-live"; noteId: string }
   /** Clear mutable notes for one file, or for the whole review when no file is named. */
   | { type: "notes/clear"; fileKey?: string; includeUser?: boolean }

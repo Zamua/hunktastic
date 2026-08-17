@@ -8,6 +8,12 @@
 import type { ReviewAction } from "./actions";
 import { clamp } from "./navigation";
 import {
+  reconcileReviewStoredNotes,
+  restoreReviewStoredNotes,
+  reviewLoadedSourceTextFor,
+  withReviewNoteQuote,
+} from "./noteResolution";
+import {
   isReviewNoteWithinClearScope,
   reviewFileKeysWithRetiredContent,
   selectReviewFileByKey,
@@ -15,6 +21,7 @@ import {
 import {
   applyReviewRevealRequest,
   reviewRevealIntentsEqual,
+  type ReviewNoteResolution,
   type ReviewSourceStatus,
   type ReviewState,
   type ReviewStoredNote,
@@ -45,6 +52,21 @@ function withoutNote(notes: ReviewStoredNote[], noteId: string) {
   return next;
 }
 
+/** Set one note's resolution in a stored-note list, or return the same list when a no-op. */
+function withNoteResolution(
+  notes: ReviewStoredNote[],
+  noteId: string,
+  resolution: ReviewNoteResolution,
+) {
+  const index = notes.findIndex((entry) => entry.note.id === noteId);
+  if (index < 0 || notes[index]!.resolution === resolution) {
+    return notes;
+  }
+  const next = [...notes];
+  next[index] = { ...next[index]!, resolution };
+  return next;
+}
+
 /** Apply one named semantic action without renderer or framework dependencies. */
 export function reduceReviewState(state: ReviewState, action: ReviewAction): ReviewState {
   switch (action.type) {
@@ -69,7 +91,28 @@ export function reduceReviewState(state: ReviewState, action: ReviewAction): Rev
           ([fileKey]) => !retired.has(fileKey) && attested.has(fileKey),
         ),
       );
-      return { ...state, document: action.document, expandedGaps, sourceStatusByFileKey };
+      // Notes re-anchor against the document that just arrived: each quoted note gets a
+      // fresh resolution and anchor, so a reload that moved or deleted a noted line is
+      // reflected in what every consumer reads instead of every note staying "active".
+      const sourceTextForFile = reviewLoadedSourceTextFor(sourceStatusByFileKey);
+      const liveNotes = reconcileReviewStoredNotes(
+        state.liveNotes,
+        action.document.files,
+        sourceTextForFile,
+      );
+      const userNotes = reconcileReviewStoredNotes(
+        state.userNotes,
+        action.document.files,
+        sourceTextForFile,
+      );
+      return {
+        ...state,
+        document: action.document,
+        expandedGaps,
+        sourceStatusByFileKey,
+        liveNotes,
+        userNotes,
+      };
     }
     case "selection/select": {
       const file = selectReviewFileByKey(state, action.fileKey);
@@ -93,10 +136,47 @@ export function reduceReviewState(state: ReviewState, action: ReviewAction): Rev
       return action.visible === state.showAgentNotes
         ? state
         : { ...state, showAgentNotes: action.visible };
-    case "notes/add-live":
-      return action.notes.length === 0
+    case "notes/add-live": {
+      if (action.notes.length === 0) {
+        return state;
+      }
+      // Capture each note's re-anchoring quote at the moment it enters the store, against
+      // the document the author was looking at; a note that arrives quoted keeps its quote.
+      const sourceTextForFile = reviewLoadedSourceTextFor(state.sourceStatusByFileKey);
+      const notes = action.notes.map((entry) =>
+        withReviewNoteQuote(entry, state.document.files, sourceTextForFile),
+      );
+      return { ...state, liveNotes: [...state.liveNotes, ...notes] };
+    }
+    case "notes/restore": {
+      if (action.notes.length === 0) {
+        return state;
+      }
+      const restored = restoreReviewStoredNotes(
+        action.notes,
+        state.document.files,
+        reviewLoadedSourceTextFor(state.sourceStatusByFileKey),
+      );
+      // Replace-by-id keeps a repeated restore idempotent: the disk copy wins over any
+      // same-id entry already in the store, wherever it currently sits.
+      const restoredIds = new Set(action.notes.map((record) => record.id));
+      const keep = (entry: ReviewStoredNote) => !restoredIds.has(entry.note.id);
+      return {
+        ...state,
+        liveNotes: [...state.liveNotes.filter(keep), ...restored.live],
+        userNotes: [...state.userNotes.filter(keep), ...restored.user],
+      };
+    }
+    case "notes/set-resolution": {
+      const liveNotes = withNoteResolution(state.liveNotes, action.noteId, action.resolution);
+      const userNotes =
+        liveNotes === state.liveNotes
+          ? withNoteResolution(state.userNotes, action.noteId, action.resolution)
+          : state.userNotes;
+      return liveNotes === state.liveNotes && userNotes === state.userNotes
         ? state
-        : { ...state, liveNotes: [...state.liveNotes, ...action.notes] };
+        : { ...state, liveNotes, userNotes };
+    }
     case "notes/remove-live": {
       const liveNotes = withoutNote(state.liveNotes, action.noteId);
       return liveNotes === state.liveNotes ? state : { ...state, liveNotes };
@@ -125,7 +205,20 @@ export function reduceReviewState(state: ReviewState, action: ReviewAction): Rev
       return state.draftNote ? { ...state, draftNote: null } : state;
     case "draft/save":
       return state.draftNote
-        ? { ...state, draftNote: null, userNotes: [...state.userNotes, action.note] }
+        ? {
+            ...state,
+            draftNote: null,
+            userNotes: [
+              ...state.userNotes,
+              // Same at-entry quote capture as notes/add-live, so a saved reviewer note
+              // can re-anchor across reloads too.
+              withReviewNoteQuote(
+                action.note,
+                state.document.files,
+                reviewLoadedSourceTextFor(state.sourceStatusByFileKey),
+              ),
+            ],
+          }
         : state;
     case "expansion/toggle": {
       const index = state.expandedGaps.findIndex(

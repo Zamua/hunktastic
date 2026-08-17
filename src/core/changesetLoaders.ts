@@ -13,6 +13,7 @@ import { findSidecarFileContext, loadSidecarContext } from "./sidecar";
 import { createSkippedBinaryMetadata, isProbablyBinaryFile } from "./binary";
 import { buildDiffFile, type BuildDiffFileOptions, type DiffFileSourceContext } from "./diffFile";
 import { applyDifftasticEngine } from "./engine/difftastic";
+import { resolveNoteScope } from "./notes/session";
 import type { StartupNotice } from "./startupNotice";
 import { createFileSourceFetcher, type FileSourceSpec } from "./fileSource";
 import { logSourceDiagnostic } from "../lib/sourceText";
@@ -386,6 +387,7 @@ export async function loadAppBootstrap(
   return {
     input,
     reloadContext: { cwd, repoRoot, initialWatchSignature, vcsCatalog },
+    noteScope: resolveNoteScope(input, repoRoot),
     changeset,
     initialMode: input.options.mode ?? "auto",
     initialTheme: input.options.theme,

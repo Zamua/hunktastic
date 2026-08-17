@@ -347,12 +347,24 @@ const BUILTIN_COMMANDS = [
     closesMenu: true,
   },
   {
+    // The id predates the "inline notes" wording and keeps its name: renaming a command id
+    // silently breaks every `[keybindings]` entry already using it.
     id: "hunk.view.toggleAgentNotes",
-    title: "Toggle agent notes",
+    title: "Toggle inline notes",
     category: "view",
-    defaultKeys: ["a"],
+    defaultKeys: ["i"],
     locus: "semantic",
     review: { kind: "notes/toggle-visibility" },
+    publicToExtensions: true,
+    closesMenu: true,
+  },
+  {
+    id: "hunk.view.toggleAllNotes",
+    title: "Toggle all notes",
+    category: "view",
+    defaultKeys: ["a"],
+    // Pane visibility is this client's chrome, not shared review state.
+    locus: "client-local",
     publicToExtensions: true,
     closesMenu: true,
   },

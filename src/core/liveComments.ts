@@ -1,7 +1,10 @@
+import type { DiffSide } from "./notes/types";
 import { reviewDefaultHunkLineTarget, reviewHunkIndexForLine } from "./review/geometry";
 import type { AgentAnnotation, DiffFile } from "./types";
 
-export type DiffSide = "old" | "new";
+// The declaration lives in the leaf `notes/types.ts`; re-exported here so
+// existing importers keep their import site.
+export type { DiffSide } from "./notes/types";
 
 export interface CommentTargetInput {
   filePath: string;

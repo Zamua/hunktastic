@@ -31,6 +31,9 @@ import {
   type AppCommandLoweringContext,
 } from "../../core/commandCatalog";
 import { SourceTextTooLargeError } from "../../core/fileSource";
+import { createNoteStoreWriter, storedNotesForReviewState } from "../../core/notes/session";
+import { readNotes } from "../../core/notes/store";
+import type { NoteScope } from "../../core/notes/types";
 import {
   applyReviewIntent,
   ReviewIntentPlanningError,
@@ -46,7 +49,11 @@ import {
   selectExpandedGapIdsByFileKey,
   selectNormalizedSelection,
 } from "../../core/review/selectors";
-import { REVIEW_VIEWPORT_ANCHOR_REVEAL, type ReviewRevealRequest } from "../../core/review/state";
+import {
+  REVIEW_VIEWPORT_ANCHOR_REVEAL,
+  type ReviewRevealRequest,
+  type ReviewStoredNote,
+} from "../../core/review/state";
 import { createReviewStore, type ReviewStore } from "../../core/review/store";
 import { noDiffFileMatchesMessage } from "../../session/agent/errors";
 import type { AgentAnnotation, DiffFile, LayoutMode, UserNoteLineTarget } from "../../core/types";
@@ -87,7 +94,11 @@ import {
   type LineCursor,
 } from "../lib/lineCursors";
 import { agentNoteMarkupWidth } from "../lib/agentNoteGeometry";
-import { reviewNoteSource } from "../lib/agentAnnotations";
+import {
+  annotatedHunkLineTarget,
+  resolveVisibleReviewNotes,
+  reviewNoteSource,
+} from "../lib/agentAnnotations";
 import { STML_REFERENCE_WIDTH, validateStmlMarkup } from "../lib/stml/layout";
 import {
   groupStoredNotesByFileId,
@@ -217,6 +228,8 @@ export interface TerminalReview {
   reviewNoteCount: number;
   reviewNoteSummaries: SessionReviewNoteSummary[];
   showAgentNotes: boolean;
+  /** The store's mutable notes with their resolutions, live notes before user notes. */
+  storedNotes: readonly ReviewStoredNote[];
   userNotesByFileId: Record<string, UserReviewNote[]>;
   lineCursor: LineCursor | null;
   /** Read the current cursor synchronously between terminal key events. */
@@ -269,6 +282,8 @@ export interface TerminalReview {
   /** Jump to one file; the shared file-jump rule decides which hunk it lands on. */
   selectFile: (fileId: string, options?: ReviewSelectionOptions) => void;
   selectHunk: (fileId: string, hunkIndex: number, options?: ReviewSelectionOptions) => void;
+  /** Jump to one note's own anchor line, wherever the reviewer picked the note from. */
+  selectNoteTarget: (fileId: string, hunkIndex: number, target: UserNoteLineTarget | null) => void;
   setShowAgentNotes: (visible: boolean) => void;
   /** Flip the note layer the way the catalogued toggle command declares it. */
   toggleAgentNotes: () => void;
@@ -295,12 +310,18 @@ export function useTerminalReview({
   initialShowAgentNotes = false,
   lineCursors = EMPTY_LINE_CURSORS,
   noteGeometry,
+  noteScope,
   sourceLabel = "",
   stmlEnabled = false,
 }: {
   files: DiffFile[];
   /** Note-layer visibility the launch configuration resolved for this review. */
   initialShowAgentNotes?: boolean;
+  /**
+   * Where this review's notes persist. Absent for reviews with no stable
+   * identity (a two-file compare, a patch stream), which read and write nothing.
+   */
+  noteScope?: NoteScope;
   /**
    * Navigable lines in rendered order, published by the pane that measures the review stream.
    * Headless callers get none, which leaves `j` and `k` scrolling the viewport.
@@ -381,6 +402,40 @@ export function useTerminalReview({
     store.dispatch({ type: "document/reconcile", document });
   }, [commitAgentLineHighlights, document, store]);
 
+  // Restore this scope's persisted notes once, then mirror every note change back to
+  // disk. Restore enters through the reducer (the same layer the session's own note
+  // actions dispatch at) so a stored note's resolution and anchor come from core, not
+  // from this renderer. Persistence stays here as a side effect: state is read back out
+  // and written in the persisted record shape, quoted at the authored coordinates.
+  useEffect(() => {
+    if (!noteScope) {
+      return;
+    }
+
+    const writer = createNoteStoreWriter(noteScope, {
+      onFailure: (message) => {
+        console.error(`hunkt: ${message}.`);
+      },
+    });
+    store.dispatch({ type: "notes/restore", notes: readNotes(noteScope) });
+
+    let snapshot = store.getSnapshot();
+    const unsubscribe = store.subscribe(() => {
+      const next = store.getSnapshot();
+      const changed =
+        next.liveNotes !== snapshot.liveNotes || next.userNotes !== snapshot.userNotes;
+      snapshot = next;
+      if (changed) {
+        writer.save(storedNotesForReviewState(next));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      writer.dispose();
+    };
+  }, [noteScope, store]);
+
   const state = useReviewStoreSnapshot(store);
   const filter = state.filter;
   const scrollToNote = state.reveal.scrollToNote;
@@ -420,6 +475,12 @@ export function useTerminalReview({
   const liveCommentsByFileId = useMemo(
     () => groupStoredNotesByFileId(state.liveNotes, fileByKey, storedNoteToLiveComment),
     [fileByKey, state.liveNotes],
+  );
+  // One stable list per store revision, so consumers keyed on identity (the all-notes
+  // pane) skip work when no note changed.
+  const storedNotes = useMemo(
+    () => [...state.liveNotes, ...state.userNotes],
+    [state.liveNotes, state.userNotes],
   );
   const userNotesByFileId = useMemo(
     () => groupStoredNotesByFileId(state.userNotes, fileByKey, storedNoteToUserNote),
@@ -691,11 +752,56 @@ export function useTerminalReview({
    * The walk itself — which hunk or file is next, whether the scope wraps, and what the
    * landing asks the viewport to reveal — lives in the shared planner, so the keyboard,
    * the session's comment navigation, and later a browser client all move identically.
+   *
+   * An annotated-hunk step additionally lands the current line on the revealed note's own
+   * anchor row, resolved through the same policy the reveal scroll picks its note by, so
+   * the marker names exactly the code the revealed note is about. Placing it here (not
+   * through `revealLineCursor`) keeps the note-reveal scroll the only scroll the jump
+   * requests.
    */
   const moveSelection = useCallback(
-    (scope: ReviewSelectionScope, delta: number) =>
-      runIntent({ type: "selection/move", scope, delta }, { annotations }),
-    [annotations, runIntent],
+    (scope: ReviewSelectionScope, delta: number) => {
+      const moved = runIntent({ type: "selection/move", scope, delta }, { annotations });
+      if (moved && scope === "annotated-hunk") {
+        const fileId = fileByKey.get(moved.fileKey)?.id;
+        const merged = fileId ? allFiles.find((candidate) => candidate.id === fileId) : undefined;
+        if (merged) {
+          const target = annotatedHunkLineTarget(
+            resolveVisibleReviewNotes(merged, {
+              showAgentNotes: store.getSnapshot().showAgentNotes,
+              draft: draftNote?.fileId === merged.id ? draftNote : null,
+            }),
+            moved.hunkIndex,
+          );
+          if (target) {
+            applyLineCursor(
+              lineCursorAt(lineCursors, merged.id, moved.hunkIndex, target.lineTarget),
+            );
+          }
+        }
+      }
+      return moved;
+    },
+    [allFiles, annotations, applyLineCursor, draftNote, fileByKey, lineCursors, runIntent, store],
+  );
+
+  /**
+   * Jump to one note's own anchor line, wherever the reviewer picked the note from.
+   *
+   * Shares the annotated-hunk step's placement, so a row in the all-notes list and an
+   * annotated-hunk step land identically: the current line goes on the note's row, and
+   * the note-reveal scroll is the only scroll requested. A target of null leaves the
+   * marker where the hunk selection seeds it.
+   */
+  const selectNoteTarget = useCallback(
+    (fileId: string, hunkIndex: number, target: UserNoteLineTarget | null) => {
+      if (target) {
+        applyLineCursor(lineCursorAt(lineCursors, fileId, hunkIndex, target));
+      }
+
+      selectHunk(fileId, hunkIndex, { scrollToNote: true });
+    },
+    [applyLineCursor, lineCursors, selectHunk],
   );
 
   /**
@@ -1447,6 +1553,7 @@ export function useTerminalReview({
     reviewNoteCount: reviewNoteSummaries.length,
     reviewNoteSummaries,
     showAgentNotes: state.showAgentNotes,
+    storedNotes,
     userNotesByFileId,
     scrollToNote,
     selectedFile,
@@ -1478,6 +1585,7 @@ export function useTerminalReview({
     saveDraftNote,
     selectFile,
     selectHunk,
+    selectNoteTarget,
     setShowAgentNotes,
     toggleAgentNotes,
     startUserNote,

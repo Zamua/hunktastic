@@ -596,7 +596,7 @@ describe("PTY file views", () => {
       await session.waitForText(/\[x\] File presentation: Rendered Markdown/);
       await session.press("escape");
 
-      await session.press("a");
+      await session.press("i");
       const restored = await session.waitForText(/• new item/);
       expect(restored).not.toContain("old item");
     } finally {

@@ -129,7 +129,7 @@ import {
   type PlannedPane,
 } from "./lib/extensionPanes";
 import type { ExtensionPanePlacement } from "../extension-api/types";
-import { HUNK_FILES_PANE_KEY } from "../extensions/extensionIds";
+import { HUNK_FILES_PANE_KEY, HUNK_NOTES_PANE_KEY } from "../extensions/extensionIds";
 import { extensionPaneSize } from "../extensions/panes";
 import { nextExtensionTrustPromptRoot } from "./lib/extensionTrustPrompt";
 import {
@@ -141,6 +141,11 @@ import { maxFileHeaderStatsWidth } from "./lib/fileHeader";
 import { verifyWorkspaceWriteTarget } from "./lib/workspaceWriteGuard";
 import { openSelectedFileInEditor } from "./lib/openInEditor";
 import { resolveResponsiveLayout } from "./lib/responsive";
+import {
+  buildReviewNoteGroups,
+  currentReviewNoteId,
+  resolveReviewNoteJumpTarget,
+} from "./lib/reviewNotes";
 import { resizeSidebarWidth } from "./lib/sidebar";
 import { availableThemes, resolveTheme, withTransparentSurfaces } from "./themes";
 
@@ -279,6 +284,7 @@ export function App({
     initialShowAgentNotes: bootstrap.initialShowAgentNotes ?? false,
     lineCursors,
     noteGeometry: noteGeometryRef,
+    noteScope: bootstrap.noteScope,
     sourceLabel: bootstrap.changeset.sourceLabel,
     stmlEnabled,
   });
@@ -331,6 +337,9 @@ export function App({
   const [forceSidebarOpen, setForceSidebarOpen] = useState(
     () => !pagerMode && bootstrap.initialSidebar === true,
   );
+  // Side panes shown on their own while the sidebar area is hidden. Opening one pane is a request
+  // to see that pane, not a request to bring back every other pane docked beside it.
+  const [soloRevealedPaneKeys, setSoloRevealedPaneKeys] = useState<readonly string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [showAgentSkill, setShowAgentSkill] = useState(false);
   const [saveConfigPromptOpen, setSaveConfigPromptOpen] = useState(false);
@@ -474,6 +483,19 @@ export function App({
   const selectedFile = review.selectedFile;
   const selectedHunkIndex = review.selectedHunkIndex;
   const selectedFileId = selectedFile?.id ?? null;
+  // The all-notes list spans the review, so it is rebuilt only when the review's files or
+  // its stored notes change: the pane is memoized on this identity, so deriving it inside
+  // the pane would repaint the list on every unrelated render instead.
+  const noteGroups = useMemo(
+    () => buildReviewNoteGroups({ files: filteredFiles, storedNotes: review.storedNotes }),
+    [filteredFiles, review.storedNotes],
+  );
+  // Derived from the current line rather than stored on selection, so a note reached by
+  // keyboard stepping highlights the same row a clicked one does.
+  const currentNoteId = useMemo(
+    () => currentReviewNoteId(filteredFiles, review.lineCursor),
+    [filteredFiles, review.lineCursor],
+  );
   const currentLinePaintMatchesCursor = extensionCurrentLinePaintMatchesCursor(
     currentLinePaintState,
     review.lineCursor,
@@ -801,6 +823,28 @@ export function App({
    * is known (the controls above are created before it is computed).
    */
   const revealSidebarAreaRef = useRef<() => void>(() => {});
+
+  /**
+   * Toggle the all-notes pane.
+   *
+   * Opening reveals that pane alone rather than the whole sidebar area: the
+   * notes list docks on the right, and asking for it must not drag the file
+   * list on the left back onto the screen with it.
+   */
+  const toggleAllNotes = useCallback(() => {
+    const opens = !paneOpenStateRef.current.open.includes(HUNK_NOTES_PANE_KEY);
+    setPaneOpen(HUNK_NOTES_PANE_KEY, "toggle");
+    setSoloRevealedPaneKeys((current) => {
+      const others = current.filter((key) => key !== HUNK_NOTES_PANE_KEY);
+      return opens ? [...others, HUNK_NOTES_PANE_KEY] : others;
+    });
+  }, [setPaneOpen]);
+
+  /**
+   * Move the review onto one note, assigned each render so the list always
+   * jumps against the files and line cursors visible now.
+   */
+  const selectNoteRef = useRef<(fileId: string, noteId: string) => void>(() => {});
 
   const {
     accept: acceptExtensionDialog,
@@ -1194,7 +1238,13 @@ export function App({
   );
   const effectiveOpenPaneKeys = paneOpenState.open.filter((key) => {
     const pane = sessionPanes.find((entry) => entry.key === key);
-    return sidebarAreaVisible || (pane?.placement !== "left" && pane?.placement !== "right");
+    if (pane?.placement !== "left" && pane?.placement !== "right") {
+      return true;
+    }
+
+    // A solo-revealed pane docks on its own while the rest of the area stays hidden. It still
+    // answers to the layout: `planExtensionPanes` omits it when the terminal has no room.
+    return sidebarAreaVisible || soloRevealedPaneKeys.includes(key);
   });
   if (
     failedFilesReplacement &&
@@ -1928,6 +1978,21 @@ export function App({
     },
   };
 
+  // A note with no resolved position has nowhere to jump to, so the list row stays inert rather
+  // than moving the review somewhere the note is not about.
+  selectNoteRef.current = (fileId, noteId) => {
+    const target = resolveReviewNoteJumpTarget(filteredFiles, fileId, noteId);
+    if (!target) {
+      return;
+    }
+
+    focusFiles();
+    // The jump is only useful if the note is readable when it lands, so a hidden inline layer
+    // comes on. Never the reverse: picking a note cannot hide the layer it just needed.
+    openAgentNotes();
+    review.selectNoteTarget(fileId, target.hunkIndex, target.lineTarget);
+  };
+
   /** Toggle keyboard focus between the file list and the file filter. */
   const toggleFocusArea = useCallback(() => {
     setFocusArea((current) => (current === "files" ? "filter" : "files"));
@@ -2045,6 +2110,7 @@ export function App({
         selectLayoutMode,
         startUserNote: () => startUserNote(),
         toggleAgentNotes,
+        toggleAllNotes,
         toggleCopyDecorations,
         toggleFocusArea,
         toggleGapForSelectedHunk: review.toggleSelectedHunkGap,
@@ -2088,6 +2154,7 @@ export function App({
     layoutMode,
     filesPaneVisible,
     showAgentNotes,
+    showAllNotes: paneOpenState.open.includes(HUNK_NOTES_PANE_KEY),
     showHelp,
     showHunkHeaders,
     showLineNumbers,
@@ -2249,6 +2316,9 @@ export function App({
           showTopChrome={showMenuBar}
           keybindings={paneKeybindings}
           notify={(message, type) => extensions?.context.notify(message, type)}
+          noteGroups={noteGroups}
+          currentNoteId={currentNoteId}
+          onSelectNote={(fileId, noteId) => selectNoteRef.current(fileId, noteId)}
           onSelectFile={(fileId) => {
             focusFiles();
             jumpToFile(fileId, { alignFileHeaderTop: true });

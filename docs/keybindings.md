@@ -79,7 +79,8 @@ The built-in commands and the keys they ship with:
 | `hunk.view.layoutSplit`                        | Split layout                                   | `1`                          |
 | `hunk.view.layoutStack`                        | Stack layout                                   | `2`                          |
 | `hunk.view.openThemeSelector`                  | Choose theme                                   | `t`                          |
-| `hunk.view.toggleAgentNotes`                   | Toggle agent notes                             | `a`                          |
+| `hunk.view.toggleAgentNotes`                   | Toggle inline notes                            | `i`                          |
+| `hunk.view.toggleAllNotes`                     | Toggle all notes                               | `a`                          |
 | `hunk.view.toggleCopyDecorations`              | Toggle copy decorations                        | _(none)_                     |
 | `hunk.view.toggleFilesPane`                    | Toggle files pane                              | `s`                          |
 | `hunk.view.toggleHunkHeaders`                  | Toggle hunk headers                            | `m`                          |

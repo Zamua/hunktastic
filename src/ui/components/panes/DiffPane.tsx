@@ -14,26 +14,14 @@ import {
   type RefObject,
 } from "react";
 import { DEFAULT_TAB_WIDTH } from "../../../core/tabWidth";
-import type {
-  AgentAnnotation,
-  CursorLine,
-  DiffFile,
-  LayoutMode,
-  UserNoteLineTarget,
-} from "../../../core/types";
-import { resolveReviewRevealNoteId } from "../../../core/review/selectors";
-import {
-  reviewNoteAnchorLine,
-  reviewNoteOwnerHunkIndex,
-  reviewNoteVisibleByPolicy,
-} from "../../../core/review/state";
+import type { CursorLine, DiffFile, LayoutMode, UserNoteLineTarget } from "../../../core/types";
 import type { FileSourceStatus } from "../../diff/expandCollapsedRows";
 import type { ActiveAddNoteAffordance } from "../../diff/DiffSectionBody";
 import type { CursorHighlight } from "../../diff/renderRows";
 import type { DraftReviewNote } from "../../lib/reviewNoteMapping";
 import {
-  createVisibleAgentNote,
-  reviewNoteSource,
+  annotatedHunkLineTarget,
+  resolveVisibleReviewNotes,
   type VisibleAgentNote,
 } from "../../lib/agentAnnotations";
 import {
@@ -485,57 +473,18 @@ export function DiffPane({
     const next = new Map<string, VisibleAgentNote[]>();
 
     files.forEach((file) => {
-      const annotations = (file.agent?.annotations ?? []).filter(
-        // One shared visibility rule over the normalized note source, so the terminal and
-        // any other surface hide the same notes when the layer is off.
-        (annotation) =>
-          reviewNoteVisibleByPolicy({ source: reviewNoteSource(annotation) }, showAgentNotes),
-      );
-      // Every note kind resolves its anchor through the shared resolver here, once, so the
-      // render plan places sidecar annotations, agent comments, reviewer notes, and the open
-      // draft from one decision about where each of them hangs.
-      const hunks = file.metadata.hunks;
-      const notes: VisibleAgentNote[] = annotations.map((annotation, index) => {
-        const source = reviewNoteSource(annotation);
-        // Explicit ids and synthesized index ids live in disjoint namespaces so an
-        // annotation named "3" can never collide with an id-less annotation at index 3 —
-        // reveal resolves rows by this id, and a collision would aim it at the wrong note.
-        const id = annotation.id
-          ? `annotation:${file.id}:id:${annotation.id}`
-          : `annotation:${file.id}:at:${index}`;
-        if (source !== "user") {
-          return createVisibleAgentNote(hunks, { id, annotation });
-        }
-
-        return createVisibleAgentNote(hunks, {
-          id,
-          annotation,
-          source,
-          editable: true,
-          onRemove: annotation.id ? () => onRemoveUserNote?.(annotation.id!) : undefined,
-        });
-      });
-
-      if (draftNote?.fileId === file.id) {
-        const draftAnnotation: AgentAnnotation = {
-          id: draftNote.id,
-          source: "user-draft",
-          summary: draftNote.body || " ",
-          oldRange: draftNote.oldRange,
-          newRange: draftNote.newRange,
-          editable: true,
-        };
-        notes.push(
-          createVisibleAgentNote(hunks, {
-            id: draftNote.id,
-            annotation: draftAnnotation,
-            // The draft knows exactly where the reviewer opened it, including on an expanded
-            // gap line no hunk contains.
-            target: { hunkIndex: draftNote.hunkIndex, side: draftNote.side, line: draftNote.line },
-            source: "draft",
-            editable: true,
+      // The shared builder decides which notes exist and where each one hangs (the same
+      // list the controller's annotated-hunk cursor placement resolves), so the pane only
+      // attaches the interaction handlers it owns.
+      const notes = resolveVisibleReviewNotes(file, {
+        showAgentNotes,
+        draft: draftNote?.fileId === file.id ? draftNote : null,
+      }).map((note): VisibleAgentNote => {
+        if (note.source === "draft") {
+          return {
+            ...note,
             draft: {
-              body: draftNote.body,
+              body: draftNote?.body ?? "",
               focused: draftNoteFocused,
               onBlur: onBlurDraftNote,
               onCancel: onCancelDraftNote ?? (() => {}),
@@ -543,9 +492,16 @@ export function DiffPane({
               onInput: onUpdateDraftNote ?? (() => {}),
               onSave: onSaveDraftNote ?? (() => {}),
             },
-          }),
-        );
-      }
+          };
+        }
+
+        const annotationId = note.annotation.id;
+        if (note.source === "user" && annotationId) {
+          return { ...note, onRemove: () => onRemoveUserNote?.(annotationId) };
+        }
+
+        return note;
+      });
 
       if (notes.length > 0) {
         next.set(file.id, notes);
@@ -1657,9 +1613,10 @@ export function DiffPane({
   /**
    * The note a note-preferring reveal aims at, named by the shared policy.
    *
-   * The candidates are this pane's own — sidecar annotations, agent comments, the
+   * The candidates are this pane's own (sidecar annotations, agent comments, the
    * reviewer's notes, and the open draft, each hanging from the hunk its resolved anchor
-   * names — while which of them wins is the one rule every review surface answers with.
+   * names), while which of them wins is the one rule every review surface answers with,
+   * through the same wrapper the controller places the current line by.
    */
   const revealNoteId = useMemo(() => {
     if (!scrollToNote || !selectedFileId) {
@@ -1667,22 +1624,20 @@ export function DiffPane({
     }
 
     const notes = allAgentNotesByFile.get(selectedFileId);
-    return notes
-      ? (resolveReviewRevealNoteId(
-          notes.flatMap((note) =>
-            reviewNoteOwnerHunkIndex(note) === selectedHunkIndex
-              ? [
-                  {
-                    id: note.id,
-                    line: reviewNoteAnchorLine(note).line,
-                    draft: note.source === "draft",
-                  },
-                ]
-              : [],
-          ),
-        ) ?? null)
-      : null;
-  }, [allAgentNotesByFile, scrollToNote, selectedFileId, selectedHunkIndex]);
+    if (!notes) {
+      return null;
+    }
+
+    // A cursor already sitting on one of this hunk's notes is a completed pick (the
+    // all-notes list placed it); reveal that note rather than re-running the policy.
+    const preferred =
+      lineCursor &&
+      lineCursor.fileId === selectedFileId &&
+      lineCursor.hunkIndex === selectedHunkIndex
+        ? lineCursor.target
+        : null;
+    return annotatedHunkLineTarget(notes, selectedHunkIndex, preferred)?.noteId ?? null;
+  }, [allAgentNotesByFile, lineCursor, scrollToNote, selectedFileId, selectedHunkIndex]);
 
   /** Absolute scroll offset and height of the note that reveal aims at, once it is measured. */
   const selectedNoteBounds = useMemo(() => {

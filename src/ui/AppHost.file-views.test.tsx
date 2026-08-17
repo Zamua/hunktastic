@@ -414,7 +414,7 @@ describe("AppHost file views", () => {
     bootstrap.extensions = extensions;
     const setup = await testRender(<AppHost bootstrap={bootstrap} onQuit={() => {}} />, {
       width: 120,
-      height: 24,
+      height: 26,
     });
 
     try {
