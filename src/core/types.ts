@@ -79,7 +79,7 @@ export interface ExtensionsConfig {
   enabled: boolean;
   /** Explicit entry paths from the user config layer. */
   paths: string[];
-  /** Explicit entry paths contributed by the repo config layer; trust-gated like `.hunk/extensions`. */
+  /** Explicit entry paths contributed by the repo config layer; trust-gated like `.hunkt/extensions`. */
   repoPaths: string[];
   /** Per-extension config tables, keyed by extension id. */
   extensionConfigs: Record<string, Record<string, unknown>>;
@@ -315,7 +315,7 @@ export interface ExtensionRemoveCommandInput {
   name: string;
 }
 
-/** `hunk extension ...` managed-install commands. */
+/** `hunkt extension ...` managed-install commands. */
 export type ExtensionManageCommandInput =
   | ExtensionInstallCommandInput
   | ExtensionListCommandInput

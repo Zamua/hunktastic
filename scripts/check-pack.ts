@@ -374,9 +374,9 @@ const requiredPaths = [
   "LICENSE",
   "package.json",
   // The bundled skills must survive the narrowed per-skill files entries —
-  // `hunk skill path [name]` resolves them at runtime.
-  "skills/hunk-review/SKILL.md",
-  "skills/hunk-extensions/SKILL.md",
+  // `hunkt skill path [name]` resolves them at runtime.
+  "skills/hunkt-review/SKILL.md",
+  "skills/hunkt-extensions/SKILL.md",
 ];
 
 for (const path of requiredPaths) {
@@ -394,8 +394,8 @@ const forbiddenPrefixes = [
   "dist/npm/core/",
   "dist/npm/ui/",
   // Maintainer-only workflows reference repository scripts and never ship.
-  "skills/hunk-launch-video/",
-  "skills/hunk-release/",
+  "skills/hunkt-launch-video/",
+  "skills/hunkt-release/",
 ];
 const forbiddenPaths = ["AGENTS.md", "bun.lock"];
 

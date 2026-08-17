@@ -43,7 +43,7 @@ export interface SessionReviewFile extends SessionFileSummary {
    * review resource, read in bounded verified chunks on demand, so the daemon holds one
    * copy of one patch at a time instead of every patch of every session at once. It is
    * still parsed here because a session from an older build still sends it, and because
-   * the field is where reconstructed text lands before `hunk session review
+   * the field is where reconstructed text lands before `hunkt session review
    * --include-patch` renders it.
    */
   patch?: string;

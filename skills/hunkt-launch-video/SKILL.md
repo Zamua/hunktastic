@@ -1,5 +1,5 @@
 ---
-name: hunk-launch-video
+name: hunkt-launch-video
 description: Produces Hunk videos by driving the real TUI headlessly in a PTY, compositing captioned 1080p frames in Chromium, and encoding with ffmpeg. Use for feature demos, workflow explainers, announcements, launch videos, and full-release roundups.
 ---
 
@@ -140,7 +140,7 @@ checked-in demo coverage and belongs to the submitted change.
    or adjusting capture scenes as needed (see "Authoring scenes").
 3. Capture every scene referenced by the full storyboard, composite it, and
    encode both formats using the main workflow above.
-4. Verify the complete cut (see "Verification") and deliver both files. When `hunk-release` invoked this workflow, return the approved MP4 and WebM to that skill for versioned naming and GitHub user-attachment embedding; do not upload or edit the public release without its confirmation gate.
+4. Verify the complete cut (see "Verification") and deliver both files. When `hunkt-release` invoked this workflow, return the approved MP4 and WebM to that skill for versioned naming and GitHub user-attachment embedding; do not upload or edit the public release without its confirmation gate.
 
 ## Per-video editorial surface
 
@@ -256,7 +256,7 @@ Sandbox-specific bullets are marked; each cost real debugging time.
 - Demo content that must exist: STML notes come from
   `examples/9-agent-markup-notes` (launch with `--experimental`), extension
   scenes from `examples/extensions/` loaded via `--extension <path>` (explicit
-  paths skip the repo trust prompt). The pager pipe is `git diff | hunk pager`
+  paths skip the repo trust prompt). The pager pipe is `git diff | hunkt pager`
   — bare `hunk` on piped stdin prints help. Sidebar toggle is `s`; comment
   draft is `c`, save with Ctrl+S (`\x13`).
 
@@ -319,7 +319,7 @@ Sandbox-specific bullets are marked; each cost real debugging time.
   gitignored — never commit the video or its frames. For a standalone video
   request, send both files to the user directly (mp4: social/Slack; webm: web
   embeds), report duration and file sizes, and flag if the mp4 exceeds ~10 MB
-  (Slack) or ~15 MB (X). When invoked by `hunk-release`, hand both files back
+  (Slack) or ~15 MB (X). When invoked by `hunkt-release`, hand both files back
   to that workflow instead; it owns versioned filenames, GitHub's
   user-attachment limit, public embedding, and inline-player verification.
   Copy them elsewhere only if the user names a destination.

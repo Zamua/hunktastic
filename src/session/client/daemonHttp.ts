@@ -9,7 +9,7 @@ export const HUNK_SESSION_DAEMON_HTTP_TIMEOUT_MS = 5_000;
 function createTimeoutError(operation: string, timeoutMs: number) {
   return new HunkUserError(`Timed out waiting for the Hunk session daemon to ${operation}.`, [
     `The daemon did not respond within ${timeoutMs}ms.`,
-    'Run "hunk daemon serve" or open a Hunk window, then retry.',
+    'Run "hunkt daemon serve" or open a Hunk window, then retry.',
   ]);
 }
 

@@ -323,7 +323,7 @@ Your extension's own `[extension.<id>]` config table, as a plain object. Hunk do
 **Treat these values as untrusted.** A repository under review can set or override the table for an extension you installed globally (deliberate — team-level tuning of a shared extension), so never use `hunk.config` for exec-adjacent decisions such as binary paths, shell commands, or module loading. Validate those against something the user controls.
 
 ```toml
-# ~/.config/hunk/config.toml
+# ~/.config/hunkt/config.toml
 [extension.collapse-generated]
 patterns = ["*.lock", "dist/**"]
 ```

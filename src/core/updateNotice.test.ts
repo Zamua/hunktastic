@@ -98,11 +98,11 @@ describe("startup update notice", () => {
     });
   });
 
-  test("detects Homebrew installs from the HUNK_INSTALL_SOURCE environment variable", async () => {
+  test("detects Homebrew installs from the HUNKT_INSTALL_SOURCE environment variable", async () => {
     await withTempStatePath(async (statePath) => {
       await expect(
         resolveStartupUpdateNotice({
-          env: { HUNK_INSTALL_SOURCE: "homebrew" },
+          env: { HUNKT_INSTALL_SOURCE: "homebrew" },
           fetchImpl: async () => createDistTagsResponse({ latest: "0.7.1" }),
           resolveInstalledVersion: () => "0.7.0",
           statePath,
@@ -118,7 +118,7 @@ describe("startup update notice", () => {
     await withTempStatePath(async (statePath) => {
       await expect(
         resolveStartupUpdateNotice({
-          env: { HUNK_INSTALL_SOURCE: "nix" },
+          env: { HUNKT_INSTALL_SOURCE: "nix" },
           fetchImpl: async () => createDistTagsResponse({ latest: "0.7.1", beta: "0.8.0-beta.1" }),
           resolveInstalledVersion: () => "0.7.0",
           statePath,
@@ -151,7 +151,7 @@ describe("startup update notice", () => {
     await withTempStatePath(async (statePath) => {
       await expect(
         resolveStartupUpdateNotice({
-          env: { HUNK_INSTALL_SOURCE: "nix" },
+          env: { HUNKT_INSTALL_SOURCE: "nix" },
           fetchImpl: async () => createDistTagsResponse({ latest: "0.7.0", beta: "0.8.0-beta.1" }),
           resolveInstalledVersion: () => "0.7.0",
           statePath,
@@ -164,7 +164,7 @@ describe("startup update notice", () => {
     await withTempStatePath(async (statePath) => {
       await expect(
         resolveStartupUpdateNotice({
-          env: { HUNK_INSTALL_SOURCE: "mise" },
+          env: { HUNKT_INSTALL_SOURCE: "mise" },
           fetchImpl: async () => {
             throw new Error("should not fetch for mise installs");
           },
@@ -298,7 +298,7 @@ describe("startup update notice", () => {
         }),
       ).resolves.toEqual({
         key: "skill:0.8.0",
-        message: "Hunk 0.8.0 installed • If your agent copied Hunk's skill, run hunk skill path",
+        message: "Hunk 0.8.0 installed • If your agent copied Hunk's skill, run hunkt skill path",
       });
 
       expect(fetchCalled).toBe(false);
@@ -354,8 +354,8 @@ describe("startup update notice", () => {
   });
 
   test("returns null immediately when the CI disable env is set", async () => {
-    const previous = process.env.HUNK_DISABLE_UPDATE_NOTICE;
-    process.env.HUNK_DISABLE_UPDATE_NOTICE = "1";
+    const previous = process.env.HUNKT_DISABLE_UPDATE_NOTICE;
+    process.env.HUNKT_DISABLE_UPDATE_NOTICE = "1";
 
     try {
       await withTempStatePath(async (statePath) => {
@@ -371,9 +371,9 @@ describe("startup update notice", () => {
       });
     } finally {
       if (previous === undefined) {
-        delete process.env.HUNK_DISABLE_UPDATE_NOTICE;
+        delete process.env.HUNKT_DISABLE_UPDATE_NOTICE;
       } else {
-        process.env.HUNK_DISABLE_UPDATE_NOTICE = previous;
+        process.env.HUNKT_DISABLE_UPDATE_NOTICE = previous;
       }
     }
   });

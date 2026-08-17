@@ -19,7 +19,7 @@ function createEntry() {
   };
 }
 
-describe("hunk session projections", () => {
+describe("hunkt session projections", () => {
   test("buildListedHunkSession keeps terminal metadata and file summaries", () => {
     const entry = {
       registration: createTestSessionRegistration({

@@ -18,8 +18,8 @@ import {
 } from "../src/ui/diff/worker";
 import { resolveTheme } from "../src/ui/themes";
 
-const LINE_COUNT = Number(process.env.HUNK_COMPACT_HIGHLIGHT_LINES ?? 8_000);
-const SAMPLES = Number(process.env.HUNK_COMPACT_HIGHLIGHT_SAMPLES ?? 7);
+const LINE_COUNT = Number(process.env.HUNKT_COMPACT_HIGHLIGHT_LINES ?? 8_000);
+const SAMPLES = Number(process.env.HUNKT_COMPACT_HIGHLIGHT_SAMPLES ?? 7);
 
 function median(values: number[]) {
   const sorted = [...values].sort((left, right) => left - right);

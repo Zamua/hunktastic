@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { readAppStateRecord, writeAppStateRecord } from "../../core/appStateFile";
 
 /**
- * What `hunk extension install` remembers about one managed install.
+ * What `hunkt extension install` remembers about one managed install.
  *
  * The record is the source of truth for which directories under the managed
  * install root Hunk owns: `list`, `update`, and `remove` operate only on

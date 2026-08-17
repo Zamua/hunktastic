@@ -132,7 +132,7 @@ export async function launchShell(options: LaunchShellOptions) {
 
 /**
  * Write an executable wrapper so shell scenes can show a real command name
- * (`hunk …`) while actually exec-ing a dev invocation.
+ * (`hunkt …`) while actually exec-ing a dev invocation.
  */
 export function createCommandWrapper(binDir: string, name: string, exec: string[]) {
   mkdirSync(binDir, { recursive: true });

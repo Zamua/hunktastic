@@ -10,4 +10,4 @@ is the `@hunk/term-video` package in `packages/term-video/`.
 
 The full procedure — regeneration steps, environment gotchas, scene authoring,
 storyboard model, and content-accuracy rules — lives in
-[`skills/hunk-launch-video/SKILL.md`](../../skills/hunk-launch-video/SKILL.md).
+[`skills/hunkt-launch-video/SKILL.md`](../../skills/hunkt-launch-video/SKILL.md).

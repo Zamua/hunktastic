@@ -17,7 +17,7 @@ function createTempDir(prefix: string) {
 
 /** Write one repo-local extension candidate that records the fact that it ran. */
 function createRepoExtension(repoRoot: string): ExtensionCandidate {
-  const path = join(repoRoot, ".hunk", "extensions", "repo-local.ts");
+  const path = join(repoRoot, ".hunkt", "extensions", "repo-local.ts");
   mkdirSync(join(path, ".."), { recursive: true });
   writeFileSync(
     path,

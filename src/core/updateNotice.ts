@@ -8,8 +8,8 @@ const DIST_TAGS_URL = "https://registry.npmjs.org/-/package/hunkdiff/dist-tags";
 const STABLE_SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
 const PRERELEASE_SEMVER_PATTERN = /^\d+\.\d+\.\d+-[0-9A-Za-z.-]+$/;
 const DEFAULT_UPDATE_NOTICE_FETCH_TIMEOUT_MS = 5_000;
-const DISABLE_STARTUP_UPDATE_NOTICE_ENV = "HUNK_DISABLE_UPDATE_NOTICE";
-const INSTALL_SOURCE_ENV = "HUNK_INSTALL_SOURCE";
+const DISABLE_STARTUP_UPDATE_NOTICE_ENV = "HUNKT_DISABLE_UPDATE_NOTICE";
+const INSTALL_SOURCE_ENV = "HUNKT_INSTALL_SOURCE";
 const STARTUP_STATE_VERSION = 1;
 
 interface PersistedStartupState {
@@ -282,7 +282,7 @@ function resolveStartupSkillRefreshNotice(deps: UpdateNoticeDeps = {}): StartupN
 
   return {
     key: `skill:${installedVersion}`,
-    message: `Hunk ${installedVersion} installed • If your agent copied Hunk's skill, run hunk skill path`,
+    message: `Hunk ${installedVersion} installed • If your agent copied Hunk's skill, run hunkt skill path`,
   };
 }
 

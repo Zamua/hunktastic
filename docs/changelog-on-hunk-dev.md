@@ -16,7 +16,7 @@ on hunk.dev. Three things follow from hosting it here:
   `llms-full.txt`, a `.md` twin of every page, and an explicit crawler allow-list; release history
   was the largest gap in that corpus. Changelog pages join `llms-full.txt` automatically and are
   excluded from `llms-small.txt`, which stays scoped to learning Hunk.
-- **Release videos get a permanent home.** `skills/hunk-launch-video` renders the real TUI for every
+- **Release videos get a permanent home.** `skills/hunkt-launch-video` renders the real TUI for every
   release; a GitHub attachment URL is unindexable and unembeddable.
 
 ## One page per minor series
@@ -77,7 +77,7 @@ Two rules handle this without a draft state or an extra publication step:
 `website/releases/dates.json` is rebuilt from the release list rather than merged onto it, so a
 version that leaves `CHANGELOG.md` — or a prerelease — does not linger in the committed map.
 
-Step 4 of `skills/hunk-release/SKILL.md` regenerates after the tag exists, which backfills the date,
+Step 4 of `skills/hunkt-release/SKILL.md` regenerates after the tag exists, which backfills the date,
 adds the install command, and advances the landing-page ribbon.
 
 ## Surfaces

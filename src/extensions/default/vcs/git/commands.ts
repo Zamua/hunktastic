@@ -269,14 +269,14 @@ export function formatGitCommandLabel(input: GitBackedInput) {
   switch (input.kind) {
     case "vcs":
       if (input.staged) {
-        return "hunk diff --staged";
+        return "hunkt diff --staged";
       }
 
-      return input.range ? `hunk diff ${input.range}` : "hunk diff";
+      return input.range ? `hunkt diff ${input.range}` : "hunkt diff";
     case "show":
-      return input.ref ? `hunk show ${input.ref}` : "hunk show";
+      return input.ref ? `hunkt show ${input.ref}` : "hunkt show";
     case "stash-show":
-      return input.ref ? `hunk stash show ${input.ref}` : "hunk stash show";
+      return input.ref ? `hunkt stash show ${input.ref}` : "hunkt stash show";
   }
 }
 
@@ -284,8 +284,8 @@ function getMissingRepoHelp(input: GitBackedInput) {
   if (input.kind === "vcs") {
     return [
       "Run the command from a Git checkout, or compare files directly instead:",
-      "  hunk diff <before-file> <after-file>",
-      "  hunk patch <file.patch>",
+      "  hunkt diff <before-file> <after-file>",
+      "  hunkt patch <file.patch>",
     ];
   }
 
@@ -361,9 +361,9 @@ function createMissingStashError(input: ExtensionVcsStashShowInput) {
     );
   }
 
-  return new HunkExtensionUserError("`hunk stash show` could not find a stash entry to show.", {
+  return new HunkExtensionUserError("`hunkt stash show` could not find a stash entry to show.", {
     suggestions: [
-      "Create one with `git stash push`, or pass an explicit stash ref like `hunk stash show stash@{0}`.",
+      "Create one with `git stash push`, or pass an explicit stash ref like `hunkt stash show stash@{0}`.",
     ],
   });
 }
@@ -529,9 +529,9 @@ export function resolveGitColorMovedOptions(
 }
 
 /**
- * Return whether one `hunk diff` input still compares against the live working tree.
+ * Return whether one `hunkt diff` input still compares against the live working tree.
  *
- * Plain `hunk diff <ref>` keeps the working tree on one side, so untracked files should still
+ * Plain `hunkt diff <ref>` keeps the working tree on one side, so untracked files should still
  * appear. Explicit revision-set expressions like `a..b`, `a...b`, or `rev^!` expand into positive
  * and negative revisions and should stay commit-to-commit only.
  */
@@ -840,7 +840,7 @@ function resolveRangeRevisions(
 }
 
 /**
- * Resolve the old/new endpoints implied by a `hunk diff` invocation.
+ * Resolve the old/new endpoints implied by a `hunkt diff` invocation.
  *
  * Returns `null` when the range maps to a shape we cannot represent as a
  * single old/new pair. Callers should treat that as "do not attempt to read

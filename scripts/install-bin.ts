@@ -6,20 +6,22 @@ import path from "node:path";
 
 const repoRoot = path.resolve(import.meta.dir, "..");
 const isWindows = process.platform === "win32";
-const binaryName = isWindows ? "hunk.exe" : "hunk";
+const binaryName = isWindows ? "hunkt.exe" : "hunkt";
+// Only names this project has ever installed itself are cleaned up. `hunk` is a
+// separate tool that may share the install directory, so it is never removed.
 const legacyBinaryName = isWindows ? "otdiff.exe" : "otdiff";
 const binaryPath = path.join(repoRoot, "dist", binaryName);
 
 function defaultInstallDir() {
   if (isWindows) {
     const base = process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
-    return path.join(base, "Programs", "hunk");
+    return path.join(base, "Programs", "hunkt");
   }
 
   return path.join(os.homedir(), ".local", "bin");
 }
 
-const installDir = process.env.HUNK_INSTALL_DIR ?? defaultInstallDir();
+const installDir = process.env.HUNKT_INSTALL_DIR ?? defaultInstallDir();
 const installPath = path.join(installDir, binaryName);
 const legacyInstallPath = path.join(installDir, legacyBinaryName);
 

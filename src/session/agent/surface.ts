@@ -1,15 +1,15 @@
 import type { SessionDaemonAction } from "../protocol";
 
 /**
- * Declarative description of the agent-facing `hunk session` command surface.
+ * Declarative description of the agent-facing `hunkt session` command surface.
  *
  * This module is the single source of truth for what agents can invoke: the Commander commands in
- * `src/app/cli.ts`, the `hunk session --help` usage text, and the generated
- * `skills/hunk-review/SKILL.md` reference sections are all derived from these specs, so the parser
+ * `src/app/cli.ts`, the `hunkt session --help` usage text, and the generated
+ * `skills/hunkt-review/SKILL.md` reference sections are all derived from these specs, so the parser
  * and the docs cannot drift apart. Keep it pure data with no runtime dependencies.
  */
 
-/** One agent-facing CLI option on a `hunk session` command. */
+/** One agent-facing CLI option on a `hunkt session` command. */
 export interface AgentCommandOption {
   /** Commander flag definition, e.g. `--repo <path>`. */
   readonly flag: string;
@@ -21,14 +21,14 @@ export interface AgentCommandOption {
   readonly required?: boolean;
 }
 
-/** One positional argument on a `hunk session` command. */
+/** One positional argument on a `hunkt session` command. */
 export interface AgentCommandPositional {
   /** Commander argument token, e.g. `[sessionId]` or `[targets...]`. */
   readonly token: string;
   readonly description?: string;
 }
 
-/** Declarative spec for one agent-facing `hunk session` command. */
+/** Declarative spec for one agent-facing `hunkt session` command. */
 export interface AgentCommandSpec {
   /** Commander command path without the binary name, e.g. `session comment add`. */
   readonly name: string;
@@ -36,7 +36,7 @@ export interface AgentCommandSpec {
   readonly summary: string;
   readonly positionals: readonly AgentCommandPositional[];
   readonly options: readonly AgentCommandOption[];
-  /** Canonical usage lines shared by `hunk session --help` and the generated skill. */
+  /** Canonical usage lines shared by `hunkt session --help` and the generated skill. */
   readonly synopsis: readonly string[];
   /** Flag-group rules the parser enforces; also rendered into synopsis fragments. */
   readonly constraints?: readonly AgentCommandConstraint[];
@@ -114,7 +114,7 @@ export function optionKeyFromFlag(flag: string) {
 }
 
 /**
- * Options owned by non-session commands (`hunk diff`, `hunk markup render`, shared review flags)
+ * Options owned by non-session commands (`hunkt diff`, `hunkt markup render`, shared review flags)
  * that agent-facing docs also reference. `src/app/cli.ts` registers them from these constants,
  * so the docs' flag-consistency tests verify real parser flags instead of a hand-kept allowlist.
  */
@@ -218,21 +218,21 @@ export const SESSION_AGENT_COMMANDS = {
     summary: "list live Hunk sessions",
     positionals: [],
     options: [jsonOption],
-    synopsis: ["hunk session list [--json]"],
+    synopsis: ["hunkt session list [--json]"],
   },
   get: {
     name: "session get",
     summary: "show one live Hunk session",
     positionals: [{ token: "[sessionId]" }],
     options: [repoOption, jsonOption],
-    synopsis: [`hunk session get ${SESSION_SELECTOR_SYNOPSIS} [--json]`],
+    synopsis: [`hunkt session get ${SESSION_SELECTOR_SYNOPSIS} [--json]`],
   },
   context: {
     name: "session context",
     summary: "show the selected file and hunk for one live Hunk session",
     positionals: [{ token: "[sessionId]" }],
     options: [repoOption, jsonOption],
-    synopsis: [`hunk session context ${SESSION_SELECTOR_SYNOPSIS} [--json]`],
+    synopsis: [`hunkt session context ${SESSION_SELECTOR_SYNOPSIS} [--json]`],
   },
   review: {
     name: "session review",
@@ -251,7 +251,7 @@ export const SESSION_AGENT_COMMANDS = {
       jsonOption,
     ],
     synopsis: [
-      `hunk session review ${SESSION_SELECTOR_SYNOPSIS} [--include-patch] [--include-notes] [--json]`,
+      `hunkt session review ${SESSION_SELECTOR_SYNOPSIS} [--include-patch] [--include-notes] [--json]`,
     ],
   },
   navigate: {
@@ -274,15 +274,15 @@ export const SESSION_AGENT_COMMANDS = {
     ],
     constraints: [NAVIGATE_TARGET_CONSTRAINT, COMMENT_DIRECTION_CONSTRAINT],
     synopsis: [
-      `hunk session navigate ${SESSION_SELECTOR_SYNOPSIS} --file <path> ${constraintSynopsis(NAVIGATE_TARGET_CONSTRAINT)} [--json]`,
-      `hunk session navigate ${SESSION_SELECTOR_SYNOPSIS} ${constraintSynopsis(COMMENT_DIRECTION_CONSTRAINT)} [--json]`,
+      `hunkt session navigate ${SESSION_SELECTOR_SYNOPSIS} --file <path> ${constraintSynopsis(NAVIGATE_TARGET_CONSTRAINT)} [--json]`,
+      `hunkt session navigate ${SESSION_SELECTOR_SYNOPSIS} ${constraintSynopsis(COMMENT_DIRECTION_CONSTRAINT)} [--json]`,
     ],
     examples: [
-      "hunk session navigate --repo . --file src/App.tsx --hunk 2",
-      "hunk session navigate --repo . --file src/App.tsx --new-line 372",
-      "hunk session navigate --repo . --file src/App.tsx --old-line 355",
-      "hunk session navigate --repo . --next-comment",
-      "hunk session navigate --repo . --prev-comment",
+      "hunkt session navigate --repo . --file src/App.tsx --hunk 2",
+      "hunkt session navigate --repo . --file src/App.tsx --new-line 372",
+      "hunkt session navigate --repo . --file src/App.tsx --old-line 355",
+      "hunkt session navigate --repo . --next-comment",
+      "hunkt session navigate --repo . --prev-comment",
     ],
   },
   reload: {
@@ -302,16 +302,16 @@ export const SESSION_AGENT_COMMANDS = {
       jsonOption,
     ],
     synopsis: [
-      `hunk session reload ${RELOAD_SELECTOR_SYNOPSIS} [--source <path>] [--json] -- diff [ref] [-- <pathspec...>]`,
-      `hunk session reload ${RELOAD_SELECTOR_SYNOPSIS} [--source <path>] [--json] -- show [ref] [-- <pathspec...>]`,
+      `hunkt session reload ${RELOAD_SELECTOR_SYNOPSIS} [--source <path>] [--json] -- diff [ref] [-- <pathspec...>]`,
+      `hunkt session reload ${RELOAD_SELECTOR_SYNOPSIS} [--source <path>] [--json] -- show [ref] [-- <pathspec...>]`,
     ],
     examples: [
-      "hunk session reload --repo . -- diff",
-      "hunk session reload --repo . -- diff main...feature -- src/ui",
-      "hunk session reload --repo . -- show HEAD~1",
-      "hunk session reload --repo . -- show HEAD~1 -- README.md",
-      "hunk session reload --repo /path/to/worktree -- diff",
-      "hunk session reload --session-path /path/to/live-window --source /path/to/other-checkout -- diff",
+      "hunkt session reload --repo . -- diff",
+      "hunkt session reload --repo . -- diff main...feature -- src/ui",
+      "hunkt session reload --repo . -- show HEAD~1",
+      "hunkt session reload --repo . -- show HEAD~1 -- README.md",
+      "hunkt session reload --repo /path/to/worktree -- diff",
+      "hunkt session reload --session-path /path/to/live-window --source /path/to/other-checkout -- diff",
     ],
   },
   "comment-add": {
@@ -335,10 +335,10 @@ export const SESSION_AGENT_COMMANDS = {
     ],
     constraints: [COMMENT_TARGET_CONSTRAINT],
     synopsis: [
-      `hunk session comment add ${SESSION_SELECTOR_SYNOPSIS} --file <path> ${constraintSynopsis(COMMENT_TARGET_CONSTRAINT)} --summary <text> [--rationale <text>] [--author <name>] [--markup <stml>] [--focus] [--json]`,
+      `hunkt session comment add ${SESSION_SELECTOR_SYNOPSIS} --file <path> ${constraintSynopsis(COMMENT_TARGET_CONSTRAINT)} --summary <text> [--rationale <text>] [--author <name>] [--markup <stml>] [--focus] [--json]`,
     ],
     examples: [
-      'hunk session comment add --repo . --file README.md --new-line 103 --summary "Tighten this wording"',
+      'hunkt session comment add --repo . --file README.md --new-line 103 --summary "Tighten this wording"',
     ],
   },
   "comment-apply": {
@@ -352,10 +352,10 @@ export const SESSION_AGENT_COMMANDS = {
       jsonOption,
     ],
     synopsis: [
-      `hunk session comment apply ${SESSION_SELECTOR_SYNOPSIS} --stdin [--focus] [--json]`,
+      `hunkt session comment apply ${SESSION_SELECTOR_SYNOPSIS} --stdin [--focus] [--json]`,
     ],
     examples: [
-      `printf '%s\\n' '{"comments":[{"filePath":"README.md","newLine":103,"summary":"Tighten this wording"}]}' | hunk session comment apply --repo . --stdin`,
+      `printf '%s\\n' '{"comments":[{"filePath":"README.md","newLine":103,"summary":"Tighten this wording"}]}' | hunkt session comment apply --repo . --stdin`,
     ],
     helpExtra: [
       "Stdin JSON shape:",
@@ -383,7 +383,7 @@ export const SESSION_AGENT_COMMANDS = {
       jsonOption,
     ],
     synopsis: [
-      `hunk session comment list ${SESSION_SELECTOR_SYNOPSIS} [--file <path>] [--type <live|all|ai|agent|user>] [--json]`,
+      `hunkt session comment list ${SESSION_SELECTOR_SYNOPSIS} [--file <path>] [--type <live|all|ai|agent|user>] [--json]`,
     ],
   },
   "comment-rm": {
@@ -396,7 +396,7 @@ export const SESSION_AGENT_COMMANDS = {
       },
     ],
     options: [repoOption, jsonOption],
-    synopsis: [`hunk session comment rm ${SESSION_SELECTOR_SYNOPSIS} <comment-id> [--json]`],
+    synopsis: [`hunkt session comment rm ${SESSION_SELECTOR_SYNOPSIS} <comment-id> [--json]`],
   },
   "comment-clear": {
     name: "session comment clear",
@@ -414,7 +414,7 @@ export const SESSION_AGENT_COMMANDS = {
       jsonOption,
     ],
     synopsis: [
-      `hunk session comment clear ${SESSION_SELECTOR_SYNOPSIS} [--file <path>] [--include-user|--all] --yes [--json]`,
+      `hunkt session comment clear ${SESSION_SELECTOR_SYNOPSIS} [--file <path>] [--include-user|--all] --yes [--json]`,
     ],
   },
   "highlight-add": {
@@ -447,11 +447,11 @@ export const SESSION_AGENT_COMMANDS = {
     ],
     constraints: [HIGHLIGHT_TARGET_CONSTRAINT],
     synopsis: [
-      `hunk session highlight add ${SESSION_SELECTOR_SYNOPSIS} --file <path> ${constraintSynopsis(HIGHLIGHT_TARGET_CONSTRAINT)} --start <n> --end <n> [--tone <tone>] [--focus] [--json]`,
+      `hunkt session highlight add ${SESSION_SELECTOR_SYNOPSIS} --file <path> ${constraintSynopsis(HIGHLIGHT_TARGET_CONSTRAINT)} --start <n> --end <n> [--tone <tone>] [--focus] [--json]`,
     ],
     examples: [
-      "hunk session highlight add --repo . --file src/App.tsx --new-line 42 --start 6 --end 19",
-      "hunk session highlight add --repo . --file src/App.tsx --new-line 42 --start 6 --end 19 --tone warning --focus",
+      "hunkt session highlight add --repo . --file src/App.tsx --new-line 42 --start 6 --end 19",
+      "hunkt session highlight add --repo . --file src/App.tsx --new-line 42 --start 6 --end 19 --tone warning --focus",
     ],
   },
   "highlight-clear": {
@@ -464,9 +464,9 @@ export const SESSION_AGENT_COMMANDS = {
       jsonOption,
     ],
     synopsis: [
-      `hunk session highlight clear ${SESSION_SELECTOR_SYNOPSIS} [--file <path>] [--json]`,
+      `hunkt session highlight clear ${SESSION_SELECTOR_SYNOPSIS} [--file <path>] [--json]`,
     ],
-    examples: ["hunk session highlight clear --repo ."],
+    examples: ["hunkt session highlight clear --repo ."],
   },
 } as const satisfies Record<SessionDaemonAction, AgentCommandSpec>;
 
@@ -474,12 +474,12 @@ export const SESSION_AGENT_COMMANDS = {
 export const SESSION_AGENT_COMMAND_LIST: readonly AgentCommandSpec[] =
   Object.values(SESSION_AGENT_COMMANDS);
 
-/** Specs for the `hunk session comment` subcommand family, in display order. */
+/** Specs for the `hunkt session comment` subcommand family, in display order. */
 export const SESSION_COMMENT_COMMAND_LIST = SESSION_AGENT_COMMAND_LIST.filter((spec) =>
   spec.name.startsWith("session comment "),
 );
 
-/** Specs for the `hunk session highlight` subcommand family, in display order. */
+/** Specs for the `hunkt session highlight` subcommand family, in display order. */
 export const SESSION_HIGHLIGHT_COMMAND_LIST = SESSION_AGENT_COMMAND_LIST.filter((spec) =>
   spec.name.startsWith("session highlight "),
 );

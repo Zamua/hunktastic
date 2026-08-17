@@ -26,7 +26,7 @@ function createTestRepo() {
   }
 
   // Maintainer-only skills the artifact must leave behind.
-  for (const skillName of ["hunk-launch-video", "hunk-release"]) {
+  for (const skillName of ["hunkt-launch-video", "hunkt-release"]) {
     mkdirSync(path.join(repoRoot, "skills", skillName), { recursive: true });
     writeFileSync(path.join(repoRoot, "skills", skillName, "SKILL.md"), `# ${skillName}\n`);
   }
@@ -51,19 +51,19 @@ describe("stagePrebuiltArtifact", () => {
 
   test("rejects a missing bundled skill with an actionable error", () => {
     const { repoRoot } = createTestRepo();
-    rmSync(path.join(repoRoot, "skills", "hunk-review", "SKILL.md"), { force: true });
+    rmSync(path.join(repoRoot, "skills", "hunkt-review", "SKILL.md"), { force: true });
 
     expect(() => stagePrebuiltArtifact({ repoRoot })).toThrow(
-      "Missing bundled Hunk hunk-review skill",
+      "Missing bundled Hunk hunkt-review skill",
     );
   });
 
   test("rejects a missing bundled skill added after the first one", () => {
     const { repoRoot } = createTestRepo();
-    rmSync(path.join(repoRoot, "skills", "hunk-extensions", "SKILL.md"), { force: true });
+    rmSync(path.join(repoRoot, "skills", "hunkt-extensions", "SKILL.md"), { force: true });
 
     expect(() => stagePrebuiltArtifact({ repoRoot })).toThrow(
-      "Missing bundled Hunk hunk-extensions skill",
+      "Missing bundled Hunk hunkt-extensions skill",
     );
   });
 
@@ -81,7 +81,7 @@ describe("stagePrebuiltArtifact", () => {
     }
 
     // Maintainer-only skills reference scripts no artifact ships, so they stay out.
-    for (const skillName of ["hunk-launch-video", "hunk-release"]) {
+    for (const skillName of ["hunkt-launch-video", "hunkt-release"]) {
       expect(existsSync(path.join(outputDir, "skills", skillName))).toBe(false);
     }
 

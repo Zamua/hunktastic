@@ -8,7 +8,7 @@ The `website/` Astro project owns the complete `hunk.dev` site:
 - `/` is the marketing landing page.
 - `/docs/` and `/docs/*` are the Starlight documentation.
 - `/pagefind/` contains the documentation search index.
-- `/docs/hunk-review-skill.md` publishes the generated agent skill.
+- `/docs/hunkt-review-skill.md` publishes the generated agent skill.
 
 One static build keeps navigation, metadata, and deployment atomic. Do not copy the docs into the former `hunk-web` repository or operate a second docs origin.
 
@@ -54,7 +54,7 @@ curl --fail --location https://hunk.dev/
 curl --fail --location https://hunk.dev/docs/
 curl --fail https://hunk.dev/sitemap-index.xml
 curl --fail https://hunk.dev/pagefind/pagefind.js
-curl --fail https://hunk.dev/docs/hunk-review-skill.md
+curl --fail https://hunk.dev/docs/hunkt-review-skill.md
 curl --fail https://hunk.dev/og.png
 ```
 

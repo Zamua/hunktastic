@@ -1542,7 +1542,7 @@ describe("App interactions", () => {
   });
 
   test("reload shortcut reloads the current file diff from disk", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-reload-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-reload-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
 
@@ -1596,7 +1596,7 @@ describe("App interactions", () => {
   });
 
   test("session reload preserves live comments while refreshing the file diff", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-session-reload-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-session-reload-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
     const reviewNote = "Keep this daemon review note";
@@ -1679,7 +1679,7 @@ describe("App interactions", () => {
   });
 
   test("session reload cannot opt a normal launch into experimental STML", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-session-experimental-reload-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-session-experimental-reload-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
     writeFileSync(left, "export const answer = 41;\n");

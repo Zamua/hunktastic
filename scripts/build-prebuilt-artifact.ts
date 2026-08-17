@@ -46,7 +46,7 @@ export function stagePrebuiltArtifact(options: StagePrebuiltArtifactOptions = {}
   const binaryName = binaryFilenameForSpec(spec);
   const compiledBinaryCandidates = [
     path.join(repoRoot, "dist", binaryName),
-    path.join(repoRoot, "dist", "hunk"),
+    path.join(repoRoot, "dist", "hunkt"),
   ];
   const compiledBinary = compiledBinaryCandidates.find((candidate) => existsSync(candidate));
   const outputRoot = path.resolve(options.outputRoot ?? releaseArtifactsDir(repoRoot));

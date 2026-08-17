@@ -1,4 +1,4 @@
-// Headless STML rendering for `hunk markup render`: markup in, terminal text
+// Headless STML rendering for `hunkt markup render`: markup in, terminal text
 // out. Gives agents a preview loop — see what a note will look like at a
 // given width before publishing it — without launching the TUI.
 

@@ -43,7 +43,7 @@ Hunk navigation stays review-wide: hunk and file shortcuts move through the same
 | `F10`           | Open menus                                       |
 | `q`             | Quit                                             |
 
-Hunk may offer to save view changes on quit. Saving writes personal preferences globally unless the repository already has a `.hunk/config.toml`.
+Hunk may offer to save view changes on quit. Saving writes personal preferences globally unless the repository already has a `.hunkt/config.toml`.
 
 ## Add a human note
 

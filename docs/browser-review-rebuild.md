@@ -48,7 +48,7 @@ existing PTY suite passing untouched.
 ## Phase 2 — producer runtime
 
 `src/app/reviewSessionRuntime.ts`: generations, snapshot serving, resource materialization,
-serving the existing `hunk session` surface only. Resource read failures map to distinct error
+serving the existing `hunkt session` surface only. Resource read failures map to distinct error
 codes (integrity failures are never collapsed into `unknown-resource`).
 
 Repays: D1 and D4 producer/snapshot sites (helpers land in core beside the model; remaining
@@ -59,7 +59,7 @@ untouched (rung 4).
 ## Phase 3 — wire protocol + broker mirror
 
 `reviewProtocol.ts`, broker `wire.ts` validation, broker review mirror, `reviewResourceCache`
-(bounded in-flight budget). Patch reconstruction for `hunk session review --include-patch` uses
+(bounded in-flight budget). Patch reconstruction for `hunkt session review --include-patch` uses
 bounded-parallel loads from day one. Valuable without any web UI: agents get chunked,
 digest-verified, memory-bounded resource access. The wire vocabulary is derived from
 `ReviewIntent` (B12) and carries `expandedLineProof` (B10) and actor identity (G2) from its
@@ -115,7 +115,7 @@ active; command-parity check (both clients render command surfaces from the shar
 
 ## Phase 6 — entry points and packaging
 
-- `--web` / `--no-open` / `hunk session open` / `--tailscale` CLI wiring. The review URL is
+- `--web` / `--no-open` / `hunkt session open` / `--tailscale` CLI wiring. The review URL is
   always recoverable from the terminal, and the opener preserves URL fragments on every
   platform (no `rundll32`). Deep-link fragments use the shared address grammar (G3), never
   ad-hoc strings.
@@ -186,7 +186,7 @@ transporting them:
     broadcast to every attached client (hunk/file navigation, annotated navigation, start
     note, toggle gap expansion, toggle agent notes, filter). The browser fires these through
     the existing apply-action wire path — no new wire surface, and the agent runtime's
-    `hunk session` commands become a third consumer of the same lowering.
+    `hunkt session` commands become a third consumer of the same lowering.
   - _Client-local_ — view state that is deliberately per-client (scrolling, paging, line
     alignment, layout mode, wrap, line numbers, sidebar, menu bar, theme selector, help).
     Each client implements its own handler; identity and chords stay shared so help and

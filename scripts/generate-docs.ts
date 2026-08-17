@@ -14,7 +14,7 @@ import {
   CONFIG_REFERENCE_EXTENSIONS,
   CONFIG_REFERENCE_OPTIONS,
 } from "../src/core/config";
-import { renderHunkReviewSkill } from "../src/hunk-review/skillDocument";
+import { renderHunkReviewSkill } from "../src/hunkt-review/skillDocument";
 import { type AgentCommandOption, SESSION_AGENT_COMMAND_LIST } from "../src/session/agent/surface";
 import {
   DEFAULT_SESSION_BROKER_HOST,
@@ -31,7 +31,7 @@ const GENERATED_NOTICE =
 export const GENERATED_DOC_PATHS = {
   cli: resolve(REPO_ROOT, "website", "src", "content", "docs", "docs", "reference", "cli.md"),
   config: resolve(REPO_ROOT, "website", "src", "content", "docs", "docs", "reference", "config.md"),
-  agentSkill: resolve(REPO_ROOT, "website", "public", "docs", "hunk-review-skill.md"),
+  agentSkill: resolve(REPO_ROOT, "website", "public", "docs", "hunkt-review-skill.md"),
 } as const;
 
 /** Escape prose that Markdown would otherwise parse as inline HTML tags. */
@@ -121,7 +121,7 @@ export function renderCliReference() {
   const commandSections = (Object.values(CLI_REFERENCE_COMMANDS) as CliReferenceCommand[]).map(
     (command) => {
       const pieces = [
-        `## \`hunk ${command.path}\``,
+        `## \`hunkt ${command.path}\``,
         "",
         command.summary,
         "",
@@ -163,7 +163,7 @@ export function renderCliReference() {
 
   const sessionSections = SESSION_AGENT_COMMAND_LIST.map((command) => {
     const pieces = [
-      `### \`hunk ${command.name}\``,
+      `### \`hunkt ${command.name}\``,
       "",
       command.summary,
       "",
@@ -213,7 +213,7 @@ description: Exhaustive generated reference for Hunk commands, options, and live
 
 ${GENERATED_NOTICE}
 
-This reference is generated from the command metadata used by Hunk itself. Run \`hunk --help\` or \`hunk <command> --help\` to inspect the installed version.
+This reference is generated from the command metadata used by Hunk itself. Run \`hunkt --help\` or \`hunkt <command> --help\` to inspect the installed version.
 
 ## Global options
 
@@ -226,11 +226,11 @@ This reference is generated from the command metadata used by Hunk itself. Run \
 
 ${renderOptionTable(COMMON_REVIEW_OPTIONS)}
 
-\`--experimental\` may also be placed before the review command, as in \`hunk --experimental diff\`.
+\`--experimental\` may also be placed before the review command, as in \`hunkt --experimental diff\`.
 
 ${commandSections.join("\n\n")}
 
-## \`hunk session\`
+## \`hunkt session\`
 
 Inspect and control live Hunk review sessions through the loopback daemon. Select a session by id or with \`--repo <path>\` where shown.
 
@@ -284,10 +284,10 @@ Layers apply from lowest to highest precedence:
 
 1. built-in defaults
 2. user config top-level keys, then the matching command table, then \`[pager]\` when pager chrome is active
-3. repository \`.hunk/config.toml\` top-level keys, matching command table, and pager table
+3. repository \`.hunkt/config.toml\` top-level keys, matching command table, and pager table
 4. explicit CLI options
 
-The user path is \`$XDG_CONFIG_HOME/hunk/config.toml\` when configured. Otherwise Hunk uses \`$HOME/.config/hunk/config.toml\` or \`%USERPROFILE%/.config/hunk/config.toml\`; if none of those environment variables are set, no user config is loaded. Custom theme tables are root-only; preference keys may appear at top level, in a command table, or in \`[pager]\`.
+The user path is \`$XDG_CONFIG_HOME/hunkt/config.toml\` when configured. Otherwise Hunk uses \`$HOME/.config/hunkt/config.toml\` or \`%USERPROFILE%/.config/hunkt/config.toml\`; if none of those environment variables are set, no user config is loaded. Custom theme tables are root-only; preference keys may appear at top level, in a command table, or in \`[pager]\`.
 
 ## Preference keys
 
@@ -335,7 +335,7 @@ Declare any number of additional themes as \`[${CONFIG_REFERENCE_CUSTOM_THEME.na
 | --- | --- | --- | --- | --- |
 ${extensionRows.join("\n")}
 
-Repository \`.hunk/config.toml\` paths are kept separate from user paths: Hunk prompts for trust before executing repository-declared extension code, and \`--no-extensions\` disables user extensions entirely for one run.
+Repository \`.hunkt/config.toml\` paths are kept separate from user paths: Hunk prompts for trust before executing repository-declared extension code, and \`--no-extensions\` disables user extensions entirely for one run.
 
 Each extension reads its own settings from a \`[${CONFIG_REFERENCE_EXTENSIONS.perExtensionTable}.<id>]\` table. Hunk does not interpret those keys; it passes the table through to the extension. Repository tables merge over user tables key by key, and Hunk emits a startup notice naming every extension whose settings the repository overrides.
 `);

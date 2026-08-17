@@ -40,7 +40,7 @@ src/main.tsx           CLI entry
 Intentional exceptions, allowed by the rules:
 
 - `src/opentui` imports `src/ui` internals: it is a packaging facade whose job is re-export.
-- `src/hunk-review` imports `src/session/agent`: the skill document is generated from the agent
+- `src/hunkt-review` imports `src/session/agent`: the skill document is generated from the agent
   surface by design.
 - Tests are excluded: they are colocated and free to reach across boundaries.
 
@@ -60,7 +60,7 @@ rules:
   `ui/lib/diffSpatial.ts`; `extensions/notifications.ts` now imports `ExtensionNotifyType`
   from its declaring module.
 - **`src/core/cli.ts` → `src/app/cli.ts`.** CLI parsing that registers every tier's command
-  surface (including `hunk session *` from `session/agent/surface.ts`) is composition, not
+  surface (including `hunkt session *` from `session/agent/surface.ts`) is composition, not
   domain — moving it made the core→session edges legal app→session edges.
 - **`src/session/app/` → `src/app/session/`.** The mounted-review registration, bridge, and
   reload-authorization modules compose the app process with the session broker, and nothing

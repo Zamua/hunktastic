@@ -7,7 +7,7 @@ export type LimitedSourceTextResult = string | null | { kind: "too-large"; maxBy
 /** Keep source-load diagnostics terse enough to be useful in logs. */
 export function logSourceDiagnostic(message: string, detail?: unknown) {
   if (detail instanceof Error) {
-    console.error(`hunk: ${message}: ${detail.message}`, detail);
+    console.error(`hunkt: ${message}: ${detail.message}`, detail);
     return;
   }
 
@@ -18,7 +18,7 @@ export function logSourceDiagnostic(message: string, detail?: unknown) {
           .map((line) => line.trim())
           .find(Boolean)
       : undefined;
-  console.error(firstLine ? `hunk: ${message}: ${firstLine}` : `hunk: ${message}`);
+  console.error(firstLine ? `hunkt: ${message}: ${firstLine}` : `hunkt: ${message}`);
 }
 
 /** Read one filesystem source as text without exceeding the supplied byte ceiling. */

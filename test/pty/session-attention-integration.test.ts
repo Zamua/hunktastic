@@ -79,7 +79,7 @@ async function reserveLoopbackPort() {
   return port;
 }
 
-/** Run one `hunk session ...` CLI invocation against the test daemon port. */
+/** Run one `hunkt session ...` CLI invocation against the test daemon port. */
 function runSessionCli(args: string[], port: number, configHome: string) {
   const proc = Bun.spawnSync(["bun", "run", "src/main.tsx", "session", ...args], {
     cwd: repoRoot,
@@ -89,7 +89,7 @@ function runSessionCli(args: string[], port: number, configHome: string) {
     env: {
       ...process.env,
       XDG_CONFIG_HOME: configHome,
-      HUNK_MCP_PORT: String(port),
+      HUNKT_MCP_PORT: String(port),
     },
   });
 
@@ -135,8 +135,8 @@ describe("PTY session attention marks", () => {
       env: {
         XDG_CONFIG_HOME: configHome,
         // The harness disables session brokering by default; this test is about it.
-        HUNK_MCP_DISABLE: "0",
-        HUNK_MCP_PORT: String(port),
+        HUNKT_MCP_DISABLE: "0",
+        HUNKT_MCP_PORT: String(port),
       },
     });
 

@@ -1,4 +1,4 @@
-// The STML authoring guide printed by `hunk markup guide`.
+// The STML authoring guide printed by `hunkt markup guide`.
 //
 // This is the canonical teaching artifact for agents writing markup notes.
 // It is loaded on demand (never embedded in a prompt), but agents pay its
@@ -19,24 +19,24 @@ Small HTML-like markup rendered as real terminal UI inside agent notes:
 boxes, rows, badges, gauges, lists, code blocks. Sources (--summary stays
 as the plain-text fallback):
 
-    hunk session comment add ... --markup '<text>formatted note body</text>'
+    hunkt session comment add ... --markup '<text>formatted note body</text>'
     comment apply items:    { "markup": "...", ... }
     agent-context sidecar:  annotations[].markup
 
 Preview from a file or stdin:
 
-    echo '<badge color="success">OK</badge> ready' | hunk markup render -
+    echo '<badge color="success">OK</badge> ready' | hunkt markup render -
 
 ## Ground rules
 
 - Hunk supplies the note's outer frame, author, and source location. STML is
   the note body; use borders for useful inner hierarchy rather than duplicating
   that frame around the whole body. Sibling and nested boxes are supported.
-- Confirm \`hunk session context --json\` lists \`stml\` in
+- Confirm \`hunkt session context --json\` lists \`stml\` in
   \`experimentalFeatures\` before authoring markup. Width follows the live
   session: stack ≈ full pane, split ≈ half. The context reports
   \`noteMarkupWidth\`; comment responses echo \`markupWidth\`. Preview with
-  \`hunk markup render - --width <that>\`. Unknown? Design for ~${STML_REFERENCE_WIDTH} cols —
+  \`hunkt markup render - --width <that>\`. Unknown? Design for ~${STML_REFERENCE_WIDTH} cols —
   it holds up wider, and users resize/switch layouts anytime.
 - No chart tag: gauges are block chars (█ ░) in color spans (glyph-run example below).
 - Bad markup degrades instead of crashing and produces render notes

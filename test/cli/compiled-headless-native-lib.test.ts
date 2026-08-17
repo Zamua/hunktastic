@@ -4,8 +4,8 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
-const executable = process.env.HUNK_TEST_EXECUTABLE
-  ? resolve(process.env.HUNK_TEST_EXECUTABLE)
+const executable = process.env.HUNKT_TEST_EXECUTABLE
+  ? resolve(process.env.HUNKT_TEST_EXECUTABLE)
   : undefined;
 const compiledTest = executable ? test : test.skip;
 const compiledLinuxTest = executable && process.platform === "linux" ? test : test.skip;
@@ -114,7 +114,7 @@ function createTestEnvironment(port?: number) {
       BUN_TMPDIR: temp,
       TEMP: temp,
       TMP: temp,
-      ...(port === undefined ? {} : { HUNK_MCP_PORT: String(port) }),
+      ...(port === undefined ? {} : { HUNKT_MCP_PORT: String(port) }),
     },
   };
 }

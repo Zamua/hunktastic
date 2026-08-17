@@ -114,12 +114,12 @@ function resolvePagerSpec(command: string): ResolvedPagerCommand | null {
   };
 }
 
-/** Choose a plain-text pager process while avoiding recursive `hunk pager` launches. */
+/** Choose a plain-text pager process while avoiding recursive `hunkt pager` launches. */
 function resolveTextPagerSpec(env: NodeJS.ProcessEnv = process.env): ResolvedPagerCommand {
-  const candidate = env.HUNK_TEXT_PAGER ?? env.PAGER;
+  const candidate = env.HUNKT_TEXT_PAGER ?? env.PAGER;
   const pagerSpec = candidate ? resolvePagerSpec(candidate) : null;
 
-  if (!pagerSpec || executableName(pagerSpec.command) === "hunk") {
+  if (!pagerSpec || executableName(pagerSpec.command) === "hunkt") {
     const fallbackSpec = resolvePagerSpec(DEFAULT_TEXT_PAGER_COMMAND);
     if (!fallbackSpec) {
       throw new Error(`Default pager command is invalid: ${DEFAULT_TEXT_PAGER_COMMAND}`);
@@ -130,7 +130,7 @@ function resolveTextPagerSpec(env: NodeJS.ProcessEnv = process.env): ResolvedPag
   return pagerSpec;
 }
 
-/** Choose a plain-text pager command while avoiding recursive `hunk pager` launches. */
+/** Choose a plain-text pager command while avoiding recursive `hunkt pager` launches. */
 export function resolveTextPagerCommand(env: NodeJS.ProcessEnv = process.env): string {
   return resolveTextPagerSpec(env).displayCommand;
 }

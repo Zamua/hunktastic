@@ -128,7 +128,7 @@ keeps highlights out of `buildDiffSectionRowPlan`, its caches, and every
 geometry measurement: a highlight change is a repaint, never a re-plan. The
 static pager never runs extension code, so highlights are interactive-only.
 
-Agent attention marks (`hunk session highlight add` / `clear`) join this same
+Agent attention marks (`hunkt session highlight add` / `clear`) join this same
 pipeline rather than growing a second one: `useTerminalReview.ts` validates
 each daemon-pushed mark with the same `validate.ts` contract and caps, holds
 them per file, and `src/ui/highlights/merge.ts` appends them after extension
@@ -300,7 +300,7 @@ and exact-source reading — live entirely under
 `src/extensions/default/vcs/<provider>/`. `src/extensions/vcsPatchResult.ts` is
 the one conversion boundary where a published `ExtensionVcsPatchResult`
 becomes Hunk's internal diff model, including structural `too-large` source
-results. `src/core/projectRoot.ts` treats `.hunk` as a provider-independent
+results. `src/core/projectRoot.ts` treats `.hunkt` as a provider-independent
 bootstrap marker and also consults the available catalog; startup performs a
 second root/config pass when a global, config-path, or CLI adapter recognizes a
 repository unavailable to the bundled catalog.

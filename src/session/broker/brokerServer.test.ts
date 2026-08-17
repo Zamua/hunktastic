@@ -10,9 +10,9 @@ import { SessionBrokerState } from "@hunk/session-broker-core";
 import { HUNK_SESSION_API_VERSION, HUNK_SESSION_DAEMON_VERSION } from "../protocol";
 import { serveSessionBrokerDaemon } from "./brokerServer";
 
-const originalHost = process.env.HUNK_MCP_HOST;
-const originalPort = process.env.HUNK_MCP_PORT;
-const originalUnsafeRemote = process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE;
+const originalHost = process.env.HUNKT_MCP_HOST;
+const originalPort = process.env.HUNKT_MCP_PORT;
+const originalUnsafeRemote = process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE;
 
 interface HealthResponse {
   ok: boolean;
@@ -209,29 +209,29 @@ async function waitForSocketClose(socket: WebSocket) {
 
 afterEach(() => {
   if (originalHost === undefined) {
-    delete process.env.HUNK_MCP_HOST;
+    delete process.env.HUNKT_MCP_HOST;
   } else {
-    process.env.HUNK_MCP_HOST = originalHost;
+    process.env.HUNKT_MCP_HOST = originalHost;
   }
 
   if (originalPort === undefined) {
-    delete process.env.HUNK_MCP_PORT;
+    delete process.env.HUNKT_MCP_PORT;
   } else {
-    process.env.HUNK_MCP_PORT = originalPort;
+    process.env.HUNKT_MCP_PORT = originalPort;
   }
 
   if (originalUnsafeRemote === undefined) {
-    delete process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE;
+    delete process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE;
   } else {
-    process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE = originalUnsafeRemote;
+    process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE = originalUnsafeRemote;
   }
 });
 
 describe("Hunk session daemon server", () => {
   test("refuses non-loopback binding unless explicitly allowed", () => {
-    process.env.HUNK_MCP_HOST = "0.0.0.0";
-    process.env.HUNK_MCP_PORT = "47657";
-    delete process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE;
+    process.env.HUNKT_MCP_HOST = "0.0.0.0";
+    process.env.HUNKT_MCP_PORT = "47657";
+    delete process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE;
 
     expect(() => serveSessionBrokerDaemon()).toThrow("local-only by default");
   });
@@ -245,8 +245,8 @@ describe("Hunk session daemon server", () => {
 
     const address = listener.address();
     const port = typeof address === "object" && address ? address.port : 0;
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     try {
       expect(() => serveSessionBrokerDaemon()).toThrow("port is already in use");
@@ -257,8 +257,8 @@ describe("Hunk session daemon server", () => {
 
   test("exposes only Hunk session endpoints and rejects the old MCP tool endpoint", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon();
 
@@ -328,8 +328,8 @@ describe("Hunk session daemon server", () => {
 
   test("rejects HTTP requests with non-loopback or wrong-port Host headers", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon();
 
@@ -358,8 +358,8 @@ describe("Hunk session daemon server", () => {
 
   test("rejects non-local Origin headers for HTTP and websocket requests", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon();
 
@@ -381,8 +381,8 @@ describe("Hunk session daemon server", () => {
 
   test("requires JSON content type for session API posts", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon();
 
@@ -404,8 +404,8 @@ describe("Hunk session daemon server", () => {
 
   test("rejects session API bodies that exceed the size limit", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon();
 
@@ -433,8 +433,8 @@ describe("Hunk session daemon server", () => {
     }
 
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon({
       idleTimeoutMs: 250,
@@ -465,8 +465,8 @@ describe("Hunk session daemon server", () => {
 
   test("ignores incompatible registration payloads instead of poisoning session list", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon({
       idleTimeoutMs: 250,
@@ -533,8 +533,8 @@ describe("Hunk session daemon server", () => {
 
   test("stays alive while at least one live session remains registered", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon({
       idleTimeoutMs: 60,
@@ -557,8 +557,8 @@ describe("Hunk session daemon server", () => {
 
   test("shuts down after the last live session disconnects", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon({
       idleTimeoutMs: 75,
@@ -579,8 +579,8 @@ describe("Hunk session daemon server", () => {
 
   test("shuts down after stale-session pruning leaves zero live sessions", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon({
       idleTimeoutMs: 75,
@@ -599,8 +599,8 @@ describe("Hunk session daemon server", () => {
 
   test("forwards review options through the session API", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const original = SessionBrokerState.prototype.getSessionReview;
     SessionBrokerState.prototype.getSessionReview = function (selector, options) {
@@ -693,8 +693,8 @@ describe("Hunk session daemon server", () => {
 
   test("forwards reload sourcePath through the session API", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const original = SessionBrokerState.prototype.dispatchCommand;
     SessionBrokerState.prototype.dispatchCommand = (({ command, input }: any) => {
@@ -755,8 +755,8 @@ describe("Hunk session daemon server", () => {
 
   test("serves review notes through the session API", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const server = serveSessionBrokerDaemon();
     const socket = await openRegisteredSession(port, "session-1", {
@@ -805,8 +805,8 @@ describe("Hunk session daemon server", () => {
 
   test("forwards comment batches through the session API", async () => {
     const port = await reserveLoopbackPort();
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
 
     const original = SessionBrokerState.prototype.dispatchCommand;
     SessionBrokerState.prototype.dispatchCommand = (({ command, input }: any) => {

@@ -124,7 +124,7 @@ async function restartDaemonForMissingAction(
     timeoutMessage: "Timed out waiting for the refreshed Hunk session daemon to start.",
   });
 
-  // `hunk session list` can recover from a stale daemon even when the old process belonged to a
+  // `hunkt session list` can recover from a stale daemon even when the old process belonged to a
   // sibling worktree that reports sessions which will never reconnect to this fresh daemon.
   if (selector || (hadSessions && action !== "list")) {
     const registered = await waitForSessionRegistration(selector);
@@ -160,7 +160,7 @@ async function resolveDaemonAvailability(action: SessionCommandInput["action"]) 
   if (portReachable) {
     throw new Error(
       `Hunk session daemon port ${config.host}:${config.port} is already in use by another process. ` +
-        `Stop the conflicting process or set HUNK_MCP_PORT to a different loopback port.`,
+        `Stop the conflicting process or set HUNKT_MCP_PORT to a different loopback port.`,
     );
   }
 

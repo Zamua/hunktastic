@@ -5,8 +5,8 @@ description: Layer user and repository TOML settings, then override them per com
 
 Hunk reads TOML preferences from a user file and an optional repository file:
 
-- `~/.config/hunk/config.toml` (or the platform/XDG config location)
-- `.hunk/config.toml` at the repository root
+- `~/.config/hunkt/config.toml` (or the platform/XDG config location)
+- `.hunkt/config.toml` at the repository root
 
 Repository settings override user settings. Command sections then override their layer's top-level values, pager sections apply to pager-style sessions, and explicit CLI flags win last.
 
@@ -43,16 +43,16 @@ menu_bar = false
 wrap_lines = true
 ```
 
-Command sections are named after the input Hunk parses, which is not always the command you type. In particular, `hunk diff` on a repository reads `[vcs]`, not `[diff]`:
+Command sections are named after the input Hunk parses, which is not always the command you type. In particular, `hunkt diff` on a repository reads `[vcs]`, not `[diff]`:
 
-| Section        | Applies to                                        |
-| -------------- | ------------------------------------------------- |
-| `[vcs]`        | `hunk diff` working-tree and target reviews       |
-| `[show]`       | `hunk show` commit reviews                        |
-| `[stash-show]` | `hunk stash show` reviews                         |
-| `[diff]`       | two-file comparisons (`hunk diff <left> <right>`) |
-| `[patch]`      | `hunk patch` reviews                              |
-| `[difftool]`   | `hunk difftool` pair reviews                      |
+| Section        | Applies to                                         |
+| -------------- | -------------------------------------------------- |
+| `[vcs]`        | `hunkt diff` working-tree and target reviews       |
+| `[show]`       | `hunkt show` commit reviews                        |
+| `[stash-show]` | `hunkt stash show` reviews                         |
+| `[diff]`       | two-file comparisons (`hunkt diff <left> <right>`) |
+| `[patch]`      | `hunkt patch` reviews                              |
+| `[difftool]`   | `hunkt difftool` pair reviews                      |
 
 `[pager]` is an overlay applied after the matching command section whenever the invocation uses pager-style behavior.
 

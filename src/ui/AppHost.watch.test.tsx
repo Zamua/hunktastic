@@ -58,7 +58,7 @@ async function advanceWatch(
 
 describe("watched input lifecycle", () => {
   test("an observer event reloads after the controlled debounce and preserves the resolved theme", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-watch-ui-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-watch-ui-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
     writeFileSync(left, "export const answer = 41;\n");
@@ -114,7 +114,7 @@ describe("watched input lifecycle", () => {
   });
 
   test("a sidecar event refreshes notes through the canonical reload pipeline", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-watch-sidecar-ui-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-watch-sidecar-ui-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
     const sidecar = join(dir, "agent.json");
@@ -170,7 +170,7 @@ describe("watched input lifecycle", () => {
   });
 
   test("replacement and unmount dispose observers once while late events remain inert", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-watch-dispose-ui-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-watch-dispose-ui-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
     writeFileSync(left, "before\n");

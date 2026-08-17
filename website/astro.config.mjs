@@ -34,14 +34,14 @@ export default defineConfig({
           details: [
             "## Notes for agents",
             "",
-            "- Hunk's TUI is for the human operator. Do NOT launch `hunk diff`, `hunk show`, or other interactive commands yourself.",
-            "- To inspect or drive a review the user already has open, use the `hunk session *` commands, which talk to the local daemon.",
-            "- The agent-facing workflow is documented under 'Working with agents'; the installable skill is published at https://hunk.dev/docs/hunk-review-skill.md.",
+            "- Hunk's TUI is for the human operator. Do NOT launch `hunkt diff`, `hunkt show`, or other interactive commands yourself.",
+            "- To inspect or drive a review the user already has open, use the `hunkt session *` commands, which talk to the local daemon.",
+            "- The agent-facing workflow is documented under 'Working with agents'; the installable skill is published at https://hunk.dev/docs/hunkt-review-skill.md.",
           ].join("\n"),
           optionalLinks: [
             {
               label: "Hunk review skill",
-              url: "https://hunk.dev/docs/hunk-review-skill.md",
+              url: "https://hunk.dev/docs/hunkt-review-skill.md",
               description: "Drop-in agent skill for driving a live Hunk review session.",
             },
             {

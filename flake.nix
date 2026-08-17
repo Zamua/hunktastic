@@ -57,7 +57,7 @@
         apps = {
           default = {
             type = "app";
-            program = "${hunk}/bin/hunk";
+            program = "${hunk}/bin/hunkt";
             meta.description = "Run Hunk";
           };
           update-bun-lock = {
@@ -81,7 +81,7 @@
       hunk = import ./nix/home-manager.nix;
       default = {pkgs, ...}: {
         imports = [self.homeManagerModules.hunk];
-        programs.hunk.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        programs.hunkt.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
     };
   };

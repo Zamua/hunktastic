@@ -75,7 +75,7 @@ describe("external VCS startup bootstrap", () => {
     };
 
     const resolvedProjectRoots: Array<string | undefined> = [];
-    const plan = await prepareStartupPlan(["bun", "hunk", "diff"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "diff"], {
       parseCliImpl: async () => input as ParsedCliInput,
       resolveRuntimeCliInputImpl: (value) => value,
       resolveConfiguredCliInputImpl: (value, options) => {

@@ -32,7 +32,7 @@ function writeText(path: string, content: string) {
   writeFileSync(path, content);
 }
 
-/** Build a private config home whose hunk config carries the given TOML. */
+/** Build a private config home whose hunkt config carries the given TOML. */
 function createConfigHome(configToml: string) {
   const home = makeTempDir("hunk-pty-keys-config-");
   writeText(join(home, "hunk", "config.toml"), configToml);

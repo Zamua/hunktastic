@@ -20,7 +20,7 @@ function createExtensionsConfig(overrides: Partial<ExtensionsConfig> = {}): Exte
 
 /** Write one extension entry into an XDG-shaped global extensions directory. */
 function writeGlobalExtension(home: string, fileName: string, source: string) {
-  const dir = join(home, "hunk", "extensions");
+  const dir = join(home, "hunkt", "extensions");
   mkdirSync(dir, { recursive: true });
   const path = join(dir, fileName);
   writeFileSync(path, source);
@@ -103,7 +103,7 @@ export default function (hunk) {
       env: { XDG_CONFIG_HOME: configHome } as NodeJS.ProcessEnv,
       deferEventBusBinding: true,
     });
-    const repoExtensions = join(repo, ".hunk", "extensions");
+    const repoExtensions = join(repo, ".hunkt", "extensions");
     mkdirSync(repoExtensions, { recursive: true });
     writeFileSync(
       join(repoExtensions, "local.ts"),

@@ -42,22 +42,22 @@ describe("startup planning", () => {
   test("returns help output without entering app startup", async () => {
     let loaded = false;
 
-    const plan = await prepareStartupPlan(["bun", "hunk"], {
-      parseCliImpl: async () => ({ kind: "help", text: "Usage: hunk\n" }),
+    const plan = await prepareStartupPlan(["bun", "hunkt"], {
+      parseCliImpl: async () => ({ kind: "help", text: "Usage: hunkt\n" }),
       loadAppBootstrapImpl: async () => {
         loaded = true;
         throw new Error("unreachable");
       },
     });
 
-    expect(plan).toEqual({ kind: "help", text: "Usage: hunk\n" });
+    expect(plan).toEqual({ kind: "help", text: "Usage: hunkt\n" });
     expect(loaded).toBe(false);
   });
 
   test("passes the daemon serve command through without app bootstrap work", async () => {
     let loaded = false;
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "daemon", "serve"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "daemon", "serve"], {
       parseCliImpl: async () => ({ kind: "daemon-serve" }),
       loadAppBootstrapImpl: async () => {
         loaded = true;
@@ -72,7 +72,7 @@ describe("startup planning", () => {
   test("passes session commands through without app bootstrap work", async () => {
     let loaded = false;
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "session", "list"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "session", "list"], {
       parseCliImpl: async () => ({
         kind: "session",
         action: "list",
@@ -94,7 +94,7 @@ describe("startup planning", () => {
   test("routes non-diff pager stdin to the plain-text pager path", async () => {
     let loaded = false;
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({
         kind: "pager",
         options: { theme: "github-light-default" },
@@ -120,7 +120,7 @@ describe("startup planning", () => {
     let loaded = false;
     const text = "* main\n  feature/demo\n";
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({
         kind: "pager",
         options: { theme: "github-light-default" },
@@ -144,7 +144,7 @@ describe("startup planning", () => {
     let loaded = false;
     const text = "* main\n  feature/demo\n";
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({ kind: "pager", options: {} }),
       readStdinText: async () => text,
       looksLikePatchInputImpl: () => false,
@@ -164,7 +164,7 @@ describe("startup planning", () => {
   test("normalizes diff-like pager stdin into patch app startup", async () => {
     const seenInputs: CliInput[] = [];
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({
         kind: "pager",
         options: { theme: "github-light-default" },
@@ -213,7 +213,7 @@ describe("startup planning", () => {
     let loaded = false;
     const patchText = "diff --git a/a.ts b/a.ts\n@@ -1 +1 @@\n-old\n+new\n";
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({ kind: "pager", options: {} }),
       readStdinText: async () => patchText,
       looksLikePatchInputImpl: () => true,
@@ -233,7 +233,7 @@ describe("startup planning", () => {
     let loaded = false;
     const patchText = "diff --git a/a.ts b/a.ts\n@@ -1 +1 @@\n-old\n+new\n";
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({ kind: "pager", options: {} }),
       readStdinText: async () => patchText,
       looksLikePatchInputImpl: () => true,
@@ -254,7 +254,7 @@ describe("startup planning", () => {
     const patchText = "diff --git a/a.ts b/a.ts\n@@ -1 +1 @@\n-old\n+new\n";
     const customThemes = [{ id: "custom", base: "github-light-default", text: "#123456" }];
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({
         kind: "pager",
         options: { theme: "custom" },
@@ -291,7 +291,7 @@ describe("startup planning", () => {
     let loaded = false;
     const patchText = "diff --git a/a.ts b/a.ts\n@@ -1 +1 @@\n-old\n+new\n";
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "pager"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "pager"], {
       parseCliImpl: async () => ({ kind: "pager", options: {} }),
       readStdinText: async () => patchText,
       looksLikePatchInputImpl: () => true,
@@ -330,7 +330,7 @@ describe("startup planning", () => {
       },
     ];
 
-    await prepareStartupPlan(["bun", "hunk", "patch", "-"], {
+    await prepareStartupPlan(["bun", "hunkt", "patch", "-"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) => createTestConfigResolution(input, { customThemes }),
@@ -358,7 +358,7 @@ describe("startup planning", () => {
       message: "Legacy custom theme syntax detected",
     };
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "patch", "-"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "patch", "-"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) =>
@@ -383,7 +383,7 @@ describe("startup planning", () => {
     };
 
     await expect(
-      prepareStartupPlan(["bun", "hunk", "patch", "-", "--watch"], {
+      prepareStartupPlan(["bun", "hunkt", "patch", "-", "--watch"], {
         parseCliImpl: async () => cliInput as ParsedCliInput,
         resolveRuntimeCliInputImpl: (input) => input,
         resolveConfiguredCliInputImpl: (input) => createTestConfigResolution(input),
@@ -403,7 +403,7 @@ describe("startup planning", () => {
     let opened = 0;
 
     const plan = await prepareStartupPlan(
-      ["bun", "hunk", "diff", "--theme", "github-dark-default"],
+      ["bun", "hunkt", "diff", "--theme", "github-dark-default"],
       {
         parseCliImpl: async () => cliInput as ParsedCliInput,
         resolveRuntimeCliInputImpl: (input) => input,
@@ -438,7 +438,7 @@ describe("startup planning", () => {
     const controllingTerminal = { stdin: {} as never, close: () => {} };
     let opened = 0;
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "patch", "-", "--theme", "auto"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "patch", "-", "--theme", "auto"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) => createTestConfigResolution(input),
@@ -480,7 +480,7 @@ describe("startup planning", () => {
     };
     let opened = 0;
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "patch", "-"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "patch", "-"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) => createTestConfigResolution(input),
@@ -522,7 +522,7 @@ describe("startup planning", () => {
     };
     const order: string[] = [];
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "patch", "-"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "patch", "-"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) =>
@@ -565,7 +565,7 @@ describe("startup planning", () => {
     );
     let bootstrapOptions: { customThemes?: readonly NamedCustomThemeConfig[] } | undefined;
 
-    const plan = await prepareStartupPlan(["bun", "hunk", "patch", "-"], {
+    const plan = await prepareStartupPlan(["bun", "hunkt", "patch", "-"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) =>
@@ -601,7 +601,7 @@ describe("startup planning", () => {
     const cliInput: CliInput = { kind: "patch", file: "-", options: { extensions: false } };
     let requestedExtensions: boolean | undefined;
 
-    await prepareStartupPlan(["bun", "hunk", "patch", "-", "--no-extensions"], {
+    await prepareStartupPlan(["bun", "hunkt", "patch", "-", "--no-extensions"], {
       parseCliImpl: async () => cliInput as ParsedCliInput,
       resolveRuntimeCliInputImpl: (input) => input,
       resolveConfiguredCliInputImpl: (input) => createTestConfigResolution(input),

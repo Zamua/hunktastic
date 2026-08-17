@@ -40,7 +40,7 @@ export interface DiscoverExtensionsOptions {
   flagPaths?: readonly string[];
   /** Paths from the user config layer's `[extensions] paths`. */
   configPaths?: readonly string[];
-  /** Paths from the repo config layer's `[extensions] paths`; trust-gated like `.hunk/extensions`. */
+  /** Paths from the repo config layer's `[extensions] paths`; trust-gated like `.hunkt/extensions`. */
   repoConfigPaths?: readonly string[];
   /** Override the scanned global directory; discovery falls back to the XDG location. */
   globalExtensionsDir?: string;
@@ -243,7 +243,7 @@ function scanExtensionsDir(dir: string): DiscoveredExtensionEntry[] {
  *
  * A directory that is itself a folder extension expands to just its declared
  * entries; anything else is a container of extensions and gets scanned. This is
- * also the shape `hunk extension install` validates a cloned repository
+ * also the shape `hunkt extension install` validates a cloned repository
  * against, so "what would load" has exactly one definition.
  */
 export function resolveExtensionContainerEntries(dir: string): DiscoveredExtensionEntry[] {
@@ -283,7 +283,7 @@ export function directoryContainsExtensionEntries(dir: string) {
  * Each clone resolves like an explicit directory path — as a folder extension
  * when it declares itself one, otherwise as a container of entry files — so a
  * repository shares one layout contract between `--extension <path>` during
- * development and `hunk extension install` after publishing. Non-directories
+ * development and `hunkt extension install` after publishing. Non-directories
  * (the records file) are skipped.
  */
 function scanInstalledExtensionsRoot(root: string): DiscoveredExtensionEntry[] {
@@ -376,7 +376,7 @@ export function discoverExtensions(options: DiscoverExtensionsOptions = {}): Ext
       entries: globalExtensionsDir
         ? [
             ...scanExtensionsDir(globalExtensionsDir),
-            // Managed installs live one level deeper so `hunk extension
+            // Managed installs live one level deeper so `hunkt extension
             // install` owns a directory hand-copied extensions never collide
             // with; they load with the same global origin and trust posture.
             ...scanInstalledExtensionsRoot(
@@ -388,9 +388,9 @@ export function discoverExtensions(options: DiscoverExtensionsOptions = {}): Ext
     {
       origin: "repo",
       entries: [
-        ...(repoRoot ? scanExtensionsDir(join(repoRoot, ".hunk", "extensions")) : []),
+        ...(repoRoot ? scanExtensionsDir(join(repoRoot, ".hunkt", "extensions")) : []),
         // Repo config contributes arbitrary paths, so treat them with the same
-        // trust posture as `.hunk/extensions` rather than as user intent.
+        // trust posture as `.hunkt/extensions` rather than as user intent.
         ...(options.repoConfigPaths ?? []).flatMap((path) =>
           expandExplicitPath(path, repoRoot ?? cwd),
         ),

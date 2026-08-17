@@ -2,22 +2,22 @@ import fs from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 /**
- * Skills Hunk ships, in the order `hunk skill path` lists them.
+ * Skills Hunk ships, in the order `hunkt skill path` lists them.
  *
  * A skill is bundled only if it is in `package.json`'s `files` allowlist and the
  * prebuilt artifact staging; `skills/` also holds maintainer-only documents that
  * never ship, and naming them here would resolve paths users cannot have.
  */
-export const BUNDLED_SKILL_NAMES = ["hunk-review", "hunk-extensions"] as const;
+export const BUNDLED_SKILL_NAMES = ["hunkt-review", "hunkt-extensions"] as const;
 export type BundledSkillName = (typeof BUNDLED_SKILL_NAMES)[number];
 
-/** The skill `hunk skill path` prints when the user names none. */
-export const DEFAULT_BUNDLED_SKILL_NAME: BundledSkillName = "hunk-review";
+/** The skill `hunkt skill path` prints when the user names none. */
+export const DEFAULT_BUNDLED_SKILL_NAME: BundledSkillName = "hunkt-review";
 
 /** Short aliases accepted alongside each skill's own name. */
 const BUNDLED_SKILL_ALIASES: Record<string, BundledSkillName> = {
-  review: "hunk-review",
-  extensions: "hunk-extensions",
+  review: "hunkt-review",
+  extensions: "hunkt-extensions",
 };
 
 /** Resolve one user-supplied skill name, or nothing when it names no bundled skill. */
@@ -89,13 +89,13 @@ export function resolveUserConfigDir(env: NodeJS.ProcessEnv = process.env) {
 /** Resolve the global Hunk config file path from the current environment. */
 export function resolveGlobalConfigPath(env: NodeJS.ProcessEnv = process.env) {
   const configDir = resolveUserConfigDir(env);
-  return configDir ? join(configDir, "hunk", "config.toml") : undefined;
+  return configDir ? join(configDir, "hunkt", "config.toml") : undefined;
 }
 
 /** Resolve the persisted Hunk state file path from the current environment. */
 export function resolveAppStatePath(env: NodeJS.ProcessEnv = process.env) {
   const configDir = resolveUserConfigDir(env);
-  return configDir ? join(configDir, "hunk", "state.json") : undefined;
+  return configDir ? join(configDir, "hunkt", "state.json") : undefined;
 }
 
 /**
@@ -126,18 +126,18 @@ export function resolveNotesDir(env: NodeJS.ProcessEnv = process.env) {
 /** Resolve the user-scoped directory Hunk scans for globally installed extensions. */
 export function resolveGlobalExtensionsDir(env: NodeJS.ProcessEnv = process.env) {
   const configDir = resolveUserConfigDir(env);
-  return configDir ? join(configDir, "hunk", "extensions") : undefined;
+  return configDir ? join(configDir, "hunkt", "extensions") : undefined;
 }
 
 /**
- * Directory inside the global extensions dir that `hunk extension install`
+ * Directory inside the global extensions dir that `hunkt extension install`
  * owns. It is not itself a folder extension, so a plain scan of the global
  * dir skips it; discovery scans its subdirectories — one per installed
  * repository — explicitly.
  */
 export const INSTALLED_EXTENSIONS_DIR_NAME = "installed";
 
-/** Resolve the managed install root for `hunk extension install`. */
+/** Resolve the managed install root for `hunkt extension install`. */
 export function resolveInstalledExtensionsRoot(env: NodeJS.ProcessEnv = process.env) {
   const extensionsDir = resolveGlobalExtensionsDir(env);
   return extensionsDir ? join(extensionsDir, INSTALLED_EXTENSIONS_DIR_NAME) : undefined;

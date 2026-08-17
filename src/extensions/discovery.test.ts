@@ -104,11 +104,11 @@ describe("extension discovery", () => {
     expect(candidates).toEqual([{ id: "dual", path: typescriptIndex, origin: "flag" }]);
   });
 
-  test("bootstraps repo-local extensions from .hunk without a bundled VCS marker", () => {
+  test("bootstraps repo-local extensions from .hunkt without a bundled VCS marker", () => {
     const repo = createTempDir("hunk-ext-provider-neutral-repo-");
     const nested = join(repo, "src", "nested");
     mkdirSync(nested, { recursive: true });
-    const repoPath = writeExtensionFile(repo, ".hunk", "extensions", "custom-vcs.ts");
+    const repoPath = writeExtensionFile(repo, ".hunkt", "extensions", "custom-vcs.ts");
 
     const candidates = discoverExtensions({
       cwd: nested,
@@ -125,7 +125,7 @@ describe("extension discovery", () => {
     const flagPath = writeExtensionFile(repo, "dev", "flagged.ts");
     const configPath = writeExtensionFile(repo, "shared", "from-config.ts");
     const globalPath = writeExtensionFile(globalDir, "installed.ts");
-    const repoPath = writeExtensionFile(repo, ".hunk", "extensions", "repo-local.ts");
+    const repoPath = writeExtensionFile(repo, ".hunkt", "extensions", "repo-local.ts");
 
     const candidates = discoverExtensions({
       cwd: repo,
@@ -244,7 +244,7 @@ describe("extension discovery", () => {
 
   test("dedupes one path across groups and keeps the first origin", () => {
     const repo = createRepo("hunk-ext-dedupe-");
-    const repoPath = writeExtensionFile(repo, ".hunk", "extensions", "shared.ts");
+    const repoPath = writeExtensionFile(repo, ".hunkt", "extensions", "shared.ts");
 
     const candidates = discoverExtensions({
       cwd: repo,
@@ -259,7 +259,7 @@ describe("extension discovery", () => {
 
   test("falls back to the XDG global extensions directory", () => {
     const home = createTempDir("hunk-ext-xdg-");
-    const globalPath = writeExtensionFile(home, "hunk", "extensions", "themed.ts");
+    const globalPath = writeExtensionFile(home, "hunkt", "extensions", "themed.ts");
 
     const candidates = discoverExtensions({
       cwd: home,

@@ -120,7 +120,7 @@ try {
   const sanitizedPath = [installedBinDir, nodeDir, bashDir].filter(Boolean).join(path.delimiter);
   const installedHunk = path.join(
     installedBinDir,
-    process.platform === "win32" ? "hunk.cmd" : "hunk",
+    process.platform === "win32" ? "hunkt.cmd" : "hunkt",
   );
   const installedPlatformBinary = path.join(
     installedPackageRoot,
@@ -144,8 +144,8 @@ try {
     env: commandEnv,
   });
 
-  if (help.stdout.includes("Usage: hunk") === false) {
-    throw new Error(`Expected help output to include 'Usage: hunk'.\n${help.stdout}`);
+  if (help.stdout.includes("Usage: hunkt") === false) {
+    throw new Error(`Expected help output to include 'Usage: hunkt'.\n${help.stdout}`);
   }
 
   const version = run([installedHunk, "--version"], {
@@ -153,23 +153,23 @@ try {
   });
   if (version.stdout !== `${packageVersion}\n`) {
     throw new Error(
-      `Expected installed hunk --version to print ${packageVersion}.\n${version.stdout}`,
+      `Expected installed hunkt --version to print ${packageVersion}.\n${version.stdout}`,
     );
   }
 
   // The bare command keeps naming the review skill; every bundled skill must
   // also resolve by name, since the install is what users discover them through.
   const skillPathChecks: [args: string[], skillName: string][] = [
-    [["skill", "path"], "hunk-review"],
-    [["skill", "path", "hunk-review"], "hunk-review"],
-    [["skill", "path", "hunk-extensions"], "hunk-extensions"],
+    [["skill", "path"], "hunkt-review"],
+    [["skill", "path", "hunkt-review"], "hunkt-review"],
+    [["skill", "path", "hunkt-extensions"], "hunkt-extensions"],
   ];
 
   for (const [args, skillName] of skillPathChecks) {
     const skillPath = run([installedHunk, ...args], { env: commandEnv }).stdout.trim();
     if (!skillPath.endsWith(path.join("skills", skillName, "SKILL.md")) || !existsSync(skillPath)) {
       throw new Error(
-        `Expected installed \`hunk ${args.join(" ")}\` to resolve the bundled ${skillName} skill.\n${skillPath}`,
+        `Expected installed \`hunkt ${args.join(" ")}\` to resolve the bundled ${skillName} skill.\n${skillPath}`,
       );
     }
   }

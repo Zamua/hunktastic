@@ -974,7 +974,7 @@ describe("loadAppBootstrap", () => {
         staged: false,
         options: { mode: "auto" },
       }),
-    ).rejects.toThrow("`hunk diff` must be run inside a Git repository.");
+    ).rejects.toThrow("`hunkt diff` must be run inside a Git repository.");
   });
 
   test("reports a friendly error when diff cannot resolve a range", async () => {
@@ -991,7 +991,7 @@ describe("loadAppBootstrap", () => {
         staged: false,
         options: { mode: "auto" },
       }),
-    ).rejects.toThrow("`hunk diff HEAD~999` could not resolve Git revision or range `HEAD~999`.");
+    ).rejects.toThrow("`hunkt diff HEAD~999` could not resolve Git revision or range `HEAD~999`.");
   });
 
   test("uses agent sidecar file order for the review stream", async () => {
@@ -1273,7 +1273,7 @@ describe("loadAppBootstrap", () => {
         ref: "HEAD~999",
         options: { mode: "auto" },
       }),
-    ).rejects.toThrow("`hunk show HEAD~999` could not resolve Git ref `HEAD~999`.");
+    ).rejects.toThrow("`hunkt show HEAD~999` could not resolve Git ref `HEAD~999`.");
   });
 
   test("loads show output limited by pathspec", async () => {
@@ -1365,7 +1365,7 @@ describe("loadAppBootstrap", () => {
         kind: "stash-show",
         options: { mode: "auto", vcs: "jj" },
       }),
-    ).rejects.toThrow("`hunk stash show` requires Git VCS mode.");
+    ).rejects.toThrow("`hunkt stash show` requires Git VCS mode.");
   });
 
   test("reports a friendly error when no stash entries exist", async () => {
@@ -1380,7 +1380,7 @@ describe("loadAppBootstrap", () => {
         kind: "stash-show",
         options: { mode: "auto" },
       }),
-    ).rejects.toThrow("`hunk stash show` could not find a stash entry to show.");
+    ).rejects.toThrow("`hunkt stash show` could not find a stash entry to show.");
   });
 
   test("reports a friendly error when a stash ref does not exist", async () => {
@@ -1399,7 +1399,7 @@ describe("loadAppBootstrap", () => {
         ref: "stash@{99}",
         options: { mode: "auto" },
       }),
-    ).rejects.toThrow("`hunk stash show stash@{99}` could not resolve stash entry `stash@{99}`.");
+    ).rejects.toThrow("`hunkt stash show stash@{99}` could not resolve stash entry `stash@{99}`.");
   });
 
   test("strips parser-added line endings from rename-only paths", async () => {
@@ -1524,7 +1524,7 @@ describe("loadAppBootstrap", () => {
     expect(bootstrap.changeset.files[0]?.path).toMatch(/feat[\\/]+2\.0[\\/]+auth\.ts$/);
   });
 
-  test("loads patch text emitted with diff.noprefix=true (e.g. from `hunk pager` stdin)", async () => {
+  test("loads patch text emitted with diff.noprefix=true (e.g. from `hunkt pager` stdin)", async () => {
     const bootstrap = await loadAppBootstrap({
       kind: "patch",
       text: [
@@ -1547,7 +1547,7 @@ describe("loadAppBootstrap", () => {
     expect(bootstrap.changeset.files[0]?.stats.additions).toBe(1);
   });
 
-  test("loads patch text emitted with diff.mnemonicPrefix=true (e.g. from `hunk pager` stdin)", async () => {
+  test("loads patch text emitted with diff.mnemonicPrefix=true (e.g. from `hunkt pager` stdin)", async () => {
     const dir = createTempRepo("hunk-patch-mnemonic-prefix-");
 
     writeFileSync(join(dir, "example.ts"), "export const value = 1;\n");
@@ -1927,7 +1927,7 @@ describe("loadAppBootstrap source fetcher attachment", () => {
     expect(await file?.sourceFetcher?.getFullText("new")).toBe("working tree\n");
   });
 
-  test("`hunk show <ref>` resolves both sides through git blobs", async () => {
+  test("`hunkt show <ref>` resolves both sides through git blobs", async () => {
     const dir = createTempRepo("hunk-source-show-");
     writeFileSync(join(dir, "value.txt"), "first\n");
     git(dir, "add", "value.txt");
@@ -1949,7 +1949,7 @@ describe("loadAppBootstrap source fetcher attachment", () => {
     expect(await file?.sourceFetcher?.getFullText("old")).toBe("first\n");
   });
 
-  test("`hunk show <ref>` refuses to expand source blobs above the source cap", async () => {
+  test("`hunkt show <ref>` refuses to expand source blobs above the source cap", async () => {
     const dir = createTempRepo("hunk-source-show-large-");
     const lines = Array.from({ length: 130_000 }, (_, index) => `line ${index + 1}`);
     writeFileSync(join(dir, "large.txt"), `${lines.join("\n")}\n`);
@@ -1975,7 +1975,7 @@ describe("loadAppBootstrap source fetcher attachment", () => {
     );
   });
 
-  test("`hunk show <ref>` pins expansion sources after the ref moves", async () => {
+  test("`hunkt show <ref>` pins expansion sources after the ref moves", async () => {
     const dir = createTempRepo("hunk-source-show-pinned-");
     writeFileSync(join(dir, "value.txt"), "first\n");
     git(dir, "add", "value.txt");
@@ -2000,7 +2000,7 @@ describe("loadAppBootstrap source fetcher attachment", () => {
     expect(await file?.sourceFetcher?.getFullText("old")).toBe("first\n");
   });
 
-  test("`hunk stash show` pins expansion sources after stash@{0} moves", async () => {
+  test("`hunkt stash show` pins expansion sources after stash@{0} moves", async () => {
     const dir = createTempRepo("hunk-source-stash-pinned-");
     writeFileSync(join(dir, "value.txt"), "base\n");
     git(dir, "add", "value.txt");

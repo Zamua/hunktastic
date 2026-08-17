@@ -57,7 +57,7 @@ const NOTIFY_EXTENSION_SOURCE = `export default function (hunk) {
 const INTERRUPT_SHUTDOWN_EXTENSION_SOURCE = `import { appendFileSync } from "node:fs";
 export default function (hunk) {
   hunk.on("startup", (_payload, ctx) => ctx.notify("INTERRUPT FIXTURE READY"));
-  hunk.on("shutdown", () => appendFileSync(".hunk-shutdown.log", "shutdown\\n"));
+  hunk.on("shutdown", () => appendFileSync(".hunkt-shutdown.log", "shutdown\\n"));
 }
 `;
 
@@ -266,7 +266,7 @@ describe("PTY extensions", () => {
       const prompt = await session.waitForText(/Run this repository's extensions\?/, {
         timeout: 20_000,
       });
-      expect(prompt).toContain(".hunk/extensions");
+      expect(prompt).toContain(".hunkt/extensions");
       expect(prompt).toContain("Extensions run with your user permissions.");
       // The extension has not run yet, so both files are still under review.
       expect(prompt).toContain("beta.ts");
@@ -292,7 +292,7 @@ describe("PTY extensions", () => {
   test("Ctrl-C delivers extension shutdown before the terminal exits", async () => {
     const configHome = harness.createIsolatedConfigHome();
     const fixture = harness.createRepoExtensionFixture(INTERRUPT_SHUTDOWN_EXTENSION_SOURCE);
-    const shutdownLog = join(fixture.dir, ".hunk-shutdown.log");
+    const shutdownLog = join(fixture.dir, ".hunkt-shutdown.log");
     const session = await harness.launchHunk({
       args: ["diff", "--mode", "stack"],
       cwd: fixture.dir,
@@ -403,7 +403,7 @@ describe("PTY extensions", () => {
         "--mode",
         "stack",
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       // The sidebar only renders on a "full" viewport, which starts at 220 columns.
@@ -445,7 +445,7 @@ describe("PTY extensions", () => {
         "stack",
         // Load the fixture through the dev flag so it is trusted without a prompt.
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       // The sidebar only renders on a "full" viewport, which starts at 220 columns.
@@ -490,7 +490,7 @@ describe("PTY extensions", () => {
         "--mode",
         "stack",
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 240,
@@ -539,7 +539,7 @@ describe("PTY extensions", () => {
         "--mode",
         "stack",
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 140,
@@ -584,7 +584,7 @@ describe("PTY extensions", () => {
         "stack",
         // Load the fixture through the dev flag so it is trusted without a prompt.
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 50,
@@ -827,7 +827,7 @@ describe("PTY extensions", () => {
         "--mode",
         "stack",
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 140,
@@ -876,7 +876,7 @@ describe("PTY extensions", () => {
         "--mode",
         "stack",
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 140,
@@ -929,7 +929,7 @@ describe("PTY extensions", () => {
         "--mode",
         "stack",
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 140,
@@ -970,7 +970,7 @@ describe("PTY extensions", () => {
         "stack",
         // Load the fixture through the dev flag so it is trusted without a prompt.
         "--extension",
-        join(fixture.dir, ".hunk", "extensions", "fixture.ts"),
+        join(fixture.dir, ".hunkt", "extensions", "fixture.ts"),
       ],
       cwd: fixture.dir,
       cols: 140,

@@ -97,7 +97,7 @@ export function AppHost({
   const launchExperimental = initialBootstrap.input.options.experimental === true;
   const launchFast = initialBootstrap.input.options.fast === true;
   // Extension authority is launch authority for the same reason. A reload command
-  // names *content* to reopen — `hunk session reload <id> -- diff` — and is parsed
+  // names *content* to reopen — `hunkt session reload <id> -- diff` — and is parsed
   // fresh, so it carries none of the extension flags the session was launched
   // with. Without re-threading them, `--no-extensions` silently stops applying on
   // the first reload (extensions the user disabled start executing again) and

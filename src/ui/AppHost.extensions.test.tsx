@@ -269,7 +269,7 @@ async function flushUntil(
 /**
  * A broker client stub that captures the bridge App registers with it.
  *
- * Daemon reloads are the case that matters here: `hunk session reload <id> -- diff`
+ * Daemon reloads are the case that matters here: `hunkt session reload <id> -- diff`
  * re-parses its tokens from scratch, so `nextInput` carries none of the flags
  * the session was launched with. The interactive refresh key cannot stand in for
  * it — that path reuses the live bootstrap input and so never loses anything.
@@ -965,7 +965,7 @@ export default function (hunk) {
  */
 async function grantTrustAndCollectProbeEvents(repo: string) {
   const logPath = join(repo, "probe.log");
-  writeProbeExtension(join(repo, ".hunk", "extensions", "probe.ts"), logPath);
+  writeProbeExtension(join(repo, ".hunkt", "extensions", "probe.ts"), logPath);
   // Trust decisions live in the global state file; keep this test off the
   // developer's real one.
   useTempConfigHome();

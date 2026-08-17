@@ -108,7 +108,7 @@ describe("--engine flag reaches the engine", () => {
     writeFileSync(left, "const alpha = 1;\n");
     writeFileSync(right, "const alpha = 2;\n");
 
-    const parsed = await parseCli(["bun", "hunk", "diff", left, right, "--engine", "difftastic"]);
+    const parsed = await parseCli(["bun", "hunkt", "diff", left, right, "--engine", "difftastic"]);
     expect(parsed).toMatchObject({ kind: "diff", options: { engine: "difftastic" } });
 
     // difftPath is config-resolved, not a CLI flag; pin it to the stub so the
@@ -123,7 +123,7 @@ describe("--engine flag reaches the engine", () => {
     expect(withFlag.startupNotices?.map((notice) => notice.key)).toEqual(["difftastic:fallback"]);
 
     // Without the flag the loader must not touch the engine at all.
-    const bare = (await parseCli(["bun", "hunk", "diff", left, right])) as CliInput;
+    const bare = (await parseCli(["bun", "hunkt", "diff", left, right])) as CliInput;
     const withoutFlag = await loadAppBootstrap(bare, { onEngineDiagnostic: () => {} });
     expect(withoutFlag.startupNotices).toBeUndefined();
   });

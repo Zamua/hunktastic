@@ -38,8 +38,8 @@ function resolveBunExecutable() {
 }
 
 const bunExecutable = resolveBunExecutable();
-const explicitHunkExecutable = process.env.HUNK_TEST_EXECUTABLE
-  ? resolve(repoRoot, process.env.HUNK_TEST_EXECUTABLE)
+const explicitHunkExecutable = process.env.HUNKT_TEST_EXECUTABLE
+  ? resolve(repoRoot, process.env.HUNKT_TEST_EXECUTABLE)
   : undefined;
 
 async function loadTuistory() {
@@ -242,7 +242,7 @@ export function createPtyHarness() {
   }
 
   // Isolate every launch from the developer's ambient user config/state so PTY snapshots assert
-  // against built-in defaults instead of whatever ~/.config/hunk/config.toml happens to set.
+  // against built-in defaults instead of whatever ~/.config/hunkt/config.toml happens to set.
   let isolatedConfigHome: string | undefined;
   function configHome() {
     isolatedConfigHome ??= makeTempDir("hunk-tuistory-config-");
@@ -555,7 +555,7 @@ export function createPtyHarness() {
   }
 
   /**
-   * Build a repo whose committed `.hunk/extensions` entry starts untrusted.
+   * Build a repo whose committed `.hunkt/extensions` entry starts untrusted.
    *
    * The entry file is committed rather than left untracked so the review under
    * test shows only the two changed source files, keeping snapshot assertions
@@ -585,7 +585,7 @@ export function createPtyHarness() {
     for (const file of changedFiles) {
       writeText(join(dir, file.path), file.before);
     }
-    writeText(join(dir, ".hunk", "extensions", entryName), source);
+    writeText(join(dir, ".hunkt", "extensions", entryName), source);
     runGit(["add", "."], dir);
     runGit(["commit", "-m", "initial"], dir);
 
@@ -856,7 +856,7 @@ end
   /**
    * Capture a multi-file working-tree diff as a patch file.
    *
-   * Pager tests feed this on stdin to get the same review `git diff | hunk
+   * Pager tests feed this on stdin to get the same review `git diff | hunkt
    * pager` produces, with a leading file tall enough that the second one only
    * becomes visible once the reader navigates to it.
    */
@@ -915,8 +915,8 @@ end
       env: {
         ...process.env,
         XDG_CONFIG_HOME: configHome(),
-        HUNK_MCP_DISABLE: "1",
-        HUNK_DISABLE_UPDATE_NOTICE: "1",
+        HUNKT_MCP_DISABLE: "1",
+        HUNKT_DISABLE_UPDATE_NOTICE: "1",
         ...options.env,
       },
     });
@@ -941,8 +941,8 @@ end
       env: {
         ...process.env,
         XDG_CONFIG_HOME: configHome(),
-        HUNK_MCP_DISABLE: "1",
-        HUNK_DISABLE_UPDATE_NOTICE: "1",
+        HUNKT_MCP_DISABLE: "1",
+        HUNKT_DISABLE_UPDATE_NOTICE: "1",
         ...options.env,
       },
     });

@@ -27,16 +27,20 @@ in
       ${bun}/bin/bun build --compile \
         --no-compile-autoload-bunfig \
         "./src/main.tsx" \
-        --outfile "hunk-bin"
+        --outfile "hunkt-bin"
       runHook postBuild
     '';
 
     installPhase = ''
       runHook preInstall
       mkdir -p $out/bin
-      cp -p ./hunk-bin $out/bin/hunk
+      cp -p ./hunkt-bin $out/bin/hunkt
+      # lib.getExe resolves the pname (hunkdiff) because the bun2nix builder does
+      # not carry meta.mainProgram through, so keep that name pointing at the real
+      # command rather than at a missing file.
+      ln -s hunkt $out/bin/hunkdiff
       cp -r ./skills $out/
-      wrapProgram $out/bin/hunk --set HUNK_INSTALL_SOURCE nix
+      wrapProgram $out/bin/hunkt --set HUNKT_INSTALL_SOURCE nix
       runHook postInstall
     '';
 
@@ -49,7 +53,7 @@ in
       description = "Terminal diff viewer for agentic changesets";
       homepage = "https://github.com/modem-dev/hunk";
       license = licenses.mit;
-      mainProgram = "hunk";
+      mainProgram = "hunkt";
       platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
     };
   }

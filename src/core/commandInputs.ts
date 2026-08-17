@@ -1,6 +1,6 @@
 /**
  * Declares the review-launching command inputs and the resolved view options
- * they carry: everything a `hunk diff`/`show`/`stash show`/`patch`/`difftool`
+ * they carry: everything a `hunkt diff`/`show`/`stash show`/`patch`/`difftool`
  * invocation normalizes into before a changeset is loaded.
  *
  * Kept as a leaf module so the VCS contract and watch planning can name these

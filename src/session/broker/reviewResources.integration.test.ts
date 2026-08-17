@@ -40,7 +40,7 @@ function readsFor(sent: HunkSessionServerMessage[], resourceId: string) {
 }
 
 describe("brokered review resources", () => {
-  // Intent: `hunk session review --include-patch` produces exactly the patch text the
+  // Intent: `hunkt session review --include-patch` produces exactly the patch text the
   // producer published, now that the registration no longer carries it.
   test("reconstructs patch text byte for byte from published resources", async () => {
     const files = [createTestPatchFile("alpha", 4), createTestPatchFile("beta", 3)];

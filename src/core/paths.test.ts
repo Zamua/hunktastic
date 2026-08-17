@@ -19,34 +19,34 @@ describe("paths", () => {
   test("resolves XDG config and state paths", () => {
     const env = { XDG_CONFIG_HOME: join("/tmp", "xdg-home") } as NodeJS.ProcessEnv;
 
-    expect(resolveGlobalConfigPath(env)).toBe(join("/tmp", "xdg-home", "hunk", "config.toml"));
-    expect(resolveAppStatePath(env)).toBe(join("/tmp", "xdg-home", "hunk", "state.json"));
+    expect(resolveGlobalConfigPath(env)).toBe(join("/tmp", "xdg-home", "hunkt", "config.toml"));
+    expect(resolveAppStatePath(env)).toBe(join("/tmp", "xdg-home", "hunkt", "state.json"));
   });
 
   test("falls back to HOME for config and state paths", () => {
     const env = { HOME: join("/tmp", "home") } as NodeJS.ProcessEnv;
 
     expect(resolveGlobalConfigPath(env)).toBe(
-      join("/tmp", "home", ".config", "hunk", "config.toml"),
+      join("/tmp", "home", ".config", "hunkt", "config.toml"),
     );
-    expect(resolveAppStatePath(env)).toBe(join("/tmp", "home", ".config", "hunk", "state.json"));
+    expect(resolveAppStatePath(env)).toBe(join("/tmp", "home", ".config", "hunkt", "state.json"));
   });
 
   test("falls back to USERPROFILE when HOME is unavailable", () => {
     const env = { USERPROFILE: join("/tmp", "windows-profile") } as NodeJS.ProcessEnv;
 
     expect(resolveGlobalConfigPath(env)).toBe(
-      join("/tmp", "windows-profile", ".config", "hunk", "config.toml"),
+      join("/tmp", "windows-profile", ".config", "hunkt", "config.toml"),
     );
     expect(resolveAppStatePath(env)).toBe(
-      join("/tmp", "windows-profile", ".config", "hunk", "state.json"),
+      join("/tmp", "windows-profile", ".config", "hunkt", "state.json"),
     );
   });
 
   test("locates the bundled Hunk review skill from source by default", () => {
     const resolvedPath = resolveBundledSkillPath(undefined, [import.meta.dir]);
 
-    expect(resolvedPath).toEndWith(join("skills", "hunk-review", "SKILL.md"));
+    expect(resolvedPath).toEndWith(join("skills", "hunkt-review", "SKILL.md"));
   });
 
   test("locates every bundled skill from source by name", () => {
@@ -58,9 +58,9 @@ describe("paths", () => {
   });
 
   test("resolves bundled skill names and their short aliases", () => {
-    expect(resolveBundledSkillName("hunk-extensions")).toBe("hunk-extensions");
-    expect(resolveBundledSkillName("extensions")).toBe("hunk-extensions");
-    expect(resolveBundledSkillName(" Review ")).toBe("hunk-review");
+    expect(resolveBundledSkillName("hunkt-extensions")).toBe("hunkt-extensions");
+    expect(resolveBundledSkillName("extensions")).toBe("hunkt-extensions");
+    expect(resolveBundledSkillName(" Review ")).toBe("hunkt-review");
     expect(resolveBundledSkillName("launch-video")).toBeUndefined();
     expect(resolveBundledSkillName("")).toBeUndefined();
   });
@@ -69,8 +69,8 @@ describe("paths", () => {
     const tempRoot = createTempRoot("hunk-skill-missing-");
 
     try {
-      expect(() => resolveBundledSkillPath("hunk-extensions", [tempRoot])).toThrow(
-        "Could not locate the bundled Hunk hunk-extensions skill.",
+      expect(() => resolveBundledSkillPath("hunkt-extensions", [tempRoot])).toThrow(
+        "Could not locate the bundled Hunk hunkt-extensions skill.",
       );
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
@@ -82,15 +82,15 @@ describe("paths", () => {
 
     try {
       const nestedPackageRoot = join(tempRoot, "node_modules", "hunkdiff");
-      const skillPath = join(nestedPackageRoot, "skills", "hunk-review", "SKILL.md");
-      const fakeBinary = join(tempRoot, "node_modules", "hunkdiff-linux-x64", "bin", "hunk");
+      const skillPath = join(nestedPackageRoot, "skills", "hunkt-review", "SKILL.md");
+      const fakeBinary = join(tempRoot, "node_modules", "hunkdiff-linux-x64", "bin", "hunkt");
 
       mkdirSync(dirname(skillPath), { recursive: true });
       mkdirSync(dirname(fakeBinary), { recursive: true });
       writeFileSync(skillPath, "# skill\n");
       writeFileSync(fakeBinary, "binary\n");
 
-      expect(resolveBundledSkillPath("hunk-review", [fakeBinary])).toBe(skillPath);
+      expect(resolveBundledSkillPath("hunkt-review", [fakeBinary])).toBe(skillPath);
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }

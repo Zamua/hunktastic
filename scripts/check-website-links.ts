@@ -32,7 +32,7 @@ const REQUIRED_ASSETS = [
   "shot-mocha.webp",
   "shot-zenburn.webp",
   "docs/favicon.svg",
-  "docs/hunk-review-skill.md",
+  "docs/hunkt-review-skill.md",
   "pagefind/pagefind.js",
 ] as const;
 

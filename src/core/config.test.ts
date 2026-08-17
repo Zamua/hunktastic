@@ -56,8 +56,8 @@ afterEach(() => {
 describe("config persistence", () => {
   test("writes accepted view preferences to user config without disturbing tables", () => {
     const home = createTempDir("hunk-save-config-home-");
-    const configPath = join(home, ".config", "hunk", "config.toml");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    const configPath = join(home, ".config", "hunkt", "config.toml");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
       configPath,
       [
@@ -108,8 +108,8 @@ describe("config persistence", () => {
 
   test("writes the view preferences prompt setting without disturbing tables", () => {
     const home = createTempDir("hunk-save-config-home-");
-    const configPath = join(home, ".config", "hunk", "config.toml");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    const configPath = join(home, ".config", "hunkt", "config.toml");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(configPath, ["# personal defaults", "", "[custom_theme]"].join("\n"));
 
     const savedPath = saveViewPreferencesPromptPreference(false, { env: { HOME: home } });
@@ -165,9 +165,9 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         'theme = "github-dark-default"',
         "line_numbers = false",
@@ -184,9 +184,9 @@ describe("config resolution", () => {
       ].join("\n"),
     );
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       [
         'theme = "github-light-default"',
         "wrap_lines = true",
@@ -205,8 +205,8 @@ describe("config resolution", () => {
       },
     );
 
-    expect(resolved.repoConfigPath).toBe(join(repo, ".hunk", "config.toml"));
-    expect(resolved.viewPreferencesConfigPath).toBe(join(repo, ".hunk", "config.toml"));
+    expect(resolved.repoConfigPath).toBe(join(repo, ".hunkt", "config.toml"));
+    expect(resolved.viewPreferencesConfigPath).toBe(join(repo, ".hunkt", "config.toml"));
     expect(resolved.input.options).toMatchObject({
       pager: true,
       mode: "stack",
@@ -228,8 +228,8 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-fast-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "fast = true");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "fast = true");
 
     const configured = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -249,8 +249,8 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'cursor_line = "number"');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'cursor_line = "number"');
 
     const fromConfig = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -270,8 +270,8 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'cursor_line = "sparkles"');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'cursor_line = "sparkles"');
 
     const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -295,9 +295,9 @@ describe("config resolution", () => {
         .options.menuBar,
     ).toBe(true);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[pager]", "menu_bar = true"].join("\n"),
     );
 
@@ -316,9 +316,9 @@ describe("config resolution", () => {
       resolveConfiguredCliInput(input, { cwd: repo, env: { HOME: home } }).input.options.tabWidth,
     ).toBe(4);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     for (const invalid of ["0", "17", '"4"']) {
-      writeFileSync(join(home, ".config", "hunk", "config.toml"), `tab_width = ${invalid}\n`);
+      writeFileSync(join(home, ".config", "hunkt", "config.toml"), `tab_width = ${invalid}\n`);
       expect(() => resolveConfiguredCliInput(input, { cwd: repo, env: { HOME: home } })).toThrow(
         /tab_width/,
       );
@@ -335,14 +335,14 @@ describe("config resolution", () => {
 
     expect(resolveSidebar(createPatchPagerInput())).toBe("auto");
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "sidebar = false\n");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "sidebar = false\n");
     expect(resolveSidebar(createPatchPagerInput())).toBe(false);
     // `--sidebar` outranks the config layer.
     expect(resolveSidebar(createPatchPagerInput({ sidebar: true }))).toBe(true);
 
     // Values outside `true`, `false`, and "auto" fall back to the built-in default.
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'sidebar = "always"\n');
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'sidebar = "always"\n');
     expect(resolveSidebar(createPatchPagerInput())).toBe("auto");
   });
 
@@ -351,9 +351,9 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         'theme = "custom"',
         "",
@@ -367,9 +367,9 @@ describe("config resolution", () => {
       ].join("\n"),
     );
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       [
         'theme = "custom"',
         "",
@@ -406,9 +406,9 @@ describe("config resolution", () => {
 
   test("reads named [themes.<id>] tables in declaration order after [custom_theme]", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         'theme = "ocean"',
         "",
@@ -453,9 +453,9 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         "[themes.ocean]",
         'base = "nord"',
@@ -467,9 +467,9 @@ describe("config resolution", () => {
       ].join("\n"),
     );
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       [
         "[themes.ocean]",
         'label = "Repo Ocean"',
@@ -506,9 +506,9 @@ describe("config resolution", () => {
 
   test("keeps [custom_theme] as the custom id and reports the shadowed [themes.custom] table", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[custom_theme]", 'accent = "#123456"', "", "[themes.custom]", 'accent = "#654321"'].join(
         "\n",
       ),
@@ -530,9 +530,9 @@ describe("config resolution", () => {
 
   test("skips named themes with unusable ids instead of failing startup", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         '[themes."Ocean Dark"]',
         'base = "nord"',
@@ -559,9 +559,9 @@ describe("config resolution", () => {
 
   test("reports named theme validation errors against the key the user wrote", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[themes.ocean]", 'accent = "blue"'].join("\n"),
     );
 
@@ -577,9 +577,9 @@ describe("config resolution", () => {
     "accepts custom theme base id: %s",
     (base) => {
       const home = createTempDir("hunk-config-home-");
-      mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+      mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
       writeFileSync(
-        join(home, ".config", "hunk", "config.toml"),
+        join(home, ".config", "hunkt", "config.toml"),
         ["[custom_theme]", `base = "${base}"`].join("\n"),
       );
 
@@ -594,9 +594,9 @@ describe("config resolution", () => {
 
   test("normalizes legacy custom theme base ids", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[custom_theme]", 'base = "graphite"'].join("\n"),
     );
 
@@ -610,9 +610,9 @@ describe("config resolution", () => {
 
   test("rejects invalid custom theme base ids", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[custom_theme]", 'base = "unknown"'].join("\n"),
     );
 
@@ -626,9 +626,9 @@ describe("config resolution", () => {
 
   test("rejects invalid custom theme color values", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[custom_theme]", 'accent = "blue"'].join("\n"),
     );
 
@@ -642,9 +642,9 @@ describe("config resolution", () => {
 
   test("rejects invalid Shiki scope colors", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[custom_theme.syntax_scopes]", '"comment.line" = "white"'].join("\n"),
     );
 
@@ -658,9 +658,9 @@ describe("config resolution", () => {
 
   test("temporarily translates the deprecated semantic syntax table into exact scopes", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         "[custom_theme.syntax]",
         'comment = "#ffffff"',
@@ -685,8 +685,8 @@ describe("config resolution", () => {
 
   test("rejects theme = custom when no [custom_theme] table is configured", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'theme = "custom"\n');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'theme = "custom"\n');
 
     expect(() =>
       resolveConfiguredCliInput(createPatchPagerInput(), {
@@ -698,8 +698,8 @@ describe("config resolution", () => {
 
   test("requires experimental features to be enabled by the launch CLI", () => {
     const home = createTempDir("hunk-config-experimental-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "experimental = true\n");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "experimental = true\n");
 
     const normal = resolveConfiguredCliInput(createPatchPagerInput(), {
       env: { HOME: home },
@@ -714,8 +714,8 @@ describe("config resolution", () => {
 
   test("accepts transparent background config and CLI overrides", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "transparent_background = true\n");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "transparent_background = true\n");
 
     const cwd = createTempDir("hunk-config-cwd-");
     const configured = resolveConfiguredCliInput(
@@ -741,9 +741,9 @@ describe("config resolution", () => {
 
   test("loads global config from USERPROFILE when HOME is unavailable", () => {
     const profile = createTempDir("hunk-config-profile-");
-    mkdirSync(join(profile, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(profile, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(profile, ".config", "hunk", "config.toml"),
+      join(profile, ".config", "hunkt", "config.toml"),
       "transparent_background = true\n",
     );
 
@@ -772,15 +772,15 @@ describe("config resolution", () => {
     });
 
     expect(resolved.repoConfigPath).toBeUndefined();
-    expect(resolved.viewPreferencesConfigPath).toBe(join(home, ".config", "hunk", "config.toml"));
+    expect(resolved.viewPreferencesConfigPath).toBe(join(home, ".config", "hunkt", "config.toml"));
     expect(resolved.input.options.theme).toBe("github-dark-default");
   });
 
   test("command-specific config sections also apply to show mode", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[show]", 'mode = "stack"', "line_numbers = false"].join("\n"),
     );
 
@@ -799,8 +799,8 @@ describe("config resolution", () => {
 
   test("defaults git diff to include untracked files and honors config plus CLI overrides", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "exclude_untracked = true\n");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "exclude_untracked = true\n");
 
     const cwd = createTempDir("hunk-config-cwd-");
     const defaultResolved = resolveConfiguredCliInput(
@@ -872,8 +872,8 @@ describe("config resolution", () => {
     expected: boolean;
   }>)("resolves watch: $name", ({ config, cliOptions, expected }) => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), config);
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), config);
 
     const resolved = resolveConfiguredCliInput(
       {
@@ -892,8 +892,8 @@ describe("config resolution", () => {
     // whether `hg` will exist. Dropping it here discarded the user's explicit
     // choice silently; `resolveSessionVcsId` settles it once adapters are known.
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'vcs = "hg"\n');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'vcs = "hg"\n');
 
     const resolved = resolveConfiguredCliInput(
       { kind: "vcs", staged: false, options: {} },
@@ -908,8 +908,8 @@ describe("config resolution", () => {
     // detected Git checkout both resolve to "git", and only the explicit one
     // outranks the detection that runs again once extension backends load.
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'vcs = "git"\n');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'vcs = "git"\n');
     const cwd = createTempDir("hunk-config-cwd-");
 
     const configured = resolveConfiguredCliInput(
@@ -929,8 +929,8 @@ describe("config resolution", () => {
 
   test("ignores a non-string vcs value", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "vcs = 7\n");
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "vcs = 7\n");
 
     const resolved = resolveConfiguredCliInput(
       { kind: "vcs", staged: false, options: {} },
@@ -942,8 +942,8 @@ describe("config resolution", () => {
 
   test("defaults to git VCS mode and accepts registered VCS modes from config", () => {
     const home = createTempDir("hunk-config-home-");
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'vcs = "jj"\n');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'vcs = "jj"\n');
 
     const cwd = createTempDir("hunk-config-cwd-");
     const defaultResolved = resolveConfiguredCliInput(
@@ -1007,8 +1007,8 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-jj-repo-");
     createJjRepo(repo);
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
-    writeFileSync(join(repo, ".hunk", "config.toml"), 'vcs = "git"\n');
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
+    writeFileSync(join(repo, ".hunkt", "config.toml"), 'vcs = "git"\n');
 
     const resolved = resolveConfiguredCliInput(
       {
@@ -1027,9 +1027,9 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         'theme = "github-light-default"',
         "line_numbers = false",
@@ -1076,9 +1076,9 @@ describe("config resolution", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         'theme = "custom"',
         "",
@@ -1171,15 +1171,15 @@ describe("extension configuration", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[extensions]", 'paths = ["~/dev/copy-as.ts", 7, ""]', "unknown_key = true"].join("\n"),
     );
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       ["[extensions]", 'paths = ["./tools/policy.ts"]'].join("\n"),
     );
 
@@ -1198,9 +1198,9 @@ describe("extension configuration", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         "[keybindings]",
         '"hunk.app.quit" = "ctrl+x"',
@@ -1210,9 +1210,9 @@ describe("extension configuration", () => {
       ].join("\n"),
     );
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       ["[keybindings]", '"hunk.app.quit" = "ctrl+q"'].join("\n"),
     );
 
@@ -1238,14 +1238,14 @@ describe("extension configuration", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[extensions]", "enabled = true"].join("\n"),
     );
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       ["[extensions]", "enabled = false"].join("\n"),
     );
 
@@ -1255,7 +1255,7 @@ describe("extension configuration", () => {
     ).toBe(false);
 
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       ["[extensions]", "enabled = true"].join("\n"),
     );
 
@@ -1276,9 +1276,9 @@ describe("extension configuration", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       [
         "[extension.copy-as]",
         'severity = "nit"',
@@ -1289,9 +1289,9 @@ describe("extension configuration", () => {
       ].join("\n"),
     );
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       ["[extension.copy-as]", 'severity = "blocking"'].join("\n"),
     );
 
@@ -1315,14 +1315,14 @@ describe("extension configuration", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
     writeFileSync(
-      join(home, ".config", "hunk", "config.toml"),
+      join(home, ".config", "hunkt", "config.toml"),
       ["[extension.blame]", "max_age_days = 30"].join("\n"),
     );
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     // An empty table sets nothing, so it is not an override worth reporting.
-    writeFileSync(join(repo, ".hunk", "config.toml"), ["[extension.blame]"].join("\n"));
+    writeFileSync(join(repo, ".hunkt", "config.toml"), ["[extension.blame]"].join("\n"));
 
     const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -1337,9 +1337,9 @@ describe("extension configuration", () => {
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
     writeFileSync(
-      join(repo, ".hunk", "config.toml"),
+      join(repo, ".hunkt", "config.toml"),
       ["[extension.zebra]", 'binary = "/tmp/zebra"', "", "[extension.alpha]", "on = true"].join(
         "\n",
       ),
@@ -1361,19 +1361,19 @@ describe("extension configuration", () => {
     const home = createTempDir("hunk-config-home-");
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
 
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "extensions = true\n");
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "extensions = true\n");
     expect(() =>
       resolveConfiguredCliInput(createPatchPagerInput(), { cwd: repo, env: { HOME: home } }),
     ).toThrow(/extensions to contain a TOML table/);
 
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'extension = "copy-as"\n');
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'extension = "copy-as"\n');
     expect(() =>
       resolveConfiguredCliInput(createPatchPagerInput(), { cwd: repo, env: { HOME: home } }),
     ).toThrow(/per-extension TOML tables/);
 
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), "[extension]\ncopy-as = 1\n");
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), "[extension]\ncopy-as = 1\n");
     expect(() =>
       resolveConfiguredCliInput(createPatchPagerInput(), { cwd: repo, env: { HOME: home } }),
     ).toThrow(/\[extension.copy-as\] to contain a TOML table/);
@@ -1399,8 +1399,8 @@ describe("engine configuration", () => {
     const home = createTempDir("hunk-config-home-");
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'engine = "difftastic"');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'engine = "difftastic"');
 
     const fromUser = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -1408,8 +1408,8 @@ describe("engine configuration", () => {
     });
     expect(fromUser.input.options.engine).toBe("difftastic");
 
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
-    writeFileSync(join(repo, ".hunk", "config.toml"), 'engine = "pierre"');
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
+    writeFileSync(join(repo, ".hunkt", "config.toml"), 'engine = "pierre"');
     const fromRepo = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
       env: { HOME: home },
@@ -1449,8 +1449,8 @@ describe("engine configuration", () => {
     const home = createTempDir("hunk-config-home-");
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'engine = "sparkles"');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'engine = "sparkles"');
 
     const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -1464,8 +1464,8 @@ describe("engine configuration", () => {
     const home = createTempDir("hunk-config-home-");
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
-    mkdirSync(join(home, ".config", "hunk"), { recursive: true });
-    writeFileSync(join(home, ".config", "hunk", "config.toml"), 'difft_path = "/opt/difft"');
+    mkdirSync(join(home, ".config", "hunkt"), { recursive: true });
+    writeFileSync(join(home, ".config", "hunkt", "config.toml"), 'difft_path = "/opt/difft"');
 
     const fromUser = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,
@@ -1484,8 +1484,8 @@ describe("engine configuration", () => {
     const home = createTempDir("hunk-config-home-");
     const repo = createTempDir("hunk-config-repo-");
     createRepo(repo);
-    mkdirSync(join(repo, ".hunk"), { recursive: true });
-    writeFileSync(join(repo, ".hunk", "config.toml"), 'difft_path = "/tmp/evil-difft"');
+    mkdirSync(join(repo, ".hunkt"), { recursive: true });
+    writeFileSync(join(repo, ".hunkt", "config.toml"), 'difft_path = "/tmp/evil-difft"');
 
     const resolved = resolveConfiguredCliInput(createPatchPagerInput(), {
       cwd: repo,

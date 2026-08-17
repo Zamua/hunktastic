@@ -315,7 +315,7 @@ async function renderWatchedWithExtension({
   // The reviewed pair lives under the process cwd: a session's reload bounds are
   // seeded from it, so a diff assembled somewhere else would be refused before
   // the watch ever mattered.
-  const reviewDir = mkdtempSync(join(process.cwd(), ".hunk-mode-reload-"));
+  const reviewDir = mkdtempSync(join(process.cwd(), ".hunkt-mode-reload-"));
   tempDirs.push(reviewDir);
   const left = join(reviewDir, "before.ts");
   const right = join(reviewDir, "after.ts");

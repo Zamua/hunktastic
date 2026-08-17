@@ -48,7 +48,7 @@ afterEach(() => {
 
 describe("parseCli", () => {
   test("prints help when no subcommand is passed", async () => {
-    const parsed = await parseCli(["bun", "hunk"]);
+    const parsed = await parseCli(["bun", "hunkt"]);
 
     expect(parsed.kind).toBe("help");
     if (parsed.kind !== "help") {
@@ -56,9 +56,9 @@ describe("parseCli", () => {
     }
 
     expect(parsed.text).toContain("Usage:");
-    expect(parsed.text).toContain("hunk diff");
-    expect(parsed.text).toContain("hunk show");
-    expect(parsed.text).toContain("hunk skill path");
+    expect(parsed.text).toContain("hunkt diff");
+    expect(parsed.text).toContain("hunkt show");
+    expect(parsed.text).toContain("hunkt skill path");
     expect(parsed.text).toContain("Global options:");
     expect(parsed.text).toContain("Common review options:");
     expect(parsed.text).toContain("auto-reload when the current diff input changes");
@@ -68,15 +68,15 @@ describe("parseCli", () => {
     expect(parsed.text).toContain("Git diff options:");
     expect(parsed.text).toContain("Notes:");
     expect(parsed.text).toContain(
-      "Run `hunk <command> --help` for command-specific syntax and options.",
+      "Run `hunkt <command> --help` for command-specific syntax and options.",
     );
     expect(parsed.text).not.toContain("Config:");
     expect(parsed.text).not.toContain("Examples:");
   });
 
   test("prints the same top-level help for --help", async () => {
-    const bare = await parseCli(["bun", "hunk"]);
-    const explicit = await parseCli(["bun", "hunk", "--help"]);
+    const bare = await parseCli(["bun", "hunkt"]);
+    const explicit = await parseCli(["bun", "hunkt", "--help"]);
 
     expect(explicit).toEqual(bare);
   });
@@ -103,8 +103,8 @@ describe("parseCli", () => {
 
   test("prints the package version for --version and version", async () => {
     const expectedVersion = require("../../package.json").version;
-    const flag = await parseCli(["bun", "hunk", "--version"]);
-    const command = await parseCli(["bun", "hunk", "version"]);
+    const flag = await parseCli(["bun", "hunkt", "--version"]);
+    const command = await parseCli(["bun", "hunkt", "version"]);
 
     expect(flag).toEqual({ kind: "help", text: `${expectedVersion}\n` });
     expect(command).toEqual(flag);
@@ -113,7 +113,7 @@ describe("parseCli", () => {
   test("parses git-style diff mode with shared options", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "diff",
       "main...feature",
       "--mode",
@@ -153,33 +153,33 @@ describe("parseCli", () => {
   });
 
   test("parses the diff engine and rejects an unknown one", async () => {
-    const parsed = await parseCli(["bun", "hunk", "diff", "--engine", "difftastic"]);
+    const parsed = await parseCli(["bun", "hunkt", "diff", "--engine", "difftastic"]);
 
     expect(parsed).toMatchObject({
       kind: "vcs",
       options: { engine: "difftastic" },
     });
 
-    await expect(parseCli(["bun", "hunk", "diff", "--engine", "sparkles"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "diff", "--engine", "sparkles"])).rejects.toThrow(
       "Invalid diff engine: sparkles",
     );
   });
 
   test("parses the current-line style and rejects an unknown one", async () => {
-    const parsed = await parseCli(["bun", "hunk", "diff", "--cursor-line", "number"]);
+    const parsed = await parseCli(["bun", "hunkt", "diff", "--cursor-line", "number"]);
 
     expect(parsed).toMatchObject({
       kind: "vcs",
       options: { cursorLine: "number" },
     });
 
-    await expect(parseCli(["bun", "hunk", "diff", "--cursor-line", "sparkles"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "diff", "--cursor-line", "sparkles"])).rejects.toThrow(
       "Invalid cursor line style: sparkles",
     );
   });
 
   test("accepts --experimental before the review command", async () => {
-    const parsed = await parseCli(["bun", "hunk", "--experimental", "diff"]);
+    const parsed = await parseCli(["bun", "hunkt", "--experimental", "diff"]);
 
     expect(parsed).toMatchObject({
       kind: "vcs",
@@ -188,7 +188,7 @@ describe("parseCli", () => {
   });
 
   test("uses --fast alone as the shortest fast working-tree review", async () => {
-    expect(await parseCli(["bun", "hunk", "--fast"])).toMatchObject({
+    expect(await parseCli(["bun", "hunkt", "--fast"])).toMatchObject({
       kind: "vcs",
       staged: false,
       options: { fast: true },
@@ -196,31 +196,31 @@ describe("parseCli", () => {
   });
 
   test("accepts --fast before or after a review command", async () => {
-    const prefixed = await parseCli(["bun", "hunk", "--fast", "diff"]);
-    const commandOption = await parseCli(["bun", "hunk", "diff", "--fast"]);
+    const prefixed = await parseCli(["bun", "hunkt", "--fast", "diff"]);
+    const commandOption = await parseCli(["bun", "hunkt", "diff", "--fast"]);
 
     expect(prefixed).toMatchObject({ kind: "vcs", options: { fast: true } });
     expect(commandOption).toMatchObject({ kind: "vcs", options: { fast: true } });
   });
 
   test("routes shorthand diff options through the diff parser", async () => {
-    expect(await parseCli(["bun", "hunk", "--fast", "--staged"])).toMatchObject({
+    expect(await parseCli(["bun", "hunkt", "--fast", "--staged"])).toMatchObject({
       kind: "vcs",
       staged: true,
       options: { fast: true },
     });
-    expect(await parseCli(["bun", "hunk", "--fast", "--watch"])).toMatchObject({
+    expect(await parseCli(["bun", "hunkt", "--fast", "--watch"])).toMatchObject({
       kind: "vcs",
       options: { fast: true, watch: true },
     });
-    expect(await parseCli(["bun", "hunk", "--fast", "--theme", "nord"])).toMatchObject({
+    expect(await parseCli(["bun", "hunkt", "--fast", "--theme", "nord"])).toMatchObject({
       kind: "vcs",
       options: { fast: true, theme: "nord" },
     });
   });
 
   test("routes shorthand targets and direct file pairs through the diff parser", async () => {
-    expect(await parseCli(["bun", "hunk", "--fast", "HEAD"])).toMatchObject({
+    expect(await parseCli(["bun", "hunkt", "--fast", "HEAD"])).toMatchObject({
       kind: "vcs",
       range: "HEAD",
       options: { fast: true },
@@ -232,7 +232,7 @@ describe("parseCli", () => {
     writeFileSync(left, "export const answer = 1;\n");
     writeFileSync(right, "export const answer = 2;\n");
 
-    expect(await parseCli(["bun", "hunk", "--fast", left, right])).toMatchObject({
+    expect(await parseCli(["bun", "hunkt", "--fast", left, right])).toMatchObject({
       kind: "diff",
       left,
       right,
@@ -241,8 +241,8 @@ describe("parseCli", () => {
   });
 
   test("keeps top-level help and version handling ahead of --fast shorthand", async () => {
-    const help = await parseCli(["bun", "hunk", "--fast", "--help"]);
-    const version = await parseCli(["bun", "hunk", "--fast", "--version"]);
+    const help = await parseCli(["bun", "hunkt", "--fast", "--help"]);
+    const version = await parseCli(["bun", "hunkt", "--fast", "--version"]);
 
     expect(help).toMatchObject({ kind: "help" });
     expect(version).toEqual({ kind: "help", text: `${resolveCliVersion()}\n` });
@@ -253,7 +253,7 @@ describe("parseCli", () => {
       ["--fast", "--experimental"],
       ["--experimental", "--fast"],
     ]) {
-      expect(await parseCli(["bun", "hunk", ...flags, "show"])).toMatchObject({
+      expect(await parseCli(["bun", "hunkt", ...flags, "show"])).toMatchObject({
         kind: "show",
         options: { experimental: true, fast: true },
       });
@@ -261,8 +261,8 @@ describe("parseCli", () => {
   });
 
   test("keeps fast disabled by default and treats it as a pathspec after --", async () => {
-    const normal = await parseCli(["bun", "hunk", "diff"]);
-    const pathspec = await parseCli(["bun", "hunk", "diff", "--", "--fast"]);
+    const normal = await parseCli(["bun", "hunkt", "diff"]);
+    const pathspec = await parseCli(["bun", "hunkt", "diff", "--", "--fast"]);
 
     expect(normal).toMatchObject({ kind: "vcs", options: { fast: undefined } });
     expect(pathspec).toMatchObject({
@@ -273,8 +273,8 @@ describe("parseCli", () => {
   });
 
   test("parses transparent background toggles", async () => {
-    const transparent = await parseCli(["bun", "hunk", "diff", "--transparent-bg"]);
-    const opaque = await parseCli(["bun", "hunk", "diff", "--no-transparent-bg"]);
+    const transparent = await parseCli(["bun", "hunkt", "diff", "--transparent-bg"]);
+    const opaque = await parseCli(["bun", "hunkt", "diff", "--no-transparent-bg"]);
 
     expect(transparent).toMatchObject({
       kind: "vcs",
@@ -291,9 +291,9 @@ describe("parseCli", () => {
   });
 
   test("parses sidebar toggles", async () => {
-    const shown = await parseCli(["bun", "hunk", "diff", "--sidebar"]);
-    const hidden = await parseCli(["bun", "hunk", "diff", "--no-sidebar"]);
-    const unset = await parseCli(["bun", "hunk", "diff"]);
+    const shown = await parseCli(["bun", "hunkt", "diff", "--sidebar"]);
+    const hidden = await parseCli(["bun", "hunkt", "diff", "--no-sidebar"]);
+    const unset = await parseCli(["bun", "hunkt", "diff"]);
 
     expect(shown).toMatchObject({ kind: "vcs", options: { sidebar: true } });
     expect(hidden).toMatchObject({ kind: "vcs", options: { sidebar: false } });
@@ -321,7 +321,7 @@ describe("parseCli", () => {
     ] as const;
 
     for (const [pathspec, option] of cases) {
-      const parsed = await parseCli(["bun", "hunk", "diff", "--", pathspec]);
+      const parsed = await parseCli(["bun", "hunkt", "diff", "--", pathspec]);
 
       expect(parsed).toMatchObject({ kind: "vcs", pathspecs: [pathspec] });
       if (parsed.kind !== "vcs") throw new Error("Expected a VCS diff input.");
@@ -330,16 +330,16 @@ describe("parseCli", () => {
   });
 
   test("parses staged git-style diff aliases", async () => {
-    const staged = await parseCli(["bun", "hunk", "diff", "--staged"]);
-    const cached = await parseCli(["bun", "hunk", "diff", "--cached"]);
+    const staged = await parseCli(["bun", "hunkt", "diff", "--staged"]);
+    const cached = await parseCli(["bun", "hunkt", "diff", "--cached"]);
 
     expect(staged).toMatchObject({ kind: "vcs", staged: true });
     expect(cached).toMatchObject({ kind: "vcs", staged: true });
   });
 
   test("parses untracked file toggles for git diff", async () => {
-    const excluded = await parseCli(["bun", "hunk", "diff", "--exclude-untracked"]);
-    const included = await parseCli(["bun", "hunk", "diff", "--no-exclude-untracked"]);
+    const excluded = await parseCli(["bun", "hunkt", "diff", "--exclude-untracked"]);
+    const included = await parseCli(["bun", "hunkt", "diff", "--no-exclude-untracked"]);
 
     expect(excluded).toMatchObject({
       kind: "vcs",
@@ -364,7 +364,7 @@ describe("parseCli", () => {
     writeFileSync(left, "before\n");
     writeFileSync(right, "after\n");
 
-    const parsed = await parseCli(["bun", "hunk", "diff", left, right, "--mode", "stack"]);
+    const parsed = await parseCli(["bun", "hunkt", "diff", left, right, "--mode", "stack"]);
 
     expect(parsed).toMatchObject({
       kind: "diff",
@@ -379,7 +379,7 @@ describe("parseCli", () => {
   test("parses pathspec-limited git diffs", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "diff",
       "main",
       "--",
@@ -395,7 +395,7 @@ describe("parseCli", () => {
   });
 
   test("parses target followed by pathspecs without a separator", async () => {
-    const parsed = await parseCli(["bun", "hunk", "diff", "trunk()..@", ".github"]);
+    const parsed = await parseCli(["bun", "hunkt", "diff", "trunk()..@", ".github"]);
 
     expect(parsed).toMatchObject({
       kind: "vcs",
@@ -405,7 +405,7 @@ describe("parseCli", () => {
   });
 
   test("parses show mode with optional ref and pathspecs", async () => {
-    const parsed = await parseCli(["bun", "hunk", "show", "HEAD~1", "--", "src/app.ts"]);
+    const parsed = await parseCli(["bun", "hunkt", "show", "HEAD~1", "--", "src/app.ts"]);
 
     expect(parsed).toMatchObject({
       kind: "show",
@@ -415,7 +415,7 @@ describe("parseCli", () => {
   });
 
   test("parses general pager mode", async () => {
-    const parsed = await parseCli(["bun", "hunk", "pager", "--theme", "github-light-default"]);
+    const parsed = await parseCli(["bun", "hunkt", "pager", "--theme", "github-light-default"]);
 
     expect(parsed).toMatchObject({
       kind: "pager",
@@ -425,51 +425,51 @@ describe("parseCli", () => {
     });
   });
 
-  test("prints the bundled skill path for hunk skill path", async () => {
-    const parsed = await parseCli(["bun", "hunk", "skill", "path"]);
+  test("prints the bundled skill path for hunkt skill path", async () => {
+    const parsed = await parseCli(["bun", "hunkt", "skill", "path"]);
 
     expect(parsed.kind).toBe("help");
     if (parsed.kind !== "help") {
       throw new Error("Expected bundled skill path output.");
     }
 
-    expect(parsed.text).toEndWith(`${join("skills", "hunk-review", "SKILL.md")}\n`);
+    expect(parsed.text).toEndWith(`${join("skills", "hunkt-review", "SKILL.md")}\n`);
   });
 
   test("prints a named bundled skill path, by name or alias", async () => {
-    for (const requested of ["hunk-extensions", "extensions"]) {
-      const parsed = await parseCli(["bun", "hunk", "skill", "path", requested]);
+    for (const requested of ["hunkt-extensions", "extensions"]) {
+      const parsed = await parseCli(["bun", "hunkt", "skill", "path", requested]);
 
       expect(parsed.kind).toBe("help");
       if (parsed.kind !== "help") {
         throw new Error("Expected bundled skill path output.");
       }
 
-      expect(parsed.text).toEndWith(`${join("skills", "hunk-extensions", "SKILL.md")}\n`);
+      expect(parsed.text).toEndWith(`${join("skills", "hunkt-extensions", "SKILL.md")}\n`);
     }
   });
 
-  test("prints skill help for hunk skill --help", async () => {
-    const parsed = await parseCli(["bun", "hunk", "skill", "--help"]);
+  test("prints skill help for hunkt skill --help", async () => {
+    const parsed = await parseCli(["bun", "hunkt", "skill", "--help"]);
 
     expect(parsed).toEqual({
       kind: "help",
       text: [
-        "Usage: hunk skill path [name]",
+        "Usage: hunkt skill path [name]",
         "",
         "Print a bundled Hunk skill path.",
         "Load or symlink that file in your coding agent to keep it in sync across Hunk upgrades.",
         "",
         "Skills:",
-        `  hunk-review (default, "review")   review a live Hunk session with \`hunk session\` commands`,
-        `  hunk-extensions ("extensions")    build extensions against the hunkdiff/extension API`,
+        `  hunkt-review (default, "review")   review a live Hunk session with \`hunkt session\` commands`,
+        `  hunkt-extensions ("extensions")    build extensions against the hunkdiff/extension API`,
         "",
       ].join("\n"),
     });
   });
 
   test("parses the daemon serve command", async () => {
-    const parsed = await parseCli(["bun", "hunk", "daemon", "serve"]);
+    const parsed = await parseCli(["bun", "hunkt", "daemon", "serve"]);
 
     expect(parsed).toEqual({
       kind: "daemon-serve",
@@ -477,7 +477,7 @@ describe("parseCli", () => {
   });
 
   test("parses the legacy MCP daemon alias", async () => {
-    const parsed = await parseCli(["bun", "hunk", "mcp", "serve"]);
+    const parsed = await parseCli(["bun", "hunkt", "mcp", "serve"]);
 
     expect(parsed).toEqual({
       kind: "daemon-serve",
@@ -485,7 +485,7 @@ describe("parseCli", () => {
   });
 
   test("parses session list mode", async () => {
-    const parsed = await parseCli(["bun", "hunk", "session", "list", "--json"]);
+    const parsed = await parseCli(["bun", "hunkt", "session", "list", "--json"]);
 
     expect(parsed).toEqual({
       kind: "session",
@@ -495,7 +495,7 @@ describe("parseCli", () => {
   });
 
   test("parses session get by repo alias", async () => {
-    const parsed = await parseCli(["bun", "hunk", "session", "get", "--repo", "."]);
+    const parsed = await parseCli(["bun", "hunkt", "session", "get", "--repo", "."]);
 
     expect(parsed).toMatchObject({
       kind: "session",
@@ -513,7 +513,7 @@ describe("parseCli", () => {
     const subdir = join(repoRoot, "packages", "app");
     mkdirSync(subdir, { recursive: true });
 
-    const parsed = await parseCli(["bun", "hunk", "session", "get", "--repo", subdir]);
+    const parsed = await parseCli(["bun", "hunkt", "session", "get", "--repo", subdir]);
 
     expect(parsed).toMatchObject({
       kind: "session",
@@ -534,7 +534,7 @@ describe("parseCli", () => {
       return;
     }
 
-    const parsed = await parseCli(["bun", "hunk", "session", "get", "--repo", link]);
+    const parsed = await parseCli(["bun", "hunkt", "session", "get", "--repo", link]);
 
     expect(parsed).toMatchObject({
       kind: "session",
@@ -544,7 +544,7 @@ describe("parseCli", () => {
   });
 
   test("parses session review by repo alias", async () => {
-    const parsed = await parseCli(["bun", "hunk", "session", "review", "--repo", ".", "--json"]);
+    const parsed = await parseCli(["bun", "hunkt", "session", "review", "--repo", ".", "--json"]);
 
     expect(parsed).toMatchObject({
       kind: "session",
@@ -560,7 +560,7 @@ describe("parseCli", () => {
   test("parses session review with raw patch export enabled", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "review",
       "--repo",
@@ -583,7 +583,7 @@ describe("parseCli", () => {
   test("parses session review with live notes included", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "review",
       "session-1",
@@ -604,7 +604,7 @@ describe("parseCli", () => {
   test("parses session navigate by hunk number", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "navigate",
       "session-1",
@@ -628,7 +628,7 @@ describe("parseCli", () => {
   test("parses session reload with nested show syntax", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "reload",
       "session-1",
@@ -656,7 +656,7 @@ describe("parseCli", () => {
   test("parses split session reload with a separate session path and source directory", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "reload",
       "--session-path",
@@ -690,7 +690,7 @@ describe("parseCli", () => {
 
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "reload",
       "--repo",
@@ -708,14 +708,14 @@ describe("parseCli", () => {
 
   test("rejects session reload without a nested command separator", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "reload", "session-1", "show", "HEAD~1"]),
+      parseCli(["bun", "hunkt", "session", "reload", "session-1", "show", "HEAD~1"]),
     ).rejects.toThrow("Pass the replacement Hunk command after `--`");
   });
 
   test("parses session comment add without focusing by default", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "add",
@@ -748,7 +748,7 @@ describe("parseCli", () => {
   });
 
   test("parses markup render with defaults and options", async () => {
-    expect(await parseCli(["bun", "hunk", "markup", "render"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "markup", "render"])).toEqual({
       kind: "markup-render",
       file: "-",
       width: 56,
@@ -760,7 +760,7 @@ describe("parseCli", () => {
     expect(
       await parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "markup",
         "render",
         "note.stml",
@@ -784,21 +784,21 @@ describe("parseCli", () => {
 
   test("rejects invalid markup render color modes and unknown markup subcommands", async () => {
     await expect(
-      parseCli(["bun", "hunk", "markup", "render", "-", "--color", "sometimes"]),
+      parseCli(["bun", "hunkt", "markup", "render", "-", "--color", "sometimes"]),
     ).rejects.toThrow("--color must be auto, always, or never.");
-    await expect(parseCli(["bun", "hunk", "markup", "bogus"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "markup", "bogus"])).rejects.toThrow(
       "Supported markup subcommands are render and guide.",
     );
   });
 
   test("parses markup guide", async () => {
-    expect(await parseCli(["bun", "hunk", "markup", "guide"])).toEqual({ kind: "markup-guide" });
+    expect(await parseCli(["bun", "hunkt", "markup", "guide"])).toEqual({ kind: "markup-guide" });
   });
 
   test("parses session comment add with --markup", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "add",
@@ -828,7 +828,7 @@ describe("parseCli", () => {
   test("parses session comment add with --focus", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "add",
@@ -872,7 +872,7 @@ describe("parseCli", () => {
     try {
       const parsed = await parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "comment",
         "apply",
@@ -913,7 +913,7 @@ describe("parseCli", () => {
 
     try {
       await expect(
-        parseCli(["bun", "hunk", "session", "comment", "apply", "session-1", "--stdin"]),
+        parseCli(["bun", "hunkt", "session", "comment", "apply", "session-1", "--stdin"]),
       ).rejects.toThrow("Session comment apply expected at least one comment.");
     } finally {
       Bun.stdin.stream = originalStdin;
@@ -936,7 +936,7 @@ describe("parseCli", () => {
 
     try {
       await expect(
-        parseCli(["bun", "hunk", "session", "comment", "apply", "session-1", "--stdin"]),
+        parseCli(["bun", "hunkt", "session", "comment", "apply", "session-1", "--stdin"]),
       ).rejects.toThrow("Comment 1 must not specify both `hunk` and `hunkNumber`.");
     } finally {
       Bun.stdin.stream = originalStdin;
@@ -946,7 +946,7 @@ describe("parseCli", () => {
   test("parses session comment list with file filter", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "list",
@@ -966,15 +966,15 @@ describe("parseCli", () => {
   });
 
   test("rejects the removed session note namespace", async () => {
-    await expect(parseCli(["bun", "hunk", "session", "note", "list", "session-1"])).rejects.toThrow(
-      "Unknown session command: note",
-    );
+    await expect(
+      parseCli(["bun", "hunkt", "session", "note", "list", "session-1"]),
+    ).rejects.toThrow("Unknown session command: note");
   });
 
   test("parses session comment list with review-note type filter", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "list",
@@ -994,14 +994,14 @@ describe("parseCli", () => {
 
   test("rejects session comment list with an unsupported type", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "comment", "list", "session-1", "--type", "robot"]),
+      parseCli(["bun", "hunkt", "session", "comment", "list", "session-1", "--type", "robot"]),
     ).rejects.toThrow("Comment type must be one of live, all, ai, agent, or user.");
   });
 
   test("parses session comment rm", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "rm",
@@ -1023,7 +1023,7 @@ describe("parseCli", () => {
     mkdirSync(join(repo, ".git"));
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "rm",
@@ -1044,7 +1044,7 @@ describe("parseCli", () => {
   test("parses session comment clear", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "clear",
@@ -1067,7 +1067,7 @@ describe("parseCli", () => {
   test("parses session comment clear with user notes included", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "comment",
       "clear",
@@ -1089,7 +1089,7 @@ describe("parseCli", () => {
   test("parses session highlight add with defaults", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "highlight",
       "add",
@@ -1121,7 +1121,7 @@ describe("parseCli", () => {
   test("parses session highlight add with tone, old side, and focus", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "highlight",
       "add",
@@ -1159,7 +1159,7 @@ describe("parseCli", () => {
   test("rejects session highlight add with an empty range, bad tone, or missing target", async () => {
     const base = [
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "highlight",
       "add",
@@ -1183,7 +1183,7 @@ describe("parseCli", () => {
   });
 
   test("parses session highlight clear globally and per file", async () => {
-    expect(await parseCli(["bun", "hunk", "session", "highlight", "clear", "session-1"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "session", "highlight", "clear", "session-1"])).toEqual({
       kind: "session",
       action: "highlight-clear",
       selector: { sessionId: "session-1" },
@@ -1193,7 +1193,7 @@ describe("parseCli", () => {
     expect(
       await parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "highlight",
         "clear",
@@ -1213,13 +1213,13 @@ describe("parseCli", () => {
   });
 
   test("rejects unknown session highlight subcommands", async () => {
-    await expect(parseCli(["bun", "hunk", "session", "highlight", "paint"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "session", "highlight", "paint"])).rejects.toThrow(
       "Supported highlight subcommands are add and clear.",
     );
   });
 
   test("rejects session commands without an explicit target", async () => {
-    await expect(parseCli(["bun", "hunk", "session", "get"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "session", "get"])).rejects.toThrow(
       "Specify one live Hunk session with <session-id> or --repo <path>.",
     );
   });
@@ -1227,7 +1227,7 @@ describe("parseCli", () => {
   test("parses session navigate with --next-comment", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "navigate",
       "--repo",
@@ -1247,7 +1247,7 @@ describe("parseCli", () => {
   test("parses session navigate with --prev-comment", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "navigate",
       "session-1",
@@ -1268,7 +1268,7 @@ describe("parseCli", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "navigate",
         "session-1",
@@ -1280,7 +1280,7 @@ describe("parseCli", () => {
 
   test("rejects session navigate without --file when not using comment direction", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "navigate", "session-1", "--hunk", "1"]),
+      parseCli(["bun", "hunkt", "session", "navigate", "session-1", "--hunk", "1"]),
     ).rejects.toThrow("Specify --file");
   });
 
@@ -1288,7 +1288,7 @@ describe("parseCli", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "navigate",
         "session-1",
@@ -1304,12 +1304,12 @@ describe("parseCli", () => {
 
   test("rejects session comment clear without confirmation", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "comment", "clear", "session-1"]),
+      parseCli(["bun", "hunkt", "session", "comment", "clear", "session-1"]),
     ).rejects.toThrow("Pass --yes to clear comments.");
   });
 
   test("parses stash show mode", async () => {
-    const parsed = await parseCli(["bun", "hunk", "stash", "show", "stash@{1}"]);
+    const parsed = await parseCli(["bun", "hunkt", "stash", "show", "stash@{1}"]);
 
     expect(parsed).toMatchObject({
       kind: "stash-show",
@@ -1318,11 +1318,11 @@ describe("parseCli", () => {
   });
 
   test("rejects removed legacy git alias", async () => {
-    await expect(parseCli(["bun", "hunk", "git"])).rejects.toThrow("Unknown command: git");
+    await expect(parseCli(["bun", "hunkt", "git"])).rejects.toThrow("Unknown command: git");
   });
 
   test("parses patch mode from a file", async () => {
-    const parsed = await parseCli(["bun", "hunk", "patch", "changes.patch", "--pager"]);
+    const parsed = await parseCli(["bun", "hunkt", "patch", "changes.patch", "--pager"]);
 
     expect(parsed).toMatchObject({
       kind: "patch",
@@ -1341,7 +1341,7 @@ describe("parseCli", () => {
   test("parses difftool mode with display path", async () => {
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "difftool",
       "left.ts",
       "right.ts",
@@ -1370,7 +1370,7 @@ describe("parseCli", () => {
 describe("parseCli command help text", () => {
   /** Parse `tokens` and assert it resolved to help output, returning the text. */
   async function expectHelp(tokens: string[]) {
-    const parsed = await parseCli(["bun", "hunk", ...tokens]);
+    const parsed = await parseCli(["bun", "hunkt", ...tokens]);
     expect(parsed.kind).toBe("help");
     if (parsed.kind !== "help") {
       throw new Error(`Expected help output for: ${tokens.join(" ")}`);
@@ -1388,8 +1388,8 @@ describe("parseCli command help text", () => {
 
   test("renders the stash command overview and the stash show command help", async () => {
     const overview = await expectHelp(["stash"]);
-    expect(overview).toContain("Usage: hunk stash show [ref] [options]");
-    expect(overview).toContain("hunk stash show stash@{1}");
+    expect(overview).toContain("Usage: hunkt stash show [ref] [options]");
+    expect(overview).toContain("hunkt stash show stash@{1}");
     expect(overview).toBe(await expectHelp(["stash", "--help"]));
 
     expect(await expectHelp(["stash", "show", "--help"])).toContain(
@@ -1399,8 +1399,8 @@ describe("parseCli command help text", () => {
 
   test("renders the daemon overview and the daemon serve command help", async () => {
     const overview = await expectHelp(["daemon"]);
-    expect(overview).toContain("Usage: hunk daemon serve");
-    expect(overview).toContain("HUNK_MCP_PORT");
+    expect(overview).toContain("Usage: hunkt daemon serve");
+    expect(overview).toContain("HUNKT_MCP_PORT");
     expect(overview).toBe(await expectHelp(["daemon", "--help"]));
 
     expect(await expectHelp(["daemon", "serve", "--help"])).toContain(
@@ -1410,8 +1410,8 @@ describe("parseCli command help text", () => {
 
   test("renders the session overview for a bare session command and --help", async () => {
     const overview = await expectHelp(["session"]);
-    expect(overview).toContain("Usage: hunk session <subcommand> [options]");
-    expect(overview).toContain("hunk session comment add");
+    expect(overview).toContain("Usage: hunkt session <subcommand> [options]");
+    expect(overview).toContain("hunkt session comment add");
     expect(overview).toBe(await expectHelp(["session", "--help"]));
   });
 
@@ -1424,18 +1424,18 @@ describe("parseCli command help text", () => {
 
     const reloadHelp = await expectHelp(["session", "reload", "--help"]);
     expect(reloadHelp).toContain("replace the contents of one live Hunk session");
-    expect(reloadHelp).toContain("hunk session reload --repo . -- diff");
+    expect(reloadHelp).toContain("hunkt session reload --repo . -- diff");
   });
 
   test("renders skill help for both `skill --help` and `skill path --help`", async () => {
     const bare = await expectHelp(["skill", "--help"]);
-    expect(bare).toContain("Usage: hunk skill path");
+    expect(bare).toContain("Usage: hunkt skill path");
     expect(await expectHelp(["skill", "path", "--help"])).toBe(bare);
   });
 
   test("renders the comment overview and per-comment-subcommand help", async () => {
     const overview = await expectHelp(["session", "comment"]);
-    expect(overview).toContain("hunk session comment add");
+    expect(overview).toContain("hunkt session comment add");
     expect(overview).toBe(await expectHelp(["session", "comment", "--help"]));
 
     expect(await expectHelp(["session", "comment", "add", "--help"])).toContain(
@@ -1463,7 +1463,7 @@ describe("parseCli argument validation", () => {
   function parseTestNavigationTarget(flag: "--hunk" | "--old-line" | "--new-line", value: string) {
     return parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "session",
       "navigate",
       "session-1",
@@ -1476,20 +1476,20 @@ describe("parseCli argument validation", () => {
 
   test("rejects invalid tab widths", async () => {
     for (const value of ["0", "17", "4x"]) {
-      await expect(parseCli(["bun", "hunk", "diff", "--tab-width", value])).rejects.toThrow(
+      await expect(parseCli(["bun", "hunkt", "diff", "--tab-width", value])).rejects.toThrow(
         "Invalid tab width",
       );
     }
   });
 
   test("rejects an invalid layout mode and rethrows the parser error", async () => {
-    await expect(parseCli(["bun", "hunk", "diff", "--mode", "bogus"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "diff", "--mode", "bogus"])).rejects.toThrow(
       "Invalid layout mode: bogus",
     );
   });
 
   test("rethrows commander errors for unknown options", async () => {
-    await expect(parseCli(["bun", "hunk", "diff", "--not-a-real-flag"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "diff", "--not-a-real-flag"])).rejects.toThrow(
       /unknown option/,
     );
   });
@@ -1522,48 +1522,48 @@ describe("parseCli argument validation", () => {
   );
 
   test("rejects ambiguous diff input that is neither a single target nor a file pair", async () => {
-    await expect(parseCli(["bun", "hunk", "diff", "--staged", "left", "right"])).rejects.toThrow(
-      "Use `hunk diff [target]",
+    await expect(parseCli(["bun", "hunkt", "diff", "--staged", "left", "right"])).rejects.toThrow(
+      "Use `hunkt diff [target]",
     );
   });
 
   test("rejects specifying both a session id and --repo for an explicit selector", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "get", "session-1", "--repo", "."]),
+      parseCli(["bun", "hunkt", "session", "get", "session-1", "--repo", "."]),
     ).rejects.toThrow("Specify either <session-id> or --repo <path>, not both.");
   });
 
   test("rejects prefixed review flags for non-review commands", async () => {
-    await expect(parseCli(["bun", "hunk", "--experimental", "session", "list"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "--experimental", "session", "list"])).rejects.toThrow(
       "must be used with a Hunk review command",
     );
-    await expect(parseCli(["bun", "hunk", "--fast", "session", "list"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "--fast", "session", "list"])).rejects.toThrow(
       "`--fast` must be used with a Hunk review command",
     );
   });
 
   test("rejects unknown top-level, skill, daemon, stash, and comment subcommands", async () => {
-    await expect(parseCli(["bun", "hunk", "skill", "bogus"])).rejects.toThrow(
-      "Only `hunk skill path` is supported.",
+    await expect(parseCli(["bun", "hunkt", "skill", "bogus"])).rejects.toThrow(
+      "Only `hunkt skill path` is supported.",
     );
-    await expect(parseCli(["bun", "hunk", "skill", "path", "bogus"])).rejects.toThrow(
-      'Unknown skill "bogus". Bundled skills are hunk-review and hunk-extensions.',
+    await expect(parseCli(["bun", "hunkt", "skill", "path", "bogus"])).rejects.toThrow(
+      'Unknown skill "bogus". Bundled skills are hunkt-review and hunkt-extensions.',
     );
     // Maintainer-only skills are not bundled, so naming one is not a path lookup.
-    await expect(parseCli(["bun", "hunk", "skill", "path", "launch-video"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "skill", "path", "launch-video"])).rejects.toThrow(
       'Unknown skill "launch-video".',
     );
     await expect(
-      parseCli(["bun", "hunk", "skill", "path", "hunk-review", "extra"]),
-    ).rejects.toThrow("`hunk skill path` accepts at most one skill name.");
-    await expect(parseCli(["bun", "hunk", "daemon", "bogus"])).rejects.toThrow(
-      "Only `hunk daemon serve` is supported.",
+      parseCli(["bun", "hunkt", "skill", "path", "hunkt-review", "extra"]),
+    ).rejects.toThrow("`hunkt skill path` accepts at most one skill name.");
+    await expect(parseCli(["bun", "hunkt", "daemon", "bogus"])).rejects.toThrow(
+      "Only `hunkt daemon serve` is supported.",
     );
-    await expect(parseCli(["bun", "hunk", "stash", "bogus"])).rejects.toThrow(
-      "Only `hunk stash show` is supported.",
+    await expect(parseCli(["bun", "hunkt", "stash", "bogus"])).rejects.toThrow(
+      "Only `hunkt stash show` is supported.",
     );
     await expect(
-      parseCli(["bun", "hunk", "session", "comment", "bogus", "session-1"]),
+      parseCli(["bun", "hunkt", "session", "comment", "bogus", "session-1"]),
     ).rejects.toThrow("Supported comment subcommands are add, apply, list, rm, and clear.");
   });
 
@@ -1571,7 +1571,7 @@ describe("parseCli argument validation", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "comment",
         "add",
@@ -1586,13 +1586,13 @@ describe("parseCli argument validation", () => {
 
   test("rejects comment apply without --stdin before reading any input", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "comment", "apply", "session-1"]),
+      parseCli(["bun", "hunkt", "session", "comment", "apply", "session-1"]),
     ).rejects.toThrow("Pass --stdin to read batch comments from stdin JSON.");
   });
 
   test("rejects comment rm with the wrong target count for each selector style", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "comment", "rm", "session-1"]),
+      parseCli(["bun", "hunkt", "session", "comment", "rm", "session-1"]),
     ).rejects.toThrow(
       "Specify a session id and comment id, or pass --repo <path> with one comment id.",
     );
@@ -1602,7 +1602,7 @@ describe("parseCli argument validation", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "comment",
         "rm",
@@ -1617,13 +1617,13 @@ describe("parseCli argument validation", () => {
 
 describe("parseCli session reload validation", () => {
   test("rejects a reload with the `--` separator but no nested command", async () => {
-    await expect(parseCli(["bun", "hunk", "session", "reload", "session-1", "--"])).rejects.toThrow(
-      "Pass the replacement Hunk command after `--`",
-    );
+    await expect(
+      parseCli(["bun", "hunkt", "session", "reload", "session-1", "--"]),
+    ).rejects.toThrow("Pass the replacement Hunk command after `--`");
   });
 
   test("rejects a reload that has no session target at all", async () => {
-    await expect(parseCli(["bun", "hunk", "session", "reload", "--", "diff"])).rejects.toThrow(
+    await expect(parseCli(["bun", "hunkt", "session", "reload", "--", "diff"])).rejects.toThrow(
       "Specify one live Hunk session with <session-id> or --repo <path>",
     );
   });
@@ -1632,7 +1632,7 @@ describe("parseCli session reload validation", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "reload",
         "--session-path",
@@ -1649,7 +1649,7 @@ describe("parseCli session reload validation", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "reload",
         "session-1",
@@ -1663,7 +1663,7 @@ describe("parseCli session reload validation", () => {
     await expect(
       parseCli([
         "bun",
-        "hunk",
+        "hunkt",
         "session",
         "reload",
         "session-1",
@@ -1677,15 +1677,15 @@ describe("parseCli session reload validation", () => {
 
   test("rejects reloading into commands that cannot back a live session", async () => {
     await expect(
-      parseCli(["bun", "hunk", "session", "reload", "session-1", "--", "pager"]),
+      parseCli(["bun", "hunkt", "session", "reload", "session-1", "--", "pager"]),
     ).rejects.toThrow("Session reload requires a Hunk review command after --");
 
     await expect(
-      parseCli(["bun", "hunk", "session", "reload", "session-1", "--", "session", "list"]),
+      parseCli(["bun", "hunkt", "session", "reload", "session-1", "--", "session", "list"]),
     ).rejects.toThrow("Session reload cannot invoke another session command.");
 
     await expect(
-      parseCli(["bun", "hunk", "session", "reload", "session-1", "--", "patch"]),
+      parseCli(["bun", "hunkt", "session", "reload", "session-1", "--", "patch"]),
     ).rejects.toThrow("Session reload does not support `patch -` or stdin-backed patch input.");
   });
 });
@@ -1694,7 +1694,7 @@ describe("parseCli session comment apply payload", () => {
   /** Parse a `comment apply` invocation reading `payload` from stdin. */
   function applyWithPayload(payload: string) {
     return withStdin(payload, () =>
-      parseCli(["bun", "hunk", "session", "comment", "apply", "session-1", "--stdin"]),
+      parseCli(["bun", "hunkt", "session", "comment", "apply", "session-1", "--stdin"]),
     );
   }
 
@@ -1785,7 +1785,7 @@ describe("parseCli session comment apply payload", () => {
 
 describe("parseCli extension flags", () => {
   test("defaults to leaving extension options unset", async () => {
-    const parsed = await parseCli(["bun", "hunk", "show", "HEAD"]);
+    const parsed = await parseCli(["bun", "hunkt", "show", "HEAD"]);
 
     if (parsed.kind !== "show") {
       throw new Error("Expected a show command.");
@@ -1796,7 +1796,7 @@ describe("parseCli extension flags", () => {
   });
 
   test("parses --no-extensions into a disabled extension option", async () => {
-    const parsed = await parseCli(["bun", "hunk", "show", "HEAD", "--no-extensions"]);
+    const parsed = await parseCli(["bun", "hunkt", "show", "HEAD", "--no-extensions"]);
 
     if (parsed.kind !== "show") {
       throw new Error("Expected a show command.");
@@ -1810,7 +1810,7 @@ describe("parseCli extension flags", () => {
     const second = join("dev", "blame.ts");
     const parsed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "patch",
       "-",
       "--extension",
@@ -1827,7 +1827,7 @@ describe("parseCli extension flags", () => {
   });
 
   test("documents the extension flags in top-level help", async () => {
-    const parsed = await parseCli(["bun", "hunk"]);
+    const parsed = await parseCli(["bun", "hunkt"]);
 
     if (parsed.kind !== "help") {
       throw new Error("Expected top-level help output.");
@@ -1840,7 +1840,7 @@ describe("parseCli extension flags", () => {
 
 describe("parseCli extension management commands", () => {
   test("parses install with its source and confirmation flag", async () => {
-    const parsed = await parseCli(["bun", "hunk", "extension", "install", "acme/hunk-ext@v1"]);
+    const parsed = await parseCli(["bun", "hunkt", "extension", "install", "acme/hunk-ext@v1"]);
     expect(parsed).toEqual({
       kind: "extension-manage",
       action: "install",
@@ -1850,7 +1850,7 @@ describe("parseCli extension management commands", () => {
 
     const confirmed = await parseCli([
       "bun",
-      "hunk",
+      "hunkt",
       "extension",
       "install",
       "acme/hunk-ext",
@@ -1865,27 +1865,27 @@ describe("parseCli extension management commands", () => {
   });
 
   test("parses list, update, and remove with their targets", async () => {
-    expect(await parseCli(["bun", "hunk", "extension", "list"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "extension", "list"])).toEqual({
       kind: "extension-manage",
       action: "list",
     });
-    expect(await parseCli(["bun", "hunk", "extension", "update"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "extension", "update"])).toEqual({
       kind: "extension-manage",
       action: "update",
       name: undefined,
     });
-    expect(await parseCli(["bun", "hunk", "extension", "update", "hunk-ext"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "extension", "update", "hunk-ext"])).toEqual({
       kind: "extension-manage",
       action: "update",
       name: "hunk-ext",
     });
-    expect(await parseCli(["bun", "hunk", "extension", "remove", "hunk-ext"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "extension", "remove", "hunk-ext"])).toEqual({
       kind: "extension-manage",
       action: "remove",
       name: "hunk-ext",
     });
     // Familiar spellings from other package managers resolve to remove.
-    expect(await parseCli(["bun", "hunk", "extension", "uninstall", "hunk-ext"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "extension", "uninstall", "hunk-ext"])).toEqual({
       kind: "extension-manage",
       action: "remove",
       name: "hunk-ext",
@@ -1893,11 +1893,11 @@ describe("parseCli extension management commands", () => {
   });
 
   test("accepts ext as an alias for extension", async () => {
-    expect(await parseCli(["bun", "hunk", "ext", "list"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "ext", "list"])).toEqual({
       kind: "extension-manage",
       action: "list",
     });
-    expect(await parseCli(["bun", "hunk", "ext", "install", "acme/hunk-ext", "--yes"])).toEqual({
+    expect(await parseCli(["bun", "hunkt", "ext", "install", "acme/hunk-ext", "--yes"])).toEqual({
       kind: "extension-manage",
       action: "install",
       source: "acme/hunk-ext",
@@ -1906,22 +1906,22 @@ describe("parseCli extension management commands", () => {
   });
 
   test("shows extension help for the bare command and rejects unknown subcommands", async () => {
-    const parsed = await parseCli(["bun", "hunk", "extension"]);
+    const parsed = await parseCli(["bun", "hunkt", "extension"]);
     expect(parsed.kind).toBe("help");
     if (parsed.kind === "help") {
-      expect(parsed.text).toContain("hunk extension install <source>");
+      expect(parsed.text).toContain("hunkt extension install <source>");
       expect(parsed.text).toContain("only install repositories you trust");
       expect(parsed.text).toContain("hunk-extension");
     }
 
-    expect(parseCli(["bun", "hunk", "extension", "publish"])).rejects.toThrow(
+    expect(parseCli(["bun", "hunkt", "extension", "publish"])).rejects.toThrow(
       /Supported extension subcommands/,
     );
   });
 
   test("session reload refuses to nest an extension management command", async () => {
     expect(
-      parseCli(["bun", "hunk", "session", "reload", "abc123", "--", "extension", "list"]),
+      parseCli(["bun", "hunkt", "session", "reload", "abc123", "--", "extension", "list"]),
     ).rejects.toThrow(/review command/);
   });
 });

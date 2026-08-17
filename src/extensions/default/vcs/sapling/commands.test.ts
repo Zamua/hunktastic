@@ -73,7 +73,7 @@ describe("sl command helpers", () => {
         slExecutable: "definitely-not-a-real-sl-binary",
       }),
     ).toThrow(
-      'Sapling is required for `hunk diff` when `vcs = "sl"`, but `definitely-not-a-real-sl-binary` was not found in PATH.',
+      'Sapling is required for `hunkt diff` when `vcs = "sl"`, but `definitely-not-a-real-sl-binary` was not found in PATH.',
     );
   });
 
@@ -86,7 +86,7 @@ describe("sl command helpers", () => {
         args: ["root"],
         cwd: dir,
       }),
-    ).toThrow('`hunk diff` must be run inside a Sapling repository when `vcs = "sl"`.');
+    ).toThrow('`hunkt diff` must be run inside a Sapling repository when `vcs = "sl"`.');
   });
 
   test.skipIf(!slAvailable)("reports a friendly error for invalid revsets", () => {
@@ -99,6 +99,6 @@ describe("sl command helpers", () => {
         args: buildSlDiffArgs(input),
         cwd: dir,
       }),
-    ).toThrow("`hunk diff missing_revision` could not resolve Sapling revset `missing_revision`.");
+    ).toThrow("`hunkt diff missing_revision` could not resolve Sapling revset `missing_revision`.");
   });
 });

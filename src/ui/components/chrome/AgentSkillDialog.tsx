@@ -3,10 +3,10 @@ import { fitText, padText } from "../../lib/text";
 import type { AppTheme } from "../../themes";
 import { ModalFrame } from "./ModalFrame";
 
-export const AGENT_SKILL_COMMAND = "hunk skill path";
+export const AGENT_SKILL_COMMAND = "hunkt skill path";
 export const AGENT_SKILL_PROMPT_ROWS = [
   "Load the Hunk skill and use it for this review.",
-  "Run `hunk skill path` to get the skill path.",
+  "Run `hunkt skill path` to get the skill path.",
 ];
 export const AGENT_SKILL_PROMPT = AGENT_SKILL_PROMPT_ROWS.join(" ");
 

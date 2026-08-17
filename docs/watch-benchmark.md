@@ -8,7 +8,7 @@ Benchmark comparing the old 250ms polling watch implementation (npm `hunkdiff@0.
 - **Branch state:** dirty working tree with untracked files
 - **OLD binary:** `/Users/justin/.npm-global/bin/hunk` (npm release 0.17.0, 250ms `setInterval` polling)
 - **NEW binary:** `/Users/justin/.local/bin/hunk` (PR build from `elucid/file-watch`, Chokidar + 10s safety poll)
-- **Command:** `hunk diff --watch`
+- **Command:** `hunkt diff --watch`
 
 ## Method
 
@@ -18,11 +18,11 @@ A wrapper script was placed ahead of real `git` on PATH. It logs every invocatio
 
 ```bash
 #!/bin/bash
-printf '%s %s\n' "$(date +%s.%N)" "$*" >> "${HUNK_BENCH_GIT_LOG}"
+printf '%s %s\n' "$(date +%s.%N)" "$*" >> "${HUNKT_BENCH_GIT_LOG}"
 exec /nix/store/.../git "$@"
 ```
 
-Both versions were launched in separate herdr panes with `HUNK_BENCH_GIT_LOG` and `PATH` set via `--env` on `herdr pane split`. After both rendered their initial diff, the log files were zeroed and CPU times recorded. The benchmark then sampled every 10 seconds for 60 seconds using `ps -p $PID -o cputime=` and `wc -l` on the log files.
+Both versions were launched in separate herdr panes with `HUNKT_BENCH_GIT_LOG` and `PATH` set via `--env` on `herdr pane split`. After both rendered their initial diff, the log files were zeroed and CPU times recorded. The benchmark then sampled every 10 seconds for 60 seconds using `ps -p $PID -o cputime=` and `wc -l` on the log files.
 
 ### Startup time
 

@@ -5,7 +5,7 @@ A flagship Hunk demo: a small command-palette refactor with inline agent rationa
 ## Run
 
 ```bash
-hunk patch examples/3-agent-review-demo/change.patch \
+hunkt patch examples/3-agent-review-demo/change.patch \
   --agent-context examples/3-agent-review-demo/agent-context.json
 ```
 

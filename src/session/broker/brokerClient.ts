@@ -83,7 +83,7 @@ export class SessionBrokerClient<
   ) {}
 
   start() {
-    if (process.env.HUNK_MCP_DISABLE === "1") {
+    if (process.env.HUNKT_MCP_DISABLE === "1") {
       return;
     }
 

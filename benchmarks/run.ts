@@ -35,10 +35,10 @@ function readArgValue(args: string[], index: number) {
 
 function parseArgs(args: string[]): RunOptions {
   const options: RunOptions = {
-    samples: Number(process.env.HUNK_BENCHMARK_SAMPLES ?? 3),
+    samples: Number(process.env.HUNKT_BENCHMARK_SAMPLES ?? 3),
     includeCompetitors: false,
     // Opt-in: a single huge-stream sample can take minutes on slow builds.
-    includeHuge: process.env.HUNK_BENCH_INCLUDE_HUGE === "1",
+    includeHuge: process.env.HUNKT_BENCH_INCLUDE_HUGE === "1",
     scripts: [],
   };
 

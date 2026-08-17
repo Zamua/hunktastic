@@ -134,9 +134,9 @@ export const CLI_REFERENCE_COMMANDS = {
     path: "diff",
     summary: "review diffs or compare two concrete files",
     synopsis: [
-      "hunk diff [target] [-- <pathspec...>]",
-      "hunk diff --staged [-- <pathspec...>]",
-      "hunk diff <left> <right>",
+      "hunkt diff [target] [-- <pathspec...>]",
+      "hunkt diff --staged [-- <pathspec...>]",
+      "hunkt diff <left> <right>",
     ],
     options: DIFF_OPTIONS,
     commonReviewOptions: true,
@@ -145,41 +145,41 @@ export const CLI_REFERENCE_COMMANDS = {
   show: {
     path: "show",
     summary: "review the last commit or a given ref",
-    synopsis: ["hunk show [target] [-- <pathspec...>]"],
+    synopsis: ["hunkt show [target] [-- <pathspec...>]"],
     commonReviewOptions: true,
     watch: true,
   },
   "stash-show": {
     path: "stash show",
     summary: "review a stash entry as a full Hunk changeset",
-    synopsis: ["hunk stash show [ref]"],
+    synopsis: ["hunkt stash show [ref]"],
     commonReviewOptions: true,
     watch: true,
   },
   patch: {
     path: "patch",
     summary: "review a patch file, or read a patch from stdin",
-    synopsis: ["hunk patch [file]"],
+    synopsis: ["hunkt patch [file]"],
     commonReviewOptions: true,
     watch: true,
   },
   pager: {
     path: "pager",
     summary: "general Git pager wrapper with diff detection",
-    synopsis: ["hunk pager"],
+    synopsis: ["hunkt pager"],
     commonReviewOptions: true,
   },
   difftool: {
     path: "difftool",
     summary: "review Git difftool file pairs",
-    synopsis: ["hunk difftool <left> <right> [path]"],
+    synopsis: ["hunkt difftool <left> <right> [path]"],
     commonReviewOptions: true,
     watch: true,
   },
   "markup-render": {
     path: "markup render",
     summary: "preview experimental STML markup as terminal text",
-    synopsis: ["hunk markup render (<file> | -) [options]"],
+    synopsis: ["hunkt markup render (<file> | -) [options]"],
     options: [
       { ...AUXILIARY_AGENT_OPTIONS.markupWidth, parse: "positiveInt", defaultValue: "56" },
       {
@@ -188,29 +188,29 @@ export const CLI_REFERENCE_COMMANDS = {
         defaultValue: "auto",
         commanderDefault: "auto",
       },
-      { flag: "--theme <id>", description: "hunk theme used to resolve colors" },
+      { flag: "--theme <id>", description: "Hunk theme used to resolve colors" },
       { flag: "--json", description: "emit structured JSON" },
     ],
   },
   "markup-guide": {
     path: "markup guide",
     summary: "print the experimental STML authoring guide",
-    synopsis: ["hunk markup guide"],
+    synopsis: ["hunkt markup guide"],
   },
   "skill-path": {
     path: "skill path",
     summary: "print a bundled Hunk skill path",
-    synopsis: ["hunk skill path [name]"],
+    synopsis: ["hunkt skill path [name]"],
   },
   "extension-install": {
     path: "extension install",
     summary: "install a shared extension from a git repository",
     synopsis: [
-      "hunk extension install <owner>/<repo>[@ref]",
-      "hunk extension install git:<host>/<path>[@ref]",
-      "hunk extension install <git-url or local path>[@ref]",
+      "hunkt extension install <owner>/<repo>[@ref]",
+      "hunkt extension install git:<host>/<path>[@ref]",
+      "hunkt extension install <git-url or local path>[@ref]",
     ],
-    aliases: ["hunk ext install"],
+    aliases: ["hunkt ext install"],
     options: [
       {
         flag: "--yes",
@@ -220,27 +220,27 @@ export const CLI_REFERENCE_COMMANDS = {
   },
   "extension-list": {
     path: "extension list",
-    summary: "list extensions installed with `hunk extension install`",
-    synopsis: ["hunk extension list"],
-    aliases: ["hunk ext list"],
+    summary: "list extensions installed with `hunkt extension install`",
+    synopsis: ["hunkt extension list"],
+    aliases: ["hunkt ext list"],
   },
   "extension-update": {
     path: "extension update",
     summary: "re-clone managed extension installs from their recorded sources",
-    synopsis: ["hunk extension update [name]"],
-    aliases: ["hunk ext update"],
+    synopsis: ["hunkt extension update [name]"],
+    aliases: ["hunkt ext update"],
   },
   "extension-remove": {
     path: "extension remove",
     summary: "remove one managed extension install",
-    synopsis: ["hunk extension remove <name>"],
-    aliases: ["hunk ext remove"],
+    synopsis: ["hunkt extension remove <name>"],
+    aliases: ["hunkt ext remove"],
   },
   "daemon-serve": {
     path: "daemon serve",
     summary: "run the local Hunk session daemon and websocket session broker",
-    synopsis: ["hunk daemon serve"],
-    aliases: ["hunk mcp serve"],
+    synopsis: ["hunkt daemon serve"],
+    aliases: ["hunkt mcp serve"],
   },
 } as const satisfies Record<string, CliReferenceCommand>;
 
@@ -421,7 +421,7 @@ export function createCliReferenceCommand(key: keyof typeof CLI_REFERENCE_COMMAN
   return command;
 }
 
-/** Render plain-text version output for `hunk --version`. */
+/** Render plain-text version output for `hunkt --version`. */
 function renderCliVersion() {
   return `${resolveCliVersion()}\n`;
 }
@@ -431,43 +431,43 @@ function renderBundledSkillPath(name?: BundledSkillName) {
   return `${resolveBundledSkillPath(name)}\n`;
 }
 
-/** Build the `hunk skill` help text. */
+/** Build the `hunkt skill` help text. */
 function renderSkillHelp() {
   return [
-    "Usage: hunk skill path [name]",
+    "Usage: hunkt skill path [name]",
     "",
     "Print a bundled Hunk skill path.",
     "Load or symlink that file in your coding agent to keep it in sync across Hunk upgrades.",
     "",
     "Skills:",
-    `  hunk-review (default, "review")   review a live Hunk session with \`hunk session\` commands`,
-    `  hunk-extensions ("extensions")    build extensions against the hunkdiff/extension API`,
+    `  hunkt-review (default, "review")   review a live Hunk session with \`hunkt session\` commands`,
+    `  hunkt-extensions ("extensions")    build extensions against the hunkdiff/extension API`,
     "",
   ].join("\n");
 }
 
-/** Build the top-level help text shown by bare `hunk` and `hunk --help`. */
+/** Build the top-level help text shown by bare `hunkt` and `hunkt --help`. */
 function renderCliHelp() {
   return [
-    "Usage: hunk <command> [options]",
+    "Usage: hunkt <command> [options]",
     "",
     "Desktop-inspired terminal diff viewer for agent-authored changesets.",
     "",
     "Commands:",
-    "  hunk diff [target] [-- <pathspec...>]   review working tree changes or compare against a target",
-    "  hunk diff --staged [-- <pathspec...>]   review staged changes",
-    "  hunk diff <left> <right>                compare two concrete files",
-    "  hunk show [target] [-- <pathspec...>]   review the last commit or a given target",
-    "  hunk stash show [ref]                   review a stash entry (git only)",
-    "  hunk patch [file]                       review a patch file or stdin",
-    "  hunk pager                              general Git pager wrapper with diff detection",
-    "  hunk difftool <left> <right> [path]     review Git difftool file pairs",
-    "  hunk session <subcommand>               inspect or control a live Hunk session",
-    "  hunk markup render (<file> | -)         preview experimental STML note markup",
-    "  hunk markup guide                       print the experimental STML authoring guide",
-    "  hunk skill path [name]                  print a bundled Hunk skill path",
-    "  hunk extension <subcommand>             install and manage shared extensions",
-    "  hunk daemon serve                       run the local Hunk session daemon",
+    "  hunkt diff [target] [-- <pathspec...>]   review working tree changes or compare against a target",
+    "  hunkt diff --staged [-- <pathspec...>]   review staged changes",
+    "  hunkt diff <left> <right>                compare two concrete files",
+    "  hunkt show [target] [-- <pathspec...>]   review the last commit or a given target",
+    "  hunkt stash show [ref]                   review a stash entry (git only)",
+    "  hunkt patch [file]                       review a patch file or stdin",
+    "  hunkt pager                              general Git pager wrapper with diff detection",
+    "  hunkt difftool <left> <right> [path]     review Git difftool file pairs",
+    "  hunkt session <subcommand>               inspect or control a live Hunk session",
+    "  hunkt markup render (<file> | -)         preview experimental STML note markup",
+    "  hunkt markup guide                       print the experimental STML authoring guide",
+    "  hunkt skill path [name]                  print a bundled Hunk skill path",
+    "  hunkt extension <subcommand>             install and manage shared extensions",
+    "  hunkt daemon serve                       run the local Hunk session daemon",
     "",
     "Global options:",
     "  -h, --help                              show help",
@@ -497,7 +497,7 @@ function renderCliHelp() {
     "  --exclude-untracked                     hide untracked files in working tree reviews",
     "",
     "Notes:",
-    "  Run `hunk <command> --help` for command-specific syntax and options.",
+    "  Run `hunkt <command> --help` for command-specific syntax and options.",
     '  "target" refers to a generic set of changes; it can be a ref (git) or revset (jj)',
     "",
   ].join("\n");
@@ -526,7 +526,7 @@ async function parseStandaloneCommand(command: Command, tokens: string[]) {
   command.exitOverride();
 
   try {
-    await command.parseAsync(["bun", "hunk", ...tokens]);
+    await command.parseAsync(["bun", "hunkt", ...tokens]);
   } catch (error) {
     if (
       error &&
@@ -707,7 +707,7 @@ function resolveReloadSelector(
   );
 }
 
-/** Parse the overloaded `hunk diff` command. */
+/** Parse the overloaded `hunkt diff` command. */
 async function parseDiffCommand(tokens: string[], argv: string[]): Promise<ParsedCliInput> {
   const { commandTokens, pathspecs } = splitPathspecArgs(tokens);
   const command = createCliReferenceCommand("diff").argument("[targets...]");
@@ -769,11 +769,11 @@ async function parseDiffCommand(tokens: string[], argv: string[]): Promise<Parse
   }
 
   throw new Error(
-    "Use `hunk diff [target] [-- pathspec...]`, `hunk diff <left> <right>` for file comparison.",
+    "Use `hunkt diff [target] [-- pathspec...]`, `hunkt diff <left> <right>` for file comparison.",
   );
 }
 
-/** Parse the Git-style `hunk show` command. */
+/** Parse the Git-style `hunkt show` command. */
 async function parseShowCommand(tokens: string[], argv: string[]): Promise<ParsedCliInput> {
   const { commandTokens, pathspecs } = splitPathspecArgs(tokens);
   const command = createCliReferenceCommand("show").argument("[ref]");
@@ -969,7 +969,7 @@ function sessionUsageLines(specs: readonly AgentCommandSpec[]) {
   return specs.flatMap((spec) => spec.synopsis.map((line) => `  ${line}`));
 }
 
-/** Parse `hunk session ...` as live-session daemon-backed commands. */
+/** Parse `hunkt session ...` as live-session daemon-backed commands. */
 async function parseSessionCommand(tokens: string[]): Promise<ParsedCliInput> {
   const [subcommand, ...rest] = tokens;
   if (!subcommand || subcommand === "--help" || subcommand === "-h") {
@@ -977,7 +977,7 @@ async function parseSessionCommand(tokens: string[]): Promise<ParsedCliInput> {
       kind: "help",
       text:
         [
-          "Usage: hunk session <subcommand> [options]",
+          "Usage: hunkt session <subcommand> [options]",
           "",
           "Inspect and control live Hunk review sessions through the local daemon.",
           "",
@@ -1128,7 +1128,7 @@ async function parseSessionCommand(tokens: string[]): Promise<ParsedCliInput> {
     }
 
     await parseStandaloneCommand(command, outerTokens);
-    const nextInput = requireReloadableCliInput(await parseCli(["bun", "hunk", ...nestedTokens]));
+    const nextInput = requireReloadableCliInput(await parseCli(["bun", "hunkt", ...nestedTokens]));
     const resolvedReload = resolveReloadSelector(
       parsedSessionId,
       parsedOptions.sessionPath,
@@ -1436,8 +1436,8 @@ async function parseSessionCommand(tokens: string[]): Promise<ParsedCliInput> {
 
 const MARKUP_HELP = [
   "Usage:",
-  "  hunk markup render (<file> | -) [--width <n>] [--color <auto|always|never>] [--theme <id>] [--json]",
-  "  hunk markup guide",
+  "  hunkt markup render (<file> | -) [--width <n>] [--color <auto|always|never>] [--theme <id>] [--json]",
+  "  hunkt markup guide",
   "",
   "Experimental STML authoring tools.",
   "",
@@ -1445,13 +1445,13 @@ const MARKUP_HELP = [
   "         render notes (unknown tags, layout degradations) go to stderr",
   "  --width <n>   layout width in columns (default 56, the note reference width)",
   "  --color       auto (default: color when stdout is a TTY), always, or never",
-  "  --theme <id>  hunk theme used to resolve colors (default github-dark-default)",
+  "  --theme <id>  Hunk theme used to resolve colors (default github-dark-default)",
   "  --json        emit { width, lines, notes } instead of text",
   "guide    print the STML authoring guide with copy-paste patterns",
   "",
 ].join("\n");
 
-/** Parse `hunk markup ...` for STML preview and guide commands. */
+/** Parse `hunkt markup ...` for STML preview and guide commands. */
 async function parseMarkupCommand(tokens: string[]): Promise<ParsedCliInput> {
   const [subcommand, ...rest] = tokens;
   if (!subcommand || subcommand === "--help" || subcommand === "-h") {
@@ -1463,7 +1463,7 @@ async function parseMarkupCommand(tokens: string[]): Promise<ParsedCliInput> {
       return { kind: "help", text: MARKUP_HELP };
     }
     if (rest.length > 0) {
-      throw new Error("`hunk markup guide` does not accept additional arguments.");
+      throw new Error("`hunkt markup guide` does not accept additional arguments.");
     }
     return { kind: "markup-guide" };
   }
@@ -1512,7 +1512,7 @@ async function parseMarkupCommand(tokens: string[]): Promise<ParsedCliInput> {
   throw new Error("Supported markup subcommands are render and guide.");
 }
 
-/** Parse `hunk skill ...` for bundled skill discovery commands. */
+/** Parse `hunkt skill ...` for bundled skill discovery commands. */
 async function parseSkillCommand(tokens: string[]): Promise<HelpCommandInput> {
   const [subcommand, ...rest] = tokens;
   if (!subcommand || subcommand === "--help" || subcommand === "-h") {
@@ -1523,7 +1523,7 @@ async function parseSkillCommand(tokens: string[]): Promise<HelpCommandInput> {
   }
 
   if (subcommand !== "path") {
-    throw new Error("Only `hunk skill path` is supported.");
+    throw new Error("Only `hunkt skill path` is supported.");
   }
 
   if (rest.includes("--help") || rest.includes("-h")) {
@@ -1534,7 +1534,7 @@ async function parseSkillCommand(tokens: string[]): Promise<HelpCommandInput> {
   }
 
   if (rest.length > 1) {
-    throw new Error("`hunk skill path` accepts at most one skill name.");
+    throw new Error("`hunkt skill path` accepts at most one skill name.");
   }
 
   const [requestedName] = rest;
@@ -1557,12 +1557,12 @@ async function parseSkillCommand(tokens: string[]): Promise<HelpCommandInput> {
 
 const EXTENSION_MANAGE_HELP = [
   "Usage:",
-  "  hunk extension install <source> [--yes]",
-  "  hunk extension list",
-  "  hunk extension update [name]",
-  "  hunk extension remove <name>",
+  "  hunkt extension install <source> [--yes]",
+  "  hunkt extension list",
+  "  hunkt extension update [name]",
+  "  hunkt extension remove <name>",
   "",
-  "Install and manage shared extensions. `hunk ext` is an alias for `hunk extension`.",
+  "Install and manage shared extensions. `hunkt ext` is an alias for `hunkt extension`.",
   "",
   "install  clone an extension repository into Hunk's managed install directory;",
   "         sources are <owner>/<repo>[@ref], git:<host>/<path>[@ref], a git URL,",
@@ -1577,7 +1577,7 @@ const EXTENSION_MANAGE_HELP = [
   "",
 ].join("\n");
 
-/** Parse `hunk extension ...` managed-install commands. */
+/** Parse `hunkt extension ...` managed-install commands. */
 async function parseExtensionCommand(
   tokens: string[],
 ): Promise<ExtensionManageCommandInput | HelpCommandInput> {
@@ -1617,7 +1617,7 @@ async function parseExtensionCommand(
       return { kind: "help", text: EXTENSION_MANAGE_HELP };
     }
     if (rest.length > 0) {
-      throw new Error("`hunk extension list` does not accept additional arguments.");
+      throw new Error("`hunkt extension list` does not accept additional arguments.");
     }
     return { kind: "extension-manage", action: "list" };
   }
@@ -1657,7 +1657,7 @@ async function parseExtensionCommand(
   throw new Error("Supported extension subcommands are install, list, update, and remove.");
 }
 
-/** Parse `hunk daemon serve` as the canonical local daemon entrypoint. */
+/** Parse `hunkt daemon serve` as the canonical local daemon entrypoint. */
 async function parseDaemonCommand(tokens: string[]): Promise<ParsedCliInput> {
   const [subcommand, ...rest] = tokens;
   if (!subcommand || subcommand === "--help" || subcommand === "-h") {
@@ -1665,20 +1665,20 @@ async function parseDaemonCommand(tokens: string[]): Promise<ParsedCliInput> {
       kind: "help",
       text:
         [
-          "Usage: hunk daemon serve",
+          "Usage: hunkt daemon serve",
           "",
           "Run the local Hunk session daemon and websocket session broker.",
           "",
           "Environment:",
-          "  HUNK_MCP_HOST                  bind host (default 127.0.0.1; loopback only unless explicitly overridden)",
-          "  HUNK_MCP_PORT                  bind port (default 47657)",
-          "  HUNK_MCP_UNSAFE_ALLOW_REMOTE   set to 1 to allow non-loopback binding (unsafe)",
+          "  HUNKT_MCP_HOST                  bind host (default 127.0.0.1; loopback only unless explicitly overridden)",
+          "  HUNKT_MCP_PORT                  bind port (default 47657)",
+          "  HUNKT_MCP_UNSAFE_ALLOW_REMOTE   set to 1 to allow non-loopback binding (unsafe)",
         ].join("\n") + "\n",
     };
   }
 
   if (subcommand !== "serve") {
-    throw new Error("Only `hunk daemon serve` is supported.");
+    throw new Error("Only `hunkt daemon serve` is supported.");
   }
 
   if (rest.includes("--help") || rest.includes("-h")) {
@@ -1686,7 +1686,7 @@ async function parseDaemonCommand(tokens: string[]): Promise<ParsedCliInput> {
       kind: "help",
       text:
         [
-          "Usage: hunk daemon serve",
+          "Usage: hunkt daemon serve",
           "",
           "Run the local Hunk session daemon and websocket session broker.",
         ].join("\n") + "\n",
@@ -1698,7 +1698,7 @@ async function parseDaemonCommand(tokens: string[]): Promise<ParsedCliInput> {
   };
 }
 
-/** Parse `hunk stash show` as a full-UI stash review command. */
+/** Parse `hunkt stash show` as a full-UI stash review command. */
 async function parseStashCommand(tokens: string[], argv: string[]): Promise<ParsedCliInput> {
   const [subcommand, ...rest] = tokens;
   if (!subcommand || subcommand === "--help" || subcommand === "-h") {
@@ -1706,19 +1706,19 @@ async function parseStashCommand(tokens: string[], argv: string[]): Promise<Pars
       kind: "help",
       text:
         [
-          "Usage: hunk stash show [ref] [options]",
+          "Usage: hunkt stash show [ref] [options]",
           "",
           "Review a stash entry as a full Hunk changeset.",
           "",
           "Examples:",
-          "  hunk stash show",
-          "  hunk stash show stash@{1}",
+          "  hunkt stash show",
+          "  hunkt stash show stash@{1}",
         ].join("\n") + "\n",
     };
   }
 
   if (subcommand !== "show") {
-    throw new Error("Only `hunk stash show` is supported.");
+    throw new Error("Only `hunkt stash show` is supported.");
   }
 
   const command = createCliReferenceCommand("stash-show").argument("[ref]");
@@ -1792,7 +1792,7 @@ export async function parseCli(argv: string[]): Promise<ParsedCliInput> {
     return { kind: "help", text: renderCliVersion() };
   }
 
-  // `hunk --fast` is shorthand for `hunk diff --fast`, so options and targets following the
+  // `hunkt --fast` is shorthand for `hunkt diff --fast`, so options and targets following the
   // launch flag belong to the diff parser unless they explicitly name another Hunk command.
   if (prefixedFast && explicitCommandName && !TOP_LEVEL_COMMAND_NAMES.has(explicitCommandName)) {
     return parseDiffCommand(args, argv);

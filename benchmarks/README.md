@@ -16,7 +16,7 @@ Run optional competitor comparisons when the tools are installed:
 bun run bench -- --samples 3 --include-competitors --out benchmarks/results/local-with-competitors.json
 ```
 
-Include the opt-in huge fixture tier (~1k files / 300k+ diff lines plus one ~50k-line file). A single huge sample can take minutes on the unoptimized hot path, so it is excluded from the default suite; enable it with the flag or `HUNK_BENCH_INCLUDE_HUGE=1`:
+Include the opt-in huge fixture tier (~1k files / 300k+ diff lines plus one ~50k-line file). A single huge sample can take minutes on the unoptimized hot path, so it is excluded from the default suite; enable it with the flag or `HUNKT_BENCH_INCLUDE_HUGE=1`:
 
 ```bash
 bun run bench -- --samples 1 --include-huge --out benchmarks/results/local-with-huge.json
@@ -63,7 +63,7 @@ bun run bench:competitors
 - `non-ascii-stream.ts` — measures first-frame and per-scroll-tick latency on a stream whose diff content embeds CJK, emoji, and box-drawing characters, exercising the string-width path on content rather than chrome glyphs.
 - `wrapped-cjk.ts` — reproduces issue #579 with 518 wrapped Japanese Markdown lines plus one pathological long logical line, includes renderer setup in first-frame latency, and measures immediate/coalesced frames from a real wheel burst.
 - `terminal-width.ts` — measures scalar-heavy CJK and emoji width calls plus the complex-cluster fallback against equivalent `string-width` reference paths, verifying identical width checksums.
-- `huge-stream.ts` — opt-in huge tier (`--include-huge` or `HUNK_BENCH_INCLUDE_HUGE=1`): cold first frame, scroll-tick and hunk-navigation latency, and memory ceilings on ~1k files / 300k+ diff lines plus one giant ~50k-line file.
+- `huge-stream.ts` — opt-in huge tier (`--include-huge` or `HUNKT_BENCH_INCLUDE_HUGE=1`): cold first frame, scroll-tick and hunk-navigation latency, and memory ceilings on ~1k files / 300k+ diff lines plus one giant ~50k-line file.
 - `large-stream-profile.ts` — optional local profiler for the main pure planning stages behind the large split-stream benchmark.
 - `memory.ts` — optional local RSS/heap profiler after fixture loading, planning, first frame, and next-hunk navigation.
 - `geometry-memory.ts` — optional local retained-memory profiler for all-files section geometry, including JSC-native heap metrics and giant-file lazy planned-row materialization latency used by first copy selection.

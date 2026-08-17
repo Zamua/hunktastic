@@ -100,7 +100,7 @@ describe("jj command helpers", () => {
         jjExecutable: "definitely-not-a-real-jj-binary",
       }),
     ).toThrow(
-      'Jujutsu is required for `hunk diff` when `vcs = "jj"`, but `definitely-not-a-real-jj-binary` was not found in PATH.',
+      'Jujutsu is required for `hunkt diff` when `vcs = "jj"`, but `definitely-not-a-real-jj-binary` was not found in PATH.',
     );
   });
 
@@ -113,7 +113,7 @@ describe("jj command helpers", () => {
         args: ["root"],
         cwd: dir,
       }),
-    ).toThrow('`hunk diff` must be run inside a Jujutsu repository when `vcs = "jj"`.');
+    ).toThrow('`hunkt diff` must be run inside a Jujutsu repository when `vcs = "jj"`.');
   });
 
   jjTest("reports a friendly error for invalid revsets", () => {
@@ -126,7 +126,7 @@ describe("jj command helpers", () => {
         args: buildJjDiffArgs(input),
         cwd: dir,
       }),
-    ).toThrow("`hunk diff missing_revision` could not resolve Jujutsu revset `missing_revision`.");
+    ).toThrow("`hunkt diff missing_revision` could not resolve Jujutsu revset `missing_revision`.");
   });
 
   jjTest(
@@ -156,7 +156,7 @@ describe("jj command helpers", () => {
           args: buildJjDiffArgs(input),
           cwd: dir,
         }),
-      ).toThrow(`\`hunk diff ${prefix}\` could not resolve Jujutsu revset \`${prefix}\`.`);
+      ).toThrow(`\`hunkt diff ${prefix}\` could not resolve Jujutsu revset \`${prefix}\`.`);
     },
     JjAmbiguousPrefixTestTimeoutMs,
   );

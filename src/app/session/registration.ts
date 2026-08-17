@@ -43,7 +43,7 @@ function inferRepoRoot(bootstrap: AppBootstrap) {
  *
  * Projected from the semantic document rather than from the changeset behind it: the
  * session surface is a consumer of the published review like any other, so what an agent
- * reads through `hunk session` and what a later client reads over the wire come from the
+ * reads through `hunkt session` and what a later client reads over the wire come from the
  * same generation instead of from two readings of the same changeset.
  *
  * Patch text is deliberately absent. It is published as a resource instead, read on

@@ -1,4 +1,4 @@
-// Runners for `hunk markup render` and `hunk markup guide`. Kept out of
+// Runners for `hunkt markup render` and `hunkt markup guide`. Kept out of
 // main.tsx so the command behavior is directly testable.
 
 import { resolve as resolvePath } from "node:path";
@@ -16,7 +16,7 @@ export interface MarkupCommandIo {
 
 const DEFAULT_PREVIEW_THEME = "github-dark-default";
 
-/** Execute `hunk markup render`; returns the process exit code. */
+/** Execute `hunkt markup render`; returns the process exit code. */
 export async function runMarkupRenderCommand(
   input: MarkupRenderCommandInput,
   io: MarkupCommandIo,
@@ -51,7 +51,7 @@ export async function runMarkupRenderCommand(
   return 0;
 }
 
-/** Execute `hunk markup guide`. */
+/** Execute `hunkt markup guide`. */
 export function runMarkupGuideCommand(io: Pick<MarkupCommandIo, "stdout">): number {
   io.stdout(STML_GUIDE);
   return 0;

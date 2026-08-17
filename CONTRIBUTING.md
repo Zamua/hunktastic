@@ -35,7 +35,7 @@ Please discuss a change before implementation when it introduces or substantiall
 
 Before adding a built-in workflow, integration, or alternate presentation, check whether it can be implemented as an extension. Extensions are usually the better home for opt-in behavior such as VCS integrations, sidebars, file views, commands, keyboard modes, line highlighters, and repository-specific review workflows.
 
-Start with [`docs/extensions.md`](docs/extensions.md) and the checked-in [`examples/extensions/`](examples/extensions/). If you use a coding agent, [`skills/hunk-extensions/SKILL.md`](skills/hunk-extensions/SKILL.md) maps the public API and its implementation. A small prototype is often the fastest way to learn whether the current API is enough.
+Start with [`docs/extensions.md`](docs/extensions.md) and the checked-in [`examples/extensions/`](examples/extensions/). If you use a coding agent, [`skills/hunkt-extensions/SKILL.md`](skills/hunkt-extensions/SKILL.md) maps the public API and its implementation. A small prototype is often the fastest way to learn whether the current API is enough.
 
 If the extension API cannot express the idea, do not immediately bypass it with feature-specific core code. Explain:
 
@@ -117,7 +117,7 @@ Keep the branch current with `main`. Prefer rebasing over repeatedly merging `ma
 
 Stacked pull requests are welcome when each change is reviewable on its own. Name the base pull request and merge order, then rebase after the base lands so each diff contains only its own work.
 
-Use a [Conventional Commit](https://www.conventionalcommits.org/) title such as `fix(ui): keep the selected hunk visible`. Update documentation, examples, and generated artifacts when public behavior or APIs change. Do not commit local review artifacts such as `.hunk/latest.json`.
+Use a [Conventional Commit](https://www.conventionalcommits.org/) title such as `fix(ui): keep the selected hunk visible`. Update documentation, examples, and generated artifacts when public behavior or APIs change. Do not commit local review artifacts such as `.hunkt/latest.json`.
 
 For a user-visible change, add a Changeset targeting `hunkdiff`:
 

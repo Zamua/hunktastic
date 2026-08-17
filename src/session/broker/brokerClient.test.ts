@@ -8,10 +8,10 @@ import {
 import { HUNK_SESSION_API_VERSION, HUNK_SESSION_DAEMON_VERSION } from "../protocol";
 import { SessionBrokerClient } from "./brokerClient";
 
-const originalHost = process.env.HUNK_MCP_HOST;
-const originalPort = process.env.HUNK_MCP_PORT;
-const originalDisable = process.env.HUNK_MCP_DISABLE;
-const originalUnsafeRemote = process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE;
+const originalHost = process.env.HUNKT_MCP_HOST;
+const originalPort = process.env.HUNKT_MCP_PORT;
+const originalDisable = process.env.HUNKT_MCP_DISABLE;
+const originalUnsafeRemote = process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE;
 const originalConsoleError = console.error;
 
 function createRegistration() {
@@ -49,27 +49,27 @@ async function waitUntil(label: string, fn: () => boolean, timeoutMs = 5_000, in
 
 afterEach(() => {
   if (originalHost === undefined) {
-    delete process.env.HUNK_MCP_HOST;
+    delete process.env.HUNKT_MCP_HOST;
   } else {
-    process.env.HUNK_MCP_HOST = originalHost;
+    process.env.HUNKT_MCP_HOST = originalHost;
   }
 
   if (originalPort === undefined) {
-    delete process.env.HUNK_MCP_PORT;
+    delete process.env.HUNKT_MCP_PORT;
   } else {
-    process.env.HUNK_MCP_PORT = originalPort;
+    process.env.HUNKT_MCP_PORT = originalPort;
   }
 
   if (originalDisable === undefined) {
-    delete process.env.HUNK_MCP_DISABLE;
+    delete process.env.HUNKT_MCP_DISABLE;
   } else {
-    process.env.HUNK_MCP_DISABLE = originalDisable;
+    process.env.HUNKT_MCP_DISABLE = originalDisable;
   }
 
   if (originalUnsafeRemote === undefined) {
-    delete process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE;
+    delete process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE;
   } else {
-    process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE = originalUnsafeRemote;
+    process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE = originalUnsafeRemote;
   }
 
   console.error = originalConsoleError;
@@ -95,10 +95,10 @@ describe("Hunk session daemon client", () => {
   });
 
   test("logs one actionable warning when the session daemon is configured for a non-loopback host without opt-in", async () => {
-    process.env.HUNK_MCP_HOST = "0.0.0.0";
-    process.env.HUNK_MCP_PORT = "47657";
-    delete process.env.HUNK_MCP_UNSAFE_ALLOW_REMOTE;
-    delete process.env.HUNK_MCP_DISABLE;
+    process.env.HUNKT_MCP_HOST = "0.0.0.0";
+    process.env.HUNKT_MCP_PORT = "47657";
+    delete process.env.HUNKT_MCP_UNSAFE_ALLOW_REMOTE;
+    delete process.env.HUNKT_MCP_DISABLE;
 
     const messages: string[] = [];
     console.error = (...args: unknown[]) => {
@@ -114,7 +114,7 @@ describe("Hunk session daemon client", () => {
       expect(messages[0]).toContain(
         "[session:broker] Session broker refuses to bind 0.0.0.0:47657 because it is local-only by default.",
       );
-      expect(messages[0]).toContain("HUNK_MCP_UNSAFE_ALLOW_REMOTE=1");
+      expect(messages[0]).toContain("HUNKT_MCP_UNSAFE_ALLOW_REMOTE=1");
     } finally {
       client.stop();
     }
@@ -260,9 +260,9 @@ describe("Hunk session daemon client", () => {
 
     const address = conflictingListener.address();
     const port = typeof address === "object" && address ? address.port : 0;
-    process.env.HUNK_MCP_HOST = "127.0.0.1";
-    process.env.HUNK_MCP_PORT = String(port);
-    delete process.env.HUNK_MCP_DISABLE;
+    process.env.HUNKT_MCP_HOST = "127.0.0.1";
+    process.env.HUNKT_MCP_PORT = String(port);
+    delete process.env.HUNKT_MCP_DISABLE;
 
     const messages: string[] = [];
     console.error = (...args: unknown[]) => {
@@ -285,7 +285,7 @@ describe("Hunk session daemon client", () => {
         `[session:broker] Session broker port 127.0.0.1:${port} is already in use by another process.`,
       );
       expect(messages[0]).toContain(
-        "Stop the conflicting process or set HUNK_MCP_PORT to a different loopback port.",
+        "Stop the conflicting process or set HUNKT_MCP_PORT to a different loopback port.",
       );
     } finally {
       client.stop();

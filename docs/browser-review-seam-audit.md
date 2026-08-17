@@ -529,7 +529,7 @@ here so the extraction happens before the duplication exists. Design detail in
   agent notes, filter) run as App closures; a browser implementation would re-derive each
   behavior — the exact drift class of B1/B3/B6. Fix: lower semantic commands to
   `ReviewIntent`s (the Phase 1 store refactor is the same work); the browser fires them
-  through the existing apply-action path, and the agent runtime's `hunk session` surface
+  through the existing apply-action path, and the agent runtime's `hunkt session` surface
   becomes a third consumer of the same lowering.
   _Repaid (Phase 1 PR 3, core and terminal sites)_: semantic entries declare their effect as data
   (`AppCommandReviewEffect`), and `lowerAppCommandToReviewIntent` is the one constructor turning
@@ -574,7 +574,7 @@ prototype browser never grew; recorded so the shared primitive exists before a s
 implementation does.
 
 - **G1. View defaults and option classification.** Terminal view options resolve through the
-  layered defaults chain (built-ins → user config → repo `.hunk/config.toml` → command
+  layered defaults chain (built-ins → user config → repo `.hunkt/config.toml` → command
   sections → CLI flags); the prototype browser hardcodes its own defaults (dark theme, layout)
   and has no persistence at all. Two decisions to make once: (a) which options are shared
   review state vs per-client view state — `showAgentNotes` and filter are already shared,
@@ -637,7 +637,7 @@ implementation does.
   uses a catalog message unless the producer supplied a more specific one. The status map
   lives with the transport (`browserReviewServer.ts`) rather than in the catalog, because a
   client reads codes and an HTTP status is not something to tell a person. The agent surface
-  keeps its own wording — its codes are `hunk session` CLI failures rather than these, and
+  keeps its own wording — its codes are `hunkt session` CLI failures rather than these, and
   the two vocabularies do not yet overlap. Browser adoption is Phase 5, which is when this
   finding closes.
 - **G5. Undo, if it ever arrives.** Note editing today has no undo. If it is added, the

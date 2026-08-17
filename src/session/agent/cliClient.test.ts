@@ -571,7 +571,7 @@ describe("Hunk session CLI formatters", () => {
       }),
     ).toBe(
       "Added live comment comment-1 on src/app.ts:12 (new) in hunk 1 for session session-1.\n" +
-        "Markup note: unknown tag <sparkline> (preview with `hunk markup render`).\n",
+        "Markup note: unknown tag <sparkline> (preview with `hunkt markup render`).\n",
     );
 
     expect(formatCommentApplyOutput(selector, { applied: [] })).toBe(

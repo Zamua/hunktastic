@@ -5,7 +5,7 @@
 //
 // <workDir> is the capture output dir (contains frames/) and must have a
 // node_modules with playwright-core matching the Chromium build (see
-// skills/hunk-launch-video/SKILL.md). Composited frames land in <workDir>/out.
+// skills/hunkt-launch-video/SKILL.md). Composited frames land in <workDir>/out.
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { composeStoryboard } from "@hunk/term-video/compose";
@@ -14,14 +14,14 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "../..");
 const workDir = resolve(process.argv[2] ?? join(repoRoot, ".video-work"));
 
-const REVIEW_TITLE = "hunk diff — line-level review";
-const STML_TITLE = "hunk patch — agent review";
+const REVIEW_TITLE = "hunkt diff — line-level review";
+const STML_TITLE = "hunkt patch — agent review";
 // Shell scenes actually run bash; keep titles generic rather than naming a
 // shell the capture doesn't launch.
 const CLI_TITLE = "shell — authoring a note";
-const PAGER_TITLE = "shell — git diff | hunk pager";
-const TRIAGE_TITLE = "hunk diff — review-triage extension";
-const GALLERY_TITLE = "hunk diff — file-view gallery extension";
+const PAGER_TITLE = "shell — git diff | hunkt pager";
+const TRIAGE_TITLE = "hunkt diff — review-triage extension";
+const GALLERY_TITLE = "hunkt diff — file-view gallery extension";
 
 const OPEN_CARD = `
   <div class="badge">v0.18.0</div>
@@ -134,7 +134,7 @@ const SHOTS = [
     title: CLI_TITLE,
     dur: 3.0,
     capKey: "cli-out",
-    caption: `<span class="hl">hunk markup render</span> — the exact output your reviewer sees`,
+    caption: `<span class="hl">hunkt markup render</span> — the exact output your reviewer sees`,
   },
   {
     kind: "term",
@@ -142,7 +142,7 @@ const SHOTS = [
     title: PAGER_TITLE,
     dur: 0.5,
     capKey: "pipe",
-    caption: `<span class="badge">NEW</span> pipe anything — <span class="hl">git diff | hunk pager</span>`,
+    caption: `<span class="badge">NEW</span> pipe anything — <span class="hl">git diff | hunkt pager</span>`,
   },
   { kind: "term", img: "pager-typed", title: PAGER_TITLE, dur: 0.6, capKey: "pipe" },
   { kind: "term", img: "pager-review", title: PAGER_TITLE, dur: 2.2, capKey: "pipe" },

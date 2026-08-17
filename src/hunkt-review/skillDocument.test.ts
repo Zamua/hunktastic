@@ -8,7 +8,7 @@ import {
 } from "../session/agent/surface";
 import { renderHunkReviewSkill } from "./skillDocument";
 
-const SKILL_PATH = join(import.meta.dir, "..", "..", "skills", "hunk-review", "SKILL.md");
+const SKILL_PATH = join(import.meta.dir, "..", "..", "skills", "hunkt-review", "SKILL.md");
 const AGENT_WORKFLOWS_PATH = join(import.meta.dir, "..", "..", "docs", "agent-workflows.md");
 
 /** Every flag the agent-facing docs may reference: the session surface plus auxiliary options. */
@@ -25,14 +25,14 @@ function normalizeNewlines(text: string) {
   return text.replaceAll("\r\n", "\n");
 }
 
-describe("hunk-review skill document", () => {
+describe("hunkt-review skill document", () => {
   test("checked-in SKILL.md matches the generated document", () => {
     const checkedIn = normalizeNewlines(readFileSync(SKILL_PATH, "utf8"));
     const rendered = renderHunkReviewSkill();
 
     if (checkedIn !== rendered) {
       throw new Error(
-        "skills/hunk-review/SKILL.md is out of date. Run `bun run generate:skill` and commit the result.",
+        "skills/hunkt-review/SKILL.md is out of date. Run `bun run generate:skill` and commit the result.",
       );
     }
 

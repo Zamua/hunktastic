@@ -67,8 +67,8 @@ async function launchHunkForCapture(options: { args: string[]; cols: number; row
     env: {
       ...process.env,
       XDG_CONFIG_HOME: configHome,
-      HUNK_MCP_DISABLE: "1",
-      HUNK_DISABLE_UPDATE_NOTICE: "1",
+      HUNKT_MCP_DISABLE: "1",
+      HUNKT_DISABLE_UPDATE_NOTICE: "1",
     },
   });
   return {
@@ -372,7 +372,7 @@ async function captureAgent() {
   });
   try {
     await waitForReview(session, /normalize\.ts/);
-    await session.press("a");
+    await session.press("i");
     await sleep(500);
 
     const story = new Storyboard(session);

@@ -305,15 +305,15 @@ jobs:
           mkdir -p dist/release/github
           while IFS= read -r -d '' directory; do
             package_name="$(basename "$directory")"
-            binary="$directory/hunk"
-            if [ ! -f "$binary" ] && [ -f "$directory/hunk.exe" ]; then
-              binary="$directory/hunk.exe"
+            binary="$directory/hunkt"
+            if [ ! -f "$binary" ] && [ -f "$directory/hunkt.exe" ]; then
+              binary="$directory/hunkt.exe"
             fi
             if [ ! -f "$binary" ]; then
               echo "Missing release binary in $directory" >&2
               exit 1
             fi
-            for skill in hunk-review hunk-extensions; do
+            for skill in hunkt-review hunkt-extensions; do
               if [ ! -f "$directory/skills/$skill/SKILL.md" ]; then
                 echo "Missing bundled Hunk $skill skill in $directory" >&2
                 exit 1

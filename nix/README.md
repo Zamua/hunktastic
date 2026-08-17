@@ -49,9 +49,9 @@ Hunk provides a Home Manager module to manage both the package and its configura
     inputs.hunk.homeManagerModules.default
   ];
 
-  programs.hunk = {
+  programs.hunkt = {
     enable = true;
-    enableGitIntegration = true; # Optional: set hunk as default git pager
+    enableGitIntegration = true; # Optional: set hunkt as default git pager
     settings = {
       theme = "graphite";
       mode = "split";
@@ -102,7 +102,7 @@ The same input also drives bun2nix, so overriding it once widens the whole build
 
 ## Building using Nix
 
-Run `nix build` to build the default package for the current system. The resulting Hunk binary will be `./result/bin/hunk`.
+Run `nix build` to build the default package for the current system. The resulting Hunk binary will be `./result/bin/hunkt`.
 
 You can also build the named package explicitly:
 

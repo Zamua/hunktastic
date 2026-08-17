@@ -915,7 +915,7 @@ export function useTerminalReview({
         .catch((error: unknown) => {
           if (!isCurrentRequest()) {
             console.error(
-              `hunk: ignored stale ${side} source load failure for ${file.path} (${file.id}).`,
+              `hunkt: ignored stale ${side} source load failure for ${file.path} (${file.id}).`,
               error,
             );
             return;
@@ -924,7 +924,7 @@ export function useTerminalReview({
           const reason = error instanceof SourceTextTooLargeError ? "too-large" : undefined;
           if (reason !== "too-large") {
             console.error(
-              `hunk: failed to load ${side} source for ${file.path} (${file.id}).`,
+              `hunkt: failed to load ${side} source for ${file.path} (${file.id}).`,
               error,
             );
           }

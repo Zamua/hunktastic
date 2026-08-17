@@ -107,7 +107,7 @@ export interface HunkConfigResolution {
   explicitVcsId?: string;
   startupNotices?: readonly StartupNotice[];
   globalConfigPath?: string;
-  /** Project root selected from `.hunk` or the base VCS catalog. */
+  /** Project root selected from `.hunkt` or the base VCS catalog. */
   projectRoot?: string;
   repoConfigPath?: string;
   viewPreferencesConfigPath?: string;
@@ -401,12 +401,12 @@ export const CONFIG_REFERENCE_OPTIONS: readonly ConfigReferenceOption[] = [
 
 /** Command-specific TOML tables accepted by the runtime resolver. */
 export const CONFIG_COMMAND_SECTIONS = {
-  vcs: "working-tree and target reviews (`hunk diff`)",
-  show: "commit and target display reviews (`hunk show`)",
-  "stash-show": "stash reviews (`hunk stash show`)",
-  diff: "two-file comparisons (`hunk diff <left> <right>`)",
-  patch: "patch-file reviews (`hunk patch`)",
-  difftool: "Git difftool pair reviews (`hunk difftool`)",
+  vcs: "working-tree and target reviews (`hunkt diff`)",
+  show: "commit and target display reviews (`hunkt show`)",
+  "stash-show": "stash reviews (`hunkt stash show`)",
+  diff: "two-file comparisons (`hunkt diff <left> <right>`)",
+  patch: "patch-file reviews (`hunkt patch`)",
+  difftool: "Git difftool pair reviews (`hunkt difftool`)",
 } as const satisfies Record<CliInput["kind"], string>;
 
 /** Reference metadata for the root-only custom-theme tables. */
@@ -1119,7 +1119,7 @@ export function resolveConfiguredCliInput(
   }: ConfigResolutionOptions = {},
 ): HunkConfigResolution {
   const repoRoot = findProjectRootCandidate(cwd, vcsCatalog);
-  const repoConfigPath = repoRoot ? join(repoRoot, ".hunk", "config.toml") : undefined;
+  const repoConfigPath = repoRoot ? join(repoRoot, ".hunkt", "config.toml") : undefined;
   const userConfigPath = resolveGlobalConfigPath(env);
   let resolvedCustomThemes: NamedCustomThemeConfig[] = [];
   let usesLegacyCustomSyntax = false;

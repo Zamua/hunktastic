@@ -108,7 +108,7 @@ async function settleHighlights(setup: Awaited<ReturnType<typeof testRender>>) {
 
 describe("reload stale highlight cache", () => {
   test("r key picks up new file content for file-pair diffs", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-reload-file-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-reload-file-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
 
@@ -218,7 +218,7 @@ describe("reload stale highlight cache", () => {
 
 describe("reload agent attention marks", () => {
   test("r key keeps agent attention marks when nothing changed on disk", async () => {
-    const dir = mkdtempSync(join(process.cwd(), ".hunk-reload-marks-"));
+    const dir = mkdtempSync(join(process.cwd(), ".hunkt-reload-marks-"));
     const left = join(dir, "before.ts");
     const right = join(dir, "after.ts");
 

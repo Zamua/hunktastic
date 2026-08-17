@@ -2,7 +2,7 @@
 // ~50k-line file. Measures cold first frame and interaction latency at the scale
 // where "very large diffs feel slow" reports actually live.
 //
-// This tier is opt-in (run.ts --include-huge or HUNK_BENCH_INCLUDE_HUGE=1) because
+// This tier is opt-in (run.ts --include-huge or HUNKT_BENCH_INCLUDE_HUGE=1) because
 // a single sample can take minutes on the unoptimized hot path.
 import { performance } from "node:perf_hooks";
 import { testRender } from "@opentui/react/test-utils";

@@ -1,5 +1,5 @@
 ---
-name: hunk-release
+name: hunkt-release
 description: Prepares, publishes, verifies, and curates Hunk releases. Use for release metadata, benchmarks, tags, publishing, release videos, backports, or recovery.
 ---
 
@@ -156,10 +156,10 @@ Prereleases are never published to `hunk.dev/changelog`; they stay on GitHub. Th
 
 ## 5. Add the release video and final notes
 
-Only after publication verifies, create a detached worktree at the released tag and follow `skills/hunk-launch-video/SKILL.md`'s full-release recipe:
+Only after publication verifies, create a detached worktree at the released tag and follow `skills/hunkt-launch-video/SKILL.md`'s full-release recipe:
 
 ```sh
-git worktree add --detach "../hunk-release-video-$version" "$tag"
+git worktree add --detach "../hunkt-release-video-$version" "$tag"
 ```
 
 That skill owns capture, encoding, and media checks. Keep generated media out of Git and Git LFS. Preserve storyboard edits only with separate approval.
@@ -184,7 +184,7 @@ https://github.com/user-attachments/assets/<video-id>
 Present the local MP4 and draft notes for explicit confirmation. Then attach the H.264 MP4 in GitHub's release editor, replace the placeholder with its generated user-attachment URL, and apply the reviewed body:
 
 ```sh
-gh release edit "$tag" --notes-file /tmp/hunk-release-notes.md
+gh release edit "$tag" --notes-file /tmp/hunkt-release-notes.md
 ```
 
 Open the public release in a browser and verify inline playback, final notes, and the unchanged five immutable binary archives.

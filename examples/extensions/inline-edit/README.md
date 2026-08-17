@@ -24,8 +24,8 @@ bun run src/main.tsx -- diff --extension ./examples/extensions/inline-edit
 Copy the whole folder — it has no dependencies:
 
 ```bash
-mkdir -p ~/.config/hunk/extensions
-cp -R examples/extensions/inline-edit ~/.config/hunk/extensions/
+mkdir -p ~/.config/hunkt/extensions
+cp -R examples/extensions/inline-edit ~/.config/hunkt/extensions/
 ```
 
 Hunk discovers the folder automatically on later launches. Open **View** and choose **File presentation: Inline edit**, or press `Ctrl-E`. The command is named `inline-edit.edit` for `[keybindings]` customization.
@@ -67,7 +67,7 @@ This is a demonstration, not an editor:
 - **No wrapping.** Lines are truncated at the pane width with `…`. A file-view layout must be deterministic for `(file, width)`, and wrapping would be a second layout problem on top of the one this example is about.
 - **Whole-line truncation.** The caret can move past the visible edge; the row does not scroll horizontally to follow it.
 - **One buffer, no undo.** Escape discards everything since the last write, with no confirmation beyond the notice it leaves behind.
-- **Writes are working-tree only**, which is a property of `ctx.workspace`: `hunk show`, `hunk patch`, a staged diff, and a file-pair diff have no working-tree document to replace, so the command refuses instead of opening an editor that could not save.
+- **Writes are working-tree only**, which is a property of `ctx.workspace`: `hunkt show`, `hunkt patch`, a staged diff, and a file-pair diff have no working-tree document to replace, so the command refuses instead of opening an editor that could not save.
 - **Agent notes describe the document as it was loaded.** They stay on the lines they were written about, but nothing re-reads the changeset while you type.
 
 ## Source bindings and provenance

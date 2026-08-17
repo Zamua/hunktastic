@@ -13,10 +13,10 @@ Layers apply from lowest to highest precedence:
 
 1. built-in defaults
 2. user config top-level keys, then the matching command table, then `[pager]` when pager chrome is active
-3. repository `.hunk/config.toml` top-level keys, matching command table, and pager table
+3. repository `.hunkt/config.toml` top-level keys, matching command table, and pager table
 4. explicit CLI options
 
-The user path is `$XDG_CONFIG_HOME/hunk/config.toml` when configured. Otherwise Hunk uses `$HOME/.config/hunk/config.toml` or `%USERPROFILE%/.config/hunk/config.toml`; if none of those environment variables are set, no user config is loaded. Custom theme tables are root-only; preference keys may appear at top level, in a command table, or in `[pager]`.
+The user path is `$XDG_CONFIG_HOME/hunkt/config.toml` when configured. Otherwise Hunk uses `$HOME/.config/hunkt/config.toml` or `%USERPROFILE%/.config/hunkt/config.toml`; if none of those environment variables are set, no user config is loaded. Custom theme tables are root-only; preference keys may appear at top level, in a command table, or in `[pager]`.
 
 ## Preference keys
 
@@ -211,14 +211,14 @@ Enable moved-line coloring when the renderer supports it.
 
 ## Command tables
 
-| Table          | Applies to                                        |
-| -------------- | ------------------------------------------------- |
-| `[vcs]`        | working-tree and target reviews (`hunk diff`)     |
-| `[show]`       | commit and target display reviews (`hunk show`)   |
-| `[stash-show]` | stash reviews (`hunk stash show`)                 |
-| `[diff]`       | two-file comparisons (`hunk diff <left> <right>`) |
-| `[patch]`      | patch-file reviews (`hunk patch`)                 |
-| `[difftool]`   | Git difftool pair reviews (`hunk difftool`)       |
+| Table          | Applies to                                         |
+| -------------- | -------------------------------------------------- |
+| `[vcs]`        | working-tree and target reviews (`hunkt diff`)     |
+| `[show]`       | commit and target display reviews (`hunkt show`)   |
+| `[stash-show]` | stash reviews (`hunkt stash show`)                 |
+| `[diff]`       | two-file comparisons (`hunkt diff <left> <right>`) |
+| `[patch]`      | patch-file reviews (`hunkt patch`)                 |
+| `[difftool]`   | Git difftool pair reviews (`hunkt difftool`)       |
 
 `[pager]` is an additional overlay for any review opened with pager-style chrome. It is applied after the matching command table in the same file.
 
@@ -359,6 +359,6 @@ Declare any number of additional themes as `[themes.<id>]` tables. Each one acce
 | `extensions.enabled` | boolean          | `true` or `false`             | `true`           | Load user extensions. `--no-extensions` forces this off for one run, and bundled VCS backends stay loaded either way. |
 | `extensions.paths`   | array of strings | entry file or directory paths | `[]`             | Extension entry points loaded at startup. Paths a repository config contributes are trust-gated before they run.      |
 
-Repository `.hunk/config.toml` paths are kept separate from user paths: Hunk prompts for trust before executing repository-declared extension code, and `--no-extensions` disables user extensions entirely for one run.
+Repository `.hunkt/config.toml` paths are kept separate from user paths: Hunk prompts for trust before executing repository-declared extension code, and `--no-extensions` disables user extensions entirely for one run.
 
 Each extension reads its own settings from a `[extension.<id>]` table. Hunk does not interpret those keys; it passes the table through to the extension. Repository tables merge over user tables key by key, and Hunk emits a startup notice naming every extension whose settings the repository overrides.

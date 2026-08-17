@@ -121,5 +121,5 @@ is also the reserved exit from each active extension mode, so an extension
 cannot trap the keyboard.
 
 `[keybindings]` is read from your user config only — never from a repository's
-`.hunk/config.toml`. Which keys do what is a property of your keyboard and your
+`.hunkt/config.toml`. Which keys do what is a property of your keyboard and your
 habits, so a checkout you review cannot rearrange them.

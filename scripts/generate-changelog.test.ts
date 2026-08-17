@@ -237,8 +237,8 @@ describe("date resolution", () => {
 
 describe("text helpers", () => {
   test("reduces Markdown to plain text", () => {
-    expect(toPlainText("Use **`hunk diff`** and [the docs](/docs/).")).toBe(
-      "Use hunk diff and the docs.",
+    expect(toPlainText("Use **`hunkt diff`** and [the docs](/docs/).")).toBe(
+      "Use hunkt diff and the docs.",
     );
   });
 

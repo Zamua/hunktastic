@@ -1,8 +1,8 @@
 # Themes
 
 Choose a built-in theme, let Hunk select one from your terminal background, or
-create a custom theme in `~/.config/hunk/config.toml` or
-`.hunk/config.toml`.
+create a custom theme in `~/.config/hunkt/config.toml` or
+`.hunkt/config.toml`.
 
 ```toml
 theme = "github-dark-default"
@@ -69,7 +69,7 @@ failing the session. `[custom_theme]` is the theme with id `custom`, so it
 takes precedence over a `[themes.custom]` table.
 
 Custom themes appear in the selector after the built-in themes, in the order
-you declare them. A repo `.hunk/config.toml` overrides a user config table by
+you declare them. A repo `.hunkt/config.toml` overrides a user config table by
 table for the same id.
 
 ## Syntax scopes

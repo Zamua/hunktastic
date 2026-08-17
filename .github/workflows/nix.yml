@@ -62,6 +62,6 @@ jobs:
 
       - name: Smoke test Nix package
         run: |
-          ./result/bin/hunk --version
-          skill_path="$(./result/bin/hunk skill path)"
+          ./result/bin/hunkt --version
+          skill_path="$(./result/bin/hunkt skill path)"
           test -f "$skill_path"

@@ -44,7 +44,7 @@ function createValidComment(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("hunk session wire parsing", () => {
+describe("hunkt session wire parsing", () => {
   test("snapshot comment counts only include validated comment summaries", () => {
     const snapshot = parseSessionSnapshot({
       updatedAt: "2026-03-22T00:00:00.000Z",

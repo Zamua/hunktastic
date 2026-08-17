@@ -119,13 +119,13 @@ describe("plain text pager fallback", () => {
     expect(resolveTextPagerCommand({})).toBe("less -R");
   });
 
-  test("prefers HUNK_TEXT_PAGER and avoids recursive hunk launches", () => {
-    expect(resolveTextPagerCommand({ HUNK_TEXT_PAGER: "bat --paging=always" })).toBe(
+  test("prefers HUNKT_TEXT_PAGER and avoids recursive hunk launches", () => {
+    expect(resolveTextPagerCommand({ HUNKT_TEXT_PAGER: "bat --paging=always" })).toBe(
       "bat --paging=always",
     );
-    expect(resolveTextPagerCommand({ HUNK_TEXT_PAGER: "hunk pager" })).toBe("less -R");
-    expect(resolveTextPagerCommand({ PAGER: "env FOO=1 hunk pager" })).toBe("less -R");
-    expect(resolveTextPagerCommand({ PAGER: String.raw`"C:\tools\hunk.exe" pager` })).toBe(
+    expect(resolveTextPagerCommand({ HUNKT_TEXT_PAGER: "hunkt pager" })).toBe("less -R");
+    expect(resolveTextPagerCommand({ PAGER: "env FOO=1 hunkt pager" })).toBe("less -R");
+    expect(resolveTextPagerCommand({ PAGER: String.raw`"C:\tools\hunkt.exe" pager` })).toBe(
       "less -R",
     );
   });
@@ -262,7 +262,7 @@ describe("plain text pager fallback", () => {
   test("passes shell metacharacters as pager arguments instead of evaluating them", async () => {
     await pagePlainText(
       "plain text",
-      { HUNK_TEXT_PAGER: "cat >/tmp/hunk-owned; touch /tmp/hunk-owned" },
+      { HUNKT_TEXT_PAGER: "cat >/tmp/hunk-owned; touch /tmp/hunk-owned" },
       createPagerDeps({
         spawnImpl(command, args, options) {
           expect(command).toBe("cat");
@@ -305,7 +305,7 @@ describe("plain text pager fallback", () => {
   });
 
   test("supports simple env wrappers while still blocking recursive hunk pagers", async () => {
-    expect(resolveTextPagerCommand({ PAGER: "env LESS=FRX hunk pager" })).toBe("less -R");
+    expect(resolveTextPagerCommand({ PAGER: "env LESS=FRX hunkt pager" })).toBe("less -R");
 
     await pagePlainText(
       "plain text",

@@ -58,10 +58,10 @@ describe("session agent command surface", () => {
     }
   });
 
-  test("keeps synopsis lines runnable as `hunk ...` invocations", () => {
+  test("keeps synopsis lines runnable as `hunkt ...` invocations", () => {
     for (const spec of SESSION_AGENT_COMMAND_LIST) {
       for (const line of spec.synopsis) {
-        expect(line.startsWith(`hunk ${spec.name}`)).toBe(true);
+        expect(line.startsWith(`hunkt ${spec.name}`)).toBe(true);
       }
     }
   });

@@ -86,7 +86,7 @@ describe("highlight worker client", () => {
     expect(
       supportsHighlightWorkerOffload({
         platform: "win32",
-        execPath: "C:\\Program Files\\Hunk\\hunk.exe",
+        execPath: "C:\\Program Files\\Hunk\\hunkt.exe",
       }),
     ).toBe(false);
     expect(
@@ -98,7 +98,7 @@ describe("highlight worker client", () => {
     expect(
       supportsHighlightWorkerOffload({
         platform: "linux",
-        execPath: "/opt/hunk/bin/hunk",
+        execPath: "/opt/hunkt/bin/hunkt",
       }),
     ).toBe(true);
   });
