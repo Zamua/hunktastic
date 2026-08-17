@@ -319,8 +319,16 @@ describe("reload agent attention marks", () => {
     // Only bravo starts out changed, so it is the changeset's first (index 0) file.
     writeFileSync(bravo, "export const bravo = 2;\n");
 
+    // Reloads resolve the configured engine (difftastic by default), so the initial
+    // bootstrap must carry it too: an engine mismatch between the loads reshapes the
+    // hunks, shifts contentIdentity, and the carry-over would drop the mark for a
+    // reason this test does not mean to exercise.
     const bootstrap = await loadAppBootstrap(
-      { kind: "vcs", staged: false, options: { mode: "stack", excludeUntracked: true } },
+      {
+        kind: "vcs",
+        staged: false,
+        options: { mode: "stack", excludeUntracked: true, engine: "difftastic" },
+      },
       { cwd: dir, vcsCatalog: getBundledVcsCatalog() },
     );
     const { dispatchCommand, hostClient } = createTestHostClient();

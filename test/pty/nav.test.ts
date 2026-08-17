@@ -1,13 +1,35 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createPtyHarness } from "./harness";
 
 const harness = createPtyHarness();
+
+// These cases assert Pierre-shaped row geometry and +/- sign columns. The fork defaults
+// the engine to difftastic (dot gutters, restructured hunks), so each launch pins the
+// engine back to pierre through a private config home; difft-native rendering has its
+// own coverage in src/ui/diff.
+const pierreConfigHomes: string[] = [];
+
+function createPierreEngineConfigHome() {
+  const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
+  pierreConfigHomes.push(home);
+  mkdirSync(join(home, "hunk"), { recursive: true });
+  // cursor_line rides along: the arrow-key walk below counts on stepping, which the
+  // fork also ships off by default.
+  writeFileSync(join(home, "hunk", "config.toml"), 'engine = "pierre"\ncursor_line = "row"\n');
+  return home;
+}
 
 /** Give PTY-backed startup and redraws enough headroom for slower CI machines. */
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   harness.cleanup();
+  for (const home of pierreConfigHomes.splice(0)) {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 describe("PTY navigation", () => {
@@ -208,6 +230,7 @@ describe("PTY navigation", () => {
   test("clicking a sidebar file pins that file header to the top in a real PTY", async () => {
     const fixture = harness.createPinnedHeaderRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "split"],
       cwd: fixture.dir,
       cols: 220,

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { resolve } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPtyHarness, lineIndexOf, measureKeyScroll } from "./harness";
 
@@ -8,17 +10,34 @@ const CURRENT_LINE_LENS_EXTENSION = resolve(
   fileURLToPath(new URL("../../examples/extensions/current-line-lens", import.meta.url)),
 );
 
+// This suite exercises current-line stepping, which the fork ships off by default
+// (j/k scroll the viewport). Every launch pins cursor_line back on through a private
+// config home so the upstream behavior stays covered.
+const configHomes: string[] = [];
+
+function createCursorLineConfigHome() {
+  const home = mkdtempSync(join(tmpdir(), "hunk-pty-cursor-config-"));
+  configHomes.push(home);
+  mkdirSync(join(home, "hunk"), { recursive: true });
+  writeFileSync(join(home, "hunk", "config.toml"), 'cursor_line = "row"\n');
+  return home;
+}
+
 /** Give PTY-backed startup and redraws enough headroom for slower CI machines. */
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   harness.cleanup();
+  for (const home of configHomes.splice(0)) {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 describe("PTY current line", () => {
   test("stepping moves the current line before it moves the viewport", async () => {
     const fixture = harness.createPinnedHeaderRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["show", "HEAD", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 120,
@@ -52,6 +71,7 @@ describe("PTY current line", () => {
   test("the current-line lens example pins old above new and hides in stack mode", async () => {
     const fixture = harness.createLongWrapFilePair();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: [
         "diff",
         fixture.before,
@@ -87,6 +107,7 @@ describe("PTY current line", () => {
   test("stepping updates lens content without moving its fixed rectangle", async () => {
     const fixture = harness.createWideCharacterFilePair();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: [
         "diff",
         fixture.before,
@@ -122,6 +143,7 @@ describe("PTY current line", () => {
   test("a held step key advances one line per press", async () => {
     const fixture = harness.createPinnedHeaderRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["show", "HEAD", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 120,
@@ -157,6 +179,7 @@ describe("PTY current line", () => {
   test("stepping reaches the lines an expanded gap reveals", async () => {
     const fixture = harness.createExpandableContextFilePair();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["diff", fixture.before, fixture.after, "--mode", "stack"],
       cols: 140,
       rows: 16,
@@ -183,6 +206,7 @@ describe("PTY current line", () => {
   test("expanding a gap moves the current line into it and collapsing puts it back", async () => {
     const fixture = harness.createExpandableContextFilePair();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["diff", fixture.before, fixture.after, "--mode", "stack"],
       cols: 140,
       rows: 16,
@@ -224,6 +248,7 @@ describe("PTY current line", () => {
   test("paging leaves the current line on screen", async () => {
     const fixture = harness.createPinnedHeaderRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["show", "HEAD", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 120,
@@ -246,6 +271,7 @@ describe("PTY current line", () => {
   test("a note after paging opens where the reviewer is looking", async () => {
     const fixture = harness.createPinnedHeaderRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["show", "HEAD", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 120,
@@ -274,6 +300,7 @@ describe("PTY current line", () => {
   test("a note anchors at the current line instead of the top of the hunk", async () => {
     const fixture = harness.createPinnedHeaderRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createCursorLineConfigHome() },
       args: ["show", "HEAD", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 120,
