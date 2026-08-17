@@ -641,3 +641,24 @@ Stated plainly, because these change the plan rather than decorate it.
 - Whether OpenTUI 0.5.1's runtime changes regress anything. Type surface is identical; only
   the PTY and TTY suites can answer.
 - Whether the operator wants our 12 changesets kept individually or collapsed into one.
+
+## 10. Decisions settled during execution
+
+### `DiffSide` / `NoteScope` declaration site (phase 3, was open in section 4)
+
+**Declare both in `src/core/notes/types.ts`, which then imports nothing. Do not alias
+`DiffSide` to `ReviewSide`.**
+
+Two facts settle it, both checked against `f65c335e`:
+
+1. `src/core/review/types.ts` is **not** a leaf: it imports `ReviewNoteSource` from
+   `src/core/types.ts` (`:12`). Aliasing `DiffSide = ReviewSide` would route
+   `notes/types.ts -> review/types.ts -> core/types.ts -> notes/store.ts -> notes/types.ts`,
+   which is cycle 2 again by a longer path. The alias does not cut the cycle, it hides it.
+2. `EXTRACTED_DUPLICATE_SYMBOLS` matches `\b(?:function|const|let)\s+<symbol>\b`
+   (`scripts/source-boundaries.test.ts:217`). It cannot see a `type` alias, so a second
+   side type is not what that gate catches. Upstream already carries four:
+   `FileSourceSide`, `DiffSide`, `ReviewSide`, `ExtensionFileSide`.
+
+A leaf declaration in `notes/types.ts` therefore matches upstream's existing shape and is
+the only one of the two options that actually breaks cycle 2.
