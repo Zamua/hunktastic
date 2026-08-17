@@ -1,7 +1,8 @@
 # difftastic engine
 
-Structural diffs (difftastic) as a second, opt-in diff engine under hunk's
-review TUI and agent annotation flow. Default engine stays `pierre`.
+Structural diffs (difftastic) as the default diff engine under hunk's
+review TUI and agent annotation flow. `pierre` stays selectable and is the
+per-file fallback.
 
 difftastic is consumed as a subprocess (`difft --display json`, gated by
 `DFT_UNSTABLE=yes`). The JSON schema is explicitly unstable. Pin the tested
@@ -51,7 +52,8 @@ existing view options. Precedence (low to high): built-in default
 `--engine` CLI flag.
 
 The built-in default is `difftastic` (`DEFAULT_DIFF_ENGINE` in
-`src/core/types.ts`): structural diffs are what this fork exists for, so they
+`src/core/changeset.ts`, re-exported from `src/core/types.ts`): structural
+diffs are what this fork exists for, so they
 are on unless a layer above turns them off. A missing difft therefore surfaces
 the unavailable notice on a default run rather than only when opted in.
 
@@ -61,23 +63,24 @@ select between.
 
 Touch list (mirrors the `layout` option shape):
 
-- `src/core/types.ts` — add `engine?: DiffEngineId` to `CommonOptions`;
-  export `type DiffEngineId = "pierre" | "difftastic"`.
-- `src/core/cli.ts` — add `{ flag: "--engine <engine>" }` to
+- `src/core/commandInputs.ts`: add `engine?: DiffEngineId` to
+  `CommonOptions`; `src/core/changeset.ts` exports
+  `type DiffEngineId = "pierre" | "difftastic"`.
+- `src/app/cli.ts`: add `{ flag: "--engine <engine>" }` to
   `COMMON_REVIEW_OPTIONS` (auto-registers on every `commonReviewOptions`
   command); add `parseEngine` validator next to `parseLayoutMode`
   (closed enum, reject unknown values at parse time); wire in
   `applyReferenceOption`; thread through `buildCommonOptions`; add the flag
   line to the hand-written `renderCliHelp`.
-- `src/core/config.ts` — add `CONFIG_REFERENCE_OPTIONS` entry
-  (`key: "engine"`, `runtimeDefault: "pierre"`); add an explicit string case
-  in `normalizeConfigReferenceValue` (the default branch is
+- `src/core/config.ts`: add `CONFIG_REFERENCE_OPTIONS` entry
+  (`key: "engine"`, `runtimeDefault: "difftastic"`); add an explicit string
+  case in `normalizeConfigReferenceValue` (the default branch is
   `normalizeBoolean` and silently drops string keys); add
   `engine: overrides.engine ?? base.engine` to `mergeOptions`; apply
   `HUNKT_ENGINE` (validated, invalid value ignored with a notice) in
   `resolveConfiguredCliInput` after the repo layer and before CLI-flag merge;
-  final default fill `engine: resolvedOptions.engine ?? "pierre"`.
-- `src/core/config.ts` — second key `difft_path` (binary path override).
+  final default fill `engine: resolvedOptions.engine ?? DEFAULT_DIFF_ENGINE`.
+- `src/core/config.ts`: second key `difft_path` (binary path override).
   Honored from user config and `HUNKT_DIFFT_PATH` env only; a repo-config
   value is IGNORED with the existing exec-adjacent repo-config notice
   treatment (`createRepoExtensionConfigNotice` precedent). Default `"difft"`
@@ -99,7 +102,7 @@ New core module `src/core/engine/difftastic/` (this is a core engine, not an
 extension: the extension API has no engine registration surface and VCS
 adapters emit patch text that core always parses with Pierre).
 
-- `src/core/engine/difftastic/exec.ts` — spawn wrapper. Copy the
+- `src/core/engine/difftastic/exec.ts`: spawn wrapper. Copy the
   `runGitCommand` shape (`src/extensions/default/vcs/git/commands.ts`):
   `Bun.spawnSync([difftPath, ...args], { stdin: "ignore", stdout: "pipe",
 stderr: "pipe", env, timeout })`, exit-code allowlist `[0]`, spawn-throw
@@ -121,7 +124,7 @@ stderr: "pipe", env, timeout })`, exit-code allowlist `[0]`, spawn-throw
   preserving the basename so difft's extension-based language detection
   works. Delete the tree in `finally`. A `null` fetch or the
   `DEFAULT_SOURCE_TEXT_MAX_BYTES` cap exceeded -> per-file fallback.
-- `schema.ts` — zod schema (zod is already a dependency) for the per-file
+- `schema.ts`: zod schema (zod is already a dependency) for the per-file
   object: `{ aligned_lines: [number|null, number|null][], chunks:
 ChunkEntry[][], language: string, path: string, status: string }`,
   `ChunkEntry = { lhs?: SideEntry, rhs?: SideEntry }`, `SideEntry =
@@ -132,15 +135,15 @@ content: string, highlight: string }[] }`. Unknown top-level keys are
 
 ### Fallback ladder
 
-| Condition                                                                                                    | Behavior                                                                                                                                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Binary missing / version probe fails                                                                         | Whole changeset renders via Pierre. One startup notice via the existing `bootstrap.startupNotices` mechanism (`src/app/startup.ts:342`, rendered by `AppHost`): `difftastic engine unavailable (difft not found); using pierre`. |
-| difft nonzero exit / timeout for a file                                                                      | Pierre for that file.                                                                                                                                                                                                            |
-| JSON parse or schema validation failure                                                                      | Pierre for that file.                                                                                                                                                                                                            |
-| Mapper validation failure (non-monotonic `aligned_lines`, line numbers out of file bounds, unknown `status`) | Pierre for that file.                                                                                                                                                                                                            |
-| Source text unavailable / over size cap                                                                      | Pierre for that file.                                                                                                                                                                                                            |
-| Binary file (`DiffFile.isBinary`)                                                                            | Never sent to difft; existing binary rendering.                                                                                                                                                                                  |
-| `patch` / `pager` input kind                                                                                 | Pierre always; one notice if difftastic was configured.                                                                                                                                                                          |
+| Condition                                                                                                    | Behavior                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Binary missing / version probe fails                                                                         | Whole changeset renders via Pierre. One startup notice via the existing `bootstrap.startupNotices` mechanism (`src/app/startup.ts`, rendered by `AppHost`): `difftastic engine unavailable (difft not found); using pierre`. |
+| difft nonzero exit / timeout for a file                                                                      | Pierre for that file.                                                                                                                                                                                                        |
+| JSON parse or schema validation failure                                                                      | Pierre for that file.                                                                                                                                                                                                        |
+| Mapper validation failure (non-monotonic `aligned_lines`, line numbers out of file bounds, unknown `status`) | Pierre for that file.                                                                                                                                                                                                        |
+| Source text unavailable / over size cap                                                                      | Pierre for that file.                                                                                                                                                                                                        |
+| Binary file (`DiffFile.isBinary`)                                                                            | Never sent to difft; existing binary rendering.                                                                                                                                                                              |
+| `patch` / `pager` input kind                                                                                 | Pierre always; one notice if difftastic was configured.                                                                                                                                                                      |
 
 Per-file fallbacks are aggregated into one startup notice
 (`difftastic fell back to pierre for N file(s)`); details go to `log`
@@ -150,7 +153,7 @@ and the session protocol can report which engine produced each file.
 ## 4. Engine dispatch point
 
 All computation stays at load time inside `loadAppBootstrap`
-(`src/core/loaders.ts`); render never re-diffs.
+(`src/core/changesetLoaders.ts`); render never re-diffs.
 
 Difftastic is an OVERLAY on the existing pipeline, not a replacement parser:
 
@@ -175,7 +178,7 @@ Difftastic is an OVERLAY on the existing pipeline, not a replacement parser:
    all-addition/all-deletion hunk is already correct.
 
 The two-file flow already holds both bodies in memory
-(`loaders.ts` reads them for `parseDiffFromFile`); pass them straight to the
+(`changesetLoaders.ts` reads them for `parseDiffFromFile`); pass them straight to the
 mapper without re-reading. Git-backed flows use the per-file
 `sourceFetcher`, which is attached by `buildDiffFile` before the overlay
 runs.
@@ -303,7 +306,7 @@ Hunk numeric fields:
   a side with no lines in the hunk, the running counter value, matching
   unified-diff convention).
 - `deletionCount` / `additionCount`: per-side line counts including context
-  (these feed `hunkLineRange`, so comment anchoring on context lines keeps
+  (these feed `reviewHunkRange`, so comment anchoring on context lines keeps
   working).
 - `deletionLines` / `additionLines` (per-hunk counts): changed lines only.
 - `collapsedBefore`: aligned rows between this hunk's span start and the
@@ -327,7 +330,7 @@ decorations (`data-diff-span`) flattened into emphasis-background
 Bridge with the established sidecar precedent (`DiffLineMoveKinds`):
 
 - New `DiffFile.noveltySpans?: DiffLineNoveltySpans` in
-  `src/core/types.ts`: `{ additionLines: (ColumnSpan[] | undefined)[],
+  `src/core/changeset.ts`: `{ additionLines: (ColumnSpan[] | undefined)[],
 deletionLines: (ColumnSpan[] | undefined)[], additionWordLines?, deletionWordLines? }`,
   index-aligned with the flat metadata arrays, `ColumnSpan = [start, end]`
   0-based end-exclusive UTF-16 code-unit offsets, remapped by the mapper from
@@ -335,7 +338,7 @@ deletionLines: (ColumnSpan[] | undefined)[], additionWordLines?, deletionWordLin
   novel lines have entries; a modified line with empty `changes` gets `[]`
   (novel line, no emphasis). The `*WordLines` arrays carry the changed-word
   tier (section 5.6) in the same index space and the same sparse pattern.
-- Render: in `src/ui/diff/pierre.ts`, where cells are built (the same sites
+- Render: in `src/ui/diff/diffRows.ts`, where cells are built (the same sites
   that consult `lineMoveKinds`), apply
   `overlayNoveltySpans(spans, columnSpans, emphasis)`: split the flattened
   `RenderSpan[]` at the column boundaries and set the emphasis. The renderer
@@ -479,14 +482,15 @@ baseline Pierre/git parse and is not touched by the overlay.
 Anchor model recap: annotations are line-range based (`oldRange` /
 `newRange`, 1-based inclusive); `hunkIndex` on `LiveComment` is frozen at
 creation. Resolution paths: `findHunkIndexForLine` (line -> hunk via
-`hunkLineRange`) and direct `hunkIndex` bounds-check, both against
+`reviewHunkIndexForLine`, `src/core/review/geometry.ts`) and direct
+`hunkIndex` bounds-check, both against
 `file.metadata.hunks`.
 
 Rules:
 
 - **Line anchors (`--old-line` / `--new-line`, `oldRange`/`newRange`) are
   engine-independent.** They are real 1-based file line numbers; difftastic
-  hunks carry real per-side starts/counts, so `hunkLineRange` and
+  hunks carry real per-side starts/counts, so `reviewHunkRange` and
   `findHunkIndexForLine` resolve them against either engine unchanged. A
   line inside a difftastic hunk's context window anchors to that hunk; a
   line no hunk covers gets the existing "No {side} diff hunk covers line"
@@ -509,7 +513,7 @@ Rules:
   same session's `review --json`.
 - Persisted/sidecar annotations (`--agent-context`) contain only line
   ranges, never hunk indexes; they re-anchor cleanly under either engine via
-  the existing range-overlap machinery (`annotationOverlapsHunk`,
+  the existing range-overlap machinery (`reviewAnnotationOverlapsHunk`,
   `annotationAnchor`). The frozen `LiveComment.hunkIndex` remains advisory
   display state, as today; switching engines between sessions re-resolves
   placement from ranges.
@@ -540,7 +544,7 @@ Fixtures (committed, so tests never need the difft binary):
 
 Unit tests (colocated `*.test.ts`, repo convention):
 
-- `src/core/engine/difftastic/map.test.ts` — the heart:
+- `src/core/engine/difftastic/map.test.ts`: the heart:
   - sample JSON + bodies -> exact `Hunk[]` (starts, counts, `hunkContent`
     runs, `collapsedBefore`, split/unified line counts).
   - blank-line addition (aligned-only, no chunk entry) becomes an addition
@@ -559,20 +563,20 @@ Unit tests (colocated `*.test.ts`, repo convention):
 - `src/core/engine/difftastic/novelWords.test.ts` covers the ported decision in
   isolation: difftastic's own `split_words_and_numbers` unit cases, the scope
   gate, and the similarity gate's floor, ratio, and single-space exclusion.
-- `src/core/engine/difftastic/schema.test.ts` — accepts the captured
+- `src/core/engine/difftastic/schema.test.ts`: accepts the captured
   sample; rejects the synthetic malformed payloads; tolerates unknown extra
   keys.
-- `src/core/engine/difftastic/exec.test.ts` — missing binary translated to
+- `src/core/engine/difftastic/exec.test.ts`: missing binary translated to
   the typed result (point `difft_path` at a nonexistent path); nonzero exit
   and timeout paths via a stub script fixture.
-- `src/core/cli.test.ts` / `src/core/config.test.ts` additions — flag
+- `src/app/cli.test.ts` / `src/core/config.test.ts` additions: flag
   parsing (rejects unknown engine), TOML key + per-command section layering,
   `HUNKT_ENGINE` precedence below `--engine`, `difft_path` ignored from repo
   config with notice.
 - `src/ui/diff/noveltySpans.test.ts` pins that `overlayNoveltySpans` splits spans at
   column boundaries, preserves text, and stacks a second attribute-only pass
   without losing the first pass's colors.
-- `src/ui/diff/pierre.test.ts` addition: the row builders paint novel tokens with
+- `src/ui/diff/diffRows.test.ts` addition: the row builders paint novel tokens with
   the sign foreground and no background at all, leaving the unspanned gap between
   two novel tokens unpainted, and mark the changed word bold plus underline over
   that foreground, through tab expansion.
@@ -580,15 +584,13 @@ Unit tests (colocated `*.test.ts`, repo convention):
   both attributes into the rendered terminal buffer and keeps row padding out
   of an underlined span.
 
-Integration (one PTY case, only because it is cheap):
+Integration:
 
-- `test/cli/engineDifftastic.test.ts` — skipped unless `difft` is on PATH.
-  Runs `hunkt diff before.js after.js --engine difftastic` against the
-  committed fixture pair, asserts the structural hunk renders and that
-  `session review --json` reports `engine: "difftastic"`. A second
-  non-skipped case runs with `difft_path` pointed at a nonexistent binary
-  and asserts the one-line fallback notice + Pierre rendering (the fallback
-  ladder is testable without difftastic installed).
+- `src/core/engine/difftastic/applyEngine.integration.test.ts`: drives the
+  real two-file loader with a stubbed `difft` binary, asserting the mapped
+  structural hunks, the per-file `engine` field, and the fallback notice when
+  `difft_path` points at a nonexistent binary (the fallback ladder is
+  testable without difftastic installed).
 
 Docs: `bun run generate:docs` after the config table change;
 `scripts/generate-docs.test.ts` enforces coverage.

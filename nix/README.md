@@ -10,7 +10,7 @@ Nix users can install Hunk from source instead of using npm.
 {
     inputs = {
         hunk = {
-          url = "github:modem-dev/hunk";
+          url = "github:Zamua/hunktastic";
           inputs.nixpkgs.follows = "nixpkgs";
         };
     }
@@ -69,7 +69,7 @@ Hunk provides a Home Manager module to manage both the package and its configura
 Run Hunk directly with Nix:
 
 ```bash
-nix run github:modem-dev/hunk -- --help
+nix run github:Zamua/hunktastic -- --help
 ```
 
 ## Updating Hunk
@@ -91,7 +91,7 @@ If you pin an older Nixpkgs that still supports a system Hunk does not list, poi
 ```nix
 {
   inputs.hunk = {
-    url = "github:modem-dev/hunk";
+    url = "github:Zamua/hunktastic";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.systems.url = "github:nix-systems/default"; # adds x86_64-darwin
   };

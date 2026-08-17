@@ -3,9 +3,9 @@
 Semantic diffs that agents can notate.
 
 hunktastic is a fork of [hunk](https://github.com/modem-dev/hunk) that adds
-[difftastic](https://github.com/Wilfred/difftastic) as a diff engine. Hunk's review
-stream, agent annotations and keybindings are unchanged; the diff underneath them
-becomes structural.
+[difftastic](https://github.com/Wilfred/difftastic) as a diff engine and makes review
+notes persistent. Hunk's review stream and agent annotations are unchanged; the diff
+underneath them becomes structural.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
@@ -75,14 +75,25 @@ Hunk numbers are engine-relative, so agents should prefer `--old-line` / `--new-
 anchors, which resolve under either engine. `hunkt skill path` prints the bundled agent
 skill, which documents this.
 
+## Review notes
+
+Notes survive quitting. On the next review of the same worktree they re-anchor onto
+the current diff, and a note whose line is gone lands in the notes list instead of
+disappearing. `i` toggles inline notes and `a` toggles the all-notes sidebar.
+
+`cursor_line` defaults to `off`, so `j`/`k` scroll the viewport; `cursor_line = "row"`
+in the config brings the cursor marker back and makes `j`/`k` move it instead.
+
 ## Everything else
 
-Identical to hunk. Keybindings, layouts, themes, sidebar, watch mode, extensions,
-jujutsu and sapling support, the `hunkt session` agent API, and the config file are all
-upstream's, unchanged. See [hunk's README](https://github.com/modem-dev/hunk#readme) and
+Identical to hunk. Layouts, themes, sidebar, watch mode, extensions, jujutsu and
+sapling support, the `hunkt session` agent API, and the config file are all upstream's,
+unchanged; the keybinding delta is `i`, `a`, and the `cursor_line` default above. See
+[hunk's README](https://github.com/modem-dev/hunk#readme) and
 [hunk.dev/docs](https://hunk.dev/docs/) for all of it.
 
-Design notes for the engine live in [docs/difftastic-engine.md](docs/difftastic-engine.md).
+Design notes live in [docs/difftastic-engine.md](docs/difftastic-engine.md) and
+[docs/note-persistence.md](docs/note-persistence.md).
 
 ## Credits
 

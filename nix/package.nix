@@ -50,8 +50,8 @@ in
     dontRunLifecycleScripts = true;
 
     meta = with lib; {
-      description = "Terminal diff viewer for agentic changesets";
-      homepage = "https://github.com/modem-dev/hunk";
+      description = "Terminal diff viewer for agentic changesets with a difftastic engine";
+      homepage = "https://github.com/Zamua/hunktastic";
       license = licenses.mit;
       mainProgram = "hunkt";
       platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];

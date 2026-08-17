@@ -483,8 +483,8 @@ then `git status --porcelain` empty; a manual read of `hunkt --help`.
   `nix/package.nix` (`:30`, `:37`, `:41` the `hunkdiff` symlink, `:43`
   `HUNKT_INSTALL_SOURCE`, `:56` `mainProgram`); `nix/home-manager.nix`; `nix/devShell.nix`.
 - Regenerate `nix/bun.lock.nix` for the 0.5.1 and 1.3.5 bumps.
-- `difftastic` stays a **runtime dependency** of the wrapper (commit `e87787e5`), not
-  bundled.
+- `difftastic` is installed by the home-manager module (`installDifftastic`, default
+  true), not bundled into the wrapper (commit `e87787e5`).
 - Keep `README.md`, `ACKNOWLEDGEMENTS.md`, `docs/difftastic-engine.md`. **Rewrite
   `docs/note-persistence.md`** against the new model; 5b through 5f change what it
   describes, so leaving it is a doc that lies.
@@ -578,7 +578,7 @@ see. A regression there surfaces only in the PTY and TTY suites.
    confirm the `test do` block still exercises `hunkt`. Update the tap `README.md` in the
    same change.
 5. Nix: `nix/bun.lock.nix` regenerated; `nix/package.nix` takes its version from
-   `package.json`; `difft` stays a runtime dependency of the wrapper.
+   `package.json`; `difft` arrives via the home-manager `installDifftastic` option.
 6. **All four channels must agree on one version string before the release is done:** the
    git tag, `package.json` `version`, the brew formula `version` plus `sha256`, and the nix
    build's `--version` output. Check them together in one pass, not one at a time. A tap
@@ -681,3 +681,27 @@ Confirmed exactly as written: every `src/core/review/navigation.ts` and `state.t
 `extension-api/types.ts:24`, and `LineHighlightSpanStyle = { bg: string; fg?: string }`
 (`lineHighlightPaint.ts:418`). That last one is the evidence for keeping our own renderer
 rather than routing novelty through `registerLineHighlighter`.
+
+## Executed
+
+Branch `rebase/0.19`, cut from upstream commit `f65c335e` (`upstream/main`). Per-phase
+commits, from `git log --oneline upstream/main..HEAD`:
+
+```
+68e863ad feat: sweep the hunkt identity across the 0.19 tree
+a952cf2b test: adapt upstream reload and PTY suites to the fork's engine and cursor defaults
+ca15ce54 feat: menu scrim dismissal and click-to-cursor on the 0.19 surfaces
+c8d9b44f feat: adopt the upstream review core and persist notes through it
+30b40dee feat: rebase difft-native novelty rendering onto the diffRows row model
+bde00350 feat: re-home the difftastic engine onto upstream's 0.19.0 module layout
+b92799e8 docs: settle the DiffSide declaration site for the 0.19 rebase
+1b59658f build: rebase toolchain onto upstream 0.19.0 deps and restore fork lint ignores
+```
+
+The upstream `.changeset/` entries at `f65c335e` are carried as-is; none of the fork's
+pre-rebase changesets survive (upstream's 0.19.0 CHANGELOG consumed them). The rebase
+itself is one fork changeset, `.changeset/rebase-upstream-0-19-0.md` (minor).
+
+Packaging note: the `files` array keeps upstream's TWO packaged skills
+(`hunkt-review`, `hunkt-extensions`); `hunkt-release` and `hunkt-launch-video` stay
+repo-only, matching upstream packaging. Phase 1's "four skills" line predates that call.
