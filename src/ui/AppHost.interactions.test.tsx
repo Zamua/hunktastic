@@ -3599,7 +3599,7 @@ describe("App interactions", () => {
       await flush(setup);
 
       expect(quit).toHaveBeenCalledTimes(1);
-      expect(readFileSync(join(configHome, "hunk", "config.toml"), "utf8")).toContain(
+      expect(readFileSync(join(configHome, "hunkt", "config.toml"), "utf8")).toContain(
         'theme = "github-dark-dimmed"',
       );
     } finally {
@@ -3655,7 +3655,7 @@ describe("App interactions", () => {
       await flush(setup);
 
       expect(quit).toHaveBeenCalledTimes(1);
-      expect(readFileSync(join(configHome, "hunk", "config.toml"), "utf8")).toContain(
+      expect(readFileSync(join(configHome, "hunkt", "config.toml"), "utf8")).toContain(
         "prompt_save_view_preferences = false",
       );
     } finally {
@@ -3736,7 +3736,7 @@ describe("App interactions", () => {
       await flush(setup);
 
       expect(quit).toHaveBeenCalledTimes(1);
-      expect(readFileSync(join(configHome, "hunk", "config.toml"), "utf8")).toContain(
+      expect(readFileSync(join(configHome, "hunkt", "config.toml"), "utf8")).toContain(
         'theme = "github-dark-dimmed"',
       );
     } finally {

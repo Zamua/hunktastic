@@ -1,14 +1,34 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import stringWidth from "string-width";
 import { createPtyHarness, dragMouse, rightmostColumnOf } from "./harness";
 
 const harness = createPtyHarness();
+
+// The mode-persistence and hotkey cases assert Pierre-shaped stacked rows (+/- sign
+// columns). The fork defaults the engine to difftastic (dot gutters, restructured
+// hunks), so those launches pin the engine back to pierre through a private config
+// home; the layout mechanics under test are engine-independent.
+const pierreConfigHomes: string[] = [];
+
+function createPierreEngineConfigHome() {
+  const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
+  pierreConfigHomes.push(home);
+  mkdirSync(join(home, "hunkt"), { recursive: true });
+  writeFileSync(join(home, "hunkt", "config.toml"), 'engine = "pierre"\n');
+  return home;
+}
 
 /** Give PTY-backed startup and redraws enough headroom for slower CI machines. */
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   harness.cleanup();
+  for (const home of pierreConfigHomes.splice(0)) {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 describe("PTY layout", () => {
@@ -379,6 +399,7 @@ describe("PTY layout", () => {
   test("explicit stack mode stays stacked after a live resize", async () => {
     const fixture = harness.createTwoFileRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 140,
@@ -409,6 +430,7 @@ describe("PTY layout", () => {
   test("direct layout hotkeys can switch between split, stack, and auto in a real PTY", async () => {
     const fixture = harness.createTwoFileRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 220,

@@ -1,16 +1,33 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createPtyHarness, lineIndexOf, rowCellBackgrounds } from "./harness";
 
 const harness = createPtyHarness();
 
+// The layout-switch cases assert Pierre-shaped row geometry and +/- sign columns. The
+// fork defaults the engine to difftastic (dot gutters, restructured hunks), so those
+// launches pin the engine back to pierre through a private config home; difft-native
+// rendering has its own coverage in src/ui/diff.
+const pierreConfigHomes: string[] = [];
+
+function createPierreEngineConfigHome() {
+  const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
+  pierreConfigHomes.push(home);
+  mkdirSync(join(home, "hunkt"), { recursive: true });
+  writeFileSync(join(home, "hunkt", "config.toml"), 'engine = "pierre"\n');
+  return home;
+}
+
 /** Give PTY-backed startup and redraws enough headroom for slower CI machines. */
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   harness.cleanup();
+  for (const home of pierreConfigHomes.splice(0)) {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 describe("PTY chrome", () => {
@@ -54,20 +71,22 @@ describe("PTY chrome", () => {
       );
       expect(themeSelected).toContain("Adds bonus export.");
 
+      // The fork retitles the toggle to "Inline notes" (key `i`); the menu item's
+      // toggle behavior is unchanged.
       await session.click(/Agent/, { first: true });
       const agentMenu = await session.waitForText(/Next annotated file/, { timeout: 5_000 });
-      expect(agentMenu).toContain("Agent notes");
+      expect(agentMenu).toContain("Inline notes");
 
-      await session.click(/Agent notes/);
+      await session.click(/Inline notes/);
       await harness.waitForSnapshot(
         session,
-        (text) => !text.includes("Adds bonus export.") && !text.includes("Agent notes"),
+        (text) => !text.includes("Adds bonus export.") && !text.includes("Inline notes"),
         5_000,
       );
 
       await session.click(/Agent/, { first: true });
-      await session.waitForText(/Agent notes/, { timeout: 5_000 });
-      await session.click(/Agent notes/);
+      await session.waitForText(/Inline notes/, { timeout: 5_000 });
+      await session.click(/Inline notes/);
       await session.waitForText(/Adds bonus export\./, { timeout: 5_000 });
 
       await session.click(/Help/);
@@ -115,7 +134,7 @@ describe("PTY chrome", () => {
 
       // The save handler writes the config and quits shortly after; poll the
       // file instead of the (soon dead) PTY session.
-      const configPath = join(configHome, "hunk", "config.toml");
+      const configPath = join(configHome, "hunkt", "config.toml");
       const deadline = Date.now() + 5_000;
       while (Date.now() < deadline && !existsSync(configPath)) {
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -239,6 +258,7 @@ describe("PTY chrome", () => {
   test("mouse menu navigation can switch the diff layout", async () => {
     const fixture = harness.createTwoFileRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "split"],
       cwd: fixture.dir,
       cols: 220,
@@ -280,6 +300,7 @@ describe("PTY chrome", () => {
   test("keyboard menu navigation can switch layouts in a real PTY", async () => {
     const fixture = harness.createTwoFileRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "split"],
       cwd: fixture.dir,
       cols: 220,

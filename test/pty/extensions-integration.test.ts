@@ -1,10 +1,17 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPtyHarness, dragMouse, lineIndexOf } from "./harness";
 
 const harness = createPtyHarness();
+
+/** Line-exact reveals ride the line-cursor stops, which the fork ships off by default. */
+function writeCursorLineConfig(configHome: string) {
+  mkdirSync(join(configHome, "hunkt"), { recursive: true });
+  writeFileSync(join(configHome, "hunkt", "config.toml"), 'cursor_line = "row"\n');
+}
+
 const REVIEW_TRIAGE_EXTENSION = resolve(
   fileURLToPath(new URL("../../examples/extensions/review-triage", import.meta.url)),
 );
@@ -21,7 +28,7 @@ afterEach(() => {
 
 /** Read the persisted repo-trust decisions from one isolated config home. */
 function readTrustState(configHome: string): Record<string, string> {
-  const statePath = join(configHome, "hunk", "state.json");
+  const statePath = join(configHome, "hunkt", "state.json");
   if (!existsSync(statePath)) {
     return {};
   }
@@ -867,6 +874,7 @@ describe("PTY extensions", () => {
 
   test("revealLine lands a line deep inside one tall hunk near the viewport top", async () => {
     const configHome = harness.createIsolatedConfigHome();
+    writeCursorLineConfig(configHome);
     const fixture = harness.createRepoExtensionFixture(REVEAL_LINE_EXTENSION_SOURCE, "fixture.ts", [
       TALL_HUNK_FILE,
     ]);
@@ -918,6 +926,7 @@ describe("PTY extensions", () => {
     // The first deferred jump of a session runs against actions minted before
     // any cursors were measured; it must land on the line, not the hunk anchor.
     const configHome = harness.createIsolatedConfigHome();
+    writeCursorLineConfig(configHome);
     const fixture = harness.createRepoExtensionFixture(
       REVEAL_LINE_MOUNT_ACTIONS_EXTENSION_SOURCE,
       "fixture.ts",

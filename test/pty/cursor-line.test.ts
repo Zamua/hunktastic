@@ -18,8 +18,8 @@ const configHomes: string[] = [];
 function createCursorLineConfigHome() {
   const home = mkdtempSync(join(tmpdir(), "hunk-pty-cursor-config-"));
   configHomes.push(home);
-  mkdirSync(join(home, "hunk"), { recursive: true });
-  writeFileSync(join(home, "hunk", "config.toml"), 'cursor_line = "row"\n');
+  mkdirSync(join(home, "hunkt"), { recursive: true });
+  writeFileSync(join(home, "hunkt", "config.toml"), 'cursor_line = "row"\n');
   return home;
 }
 

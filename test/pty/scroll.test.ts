@@ -15,8 +15,8 @@ const pierreConfigHomes: string[] = [];
 function createPierreEngineConfigHome() {
   const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
   pierreConfigHomes.push(home);
-  mkdirSync(join(home, "hunk"), { recursive: true });
-  writeFileSync(join(home, "hunk", "config.toml"), 'engine = "pierre"\n');
+  mkdirSync(join(home, "hunkt"), { recursive: true });
+  writeFileSync(join(home, "hunkt", "config.toml"), 'engine = "pierre"\n');
   return home;
 }
 

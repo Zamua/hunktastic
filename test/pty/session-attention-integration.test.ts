@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -125,6 +125,15 @@ async function waitUntil<T>(
 describe("PTY session attention marks", () => {
   test("a session CLI highlight paints the range and reveals the deep line", async () => {
     const configHome = harness.createIsolatedConfigHome();
+    // This test pins line-exact reveal and mark-paint plumbing, so pin both upstream
+    // defaults the fork changes: pierre row geometry (difft-native painting has its own
+    // unit coverage), and cursor_line = "row" because line-exact reveals resolve through
+    // the line-cursor stops, which are not built while the marker is off.
+    mkdirSync(join(configHome, "hunkt"), { recursive: true });
+    writeFileSync(
+      join(configHome, "hunkt", "config.toml"),
+      'engine = "pierre"\ncursor_line = "row"\n',
+    );
     const fixture = createTallFilePair();
     const port = await reserveLoopbackPort();
     const session = await harness.launchHunk({

@@ -1,16 +1,33 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createPtyHarness, sleep } from "./harness";
 
 const harness = createPtyHarness();
 
+// The heredoc case asserts token colors on Pierre-shaped partial hunks with context
+// rows. The fork defaults the engine to difftastic (restructured hunks, novelty
+// foreground coloring), so that launch pins the engine back to pierre through a
+// private config home.
+const pierreConfigHomes: string[] = [];
+
+function createPierreEngineConfigHome() {
+  const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
+  pierreConfigHomes.push(home);
+  mkdirSync(join(home, "hunkt"), { recursive: true });
+  writeFileSync(join(home, "hunkt", "config.toml"), 'engine = "pierre"\n');
+  return home;
+}
+
 /** Give source loading and asynchronous Shiki highlighting enough headroom in CI. */
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   harness.cleanup();
+  for (const home of pierreConfigHomes.splice(0)) {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 /** Create a contiguous added TypeScript file large enough to use the highlight worker. */
@@ -64,6 +81,7 @@ describe("PTY syntax highlighting", () => {
   test("keeps code after a hidden Elixir heredoc opener out of the string token state", async () => {
     const fixture = harness.createElixirHeredocRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "stack"],
       cwd: fixture.dir,
       cols: 100,

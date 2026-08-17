@@ -15,10 +15,10 @@ const pierreConfigHomes: string[] = [];
 function createPierreEngineConfigHome() {
   const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
   pierreConfigHomes.push(home);
-  mkdirSync(join(home, "hunk"), { recursive: true });
+  mkdirSync(join(home, "hunkt"), { recursive: true });
   // cursor_line rides along: the arrow-key walk below counts on stepping, which the
   // fork also ships off by default.
-  writeFileSync(join(home, "hunk", "config.toml"), 'engine = "pierre"\ncursor_line = "row"\n');
+  writeFileSync(join(home, "hunkt", "config.toml"), 'engine = "pierre"\ncursor_line = "row"\n');
   return home;
 }
 

@@ -1,13 +1,33 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createPtyHarness, lineIndexOf, sleep } from "./harness";
 
 const harness = createPtyHarness();
+
+// The menu-Enter case asserts Pierre-shaped stacked rows (+/- sign columns). The fork
+// defaults the engine to difftastic (dot gutters, restructured hunks), so that launch
+// pins the engine back to pierre through a private config home; the routing under test
+// is engine-independent.
+const pierreConfigHomes: string[] = [];
+
+function createPierreEngineConfigHome() {
+  const home = mkdtempSync(join(tmpdir(), "hunk-pty-pierre-config-"));
+  pierreConfigHomes.push(home);
+  mkdirSync(join(home, "hunkt"), { recursive: true });
+  writeFileSync(join(home, "hunkt", "config.toml"), 'engine = "pierre"\n');
+  return home;
+}
 
 /** Give PTY-backed startup and redraws enough headroom for slower CI machines. */
 setDefaultTimeout(20_000);
 
 afterEach(() => {
   harness.cleanup();
+  for (const home of pierreConfigHomes.splice(0)) {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 /**
@@ -71,6 +91,7 @@ describe("PTY key routing", () => {
   test("Enter on a menu item does not also submit the focused filter", async () => {
     const fixture = harness.createTwoFileRepoFixture();
     const session = await harness.launchHunk({
+      env: { XDG_CONFIG_HOME: createPierreEngineConfigHome() },
       args: ["diff", "--mode", "split"],
       cwd: fixture.dir,
       cols: 220,

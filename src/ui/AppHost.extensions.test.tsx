@@ -120,8 +120,8 @@ function useTempConfigHome(configToml?: string) {
   const configHome = createTempDir("hunk-apphost-xdg-");
   process.env.XDG_CONFIG_HOME = configHome;
   if (configToml !== undefined) {
-    mkdirSync(join(configHome, "hunk"), { recursive: true });
-    writeFileSync(join(configHome, "hunk", "config.toml"), configToml);
+    mkdirSync(join(configHome, "hunkt"), { recursive: true });
+    writeFileSync(join(configHome, "hunkt", "config.toml"), configToml);
   }
   return configHome;
 }
