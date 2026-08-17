@@ -8,10 +8,12 @@ import type { DiffFile, LayoutMode } from "../../core/types";
 import { reviewGapId } from "../../core/review/expansion";
 import { measureDiffSectionGeometry } from "../diff/diffSectionGeometry";
 import { resolveTheme } from "../themes";
+import { buildFileSectionLayouts, buildInStreamFileHeaderHeights } from "./fileSectionLayout";
 import {
   buildLineCursors,
   clampLineCursorToViewport,
   findLineCursorAt,
+  findLineCursorAtVisualRow,
   findNextLineCursor,
   firstLineCursorInHunk,
   resolveLineCursor,
@@ -291,6 +293,117 @@ describe("findNextLineCursor", () => {
 
   test("returns nothing when the stream is empty", () => {
     expect(findNextLineCursor([], null, 1)).toBeNull();
+  });
+});
+
+describe("findLineCursorAtVisualRow", () => {
+  /** Measure the review stream these files render as, with their whole-stream section offsets. */
+  function streamFor(files: DiffFile[], layout: Exclude<LayoutMode, "auto">) {
+    const sectionGeometry = files.map((file) =>
+      measureDiffSectionGeometry(file, layout, true, theme),
+    );
+    return {
+      fileSectionLayouts: buildFileSectionLayouts(
+        files,
+        sectionGeometry.map((geometry) => geometry.bodyHeight),
+        buildInStreamFileHeaderHeights(files),
+      ),
+      sectionGeometry,
+    };
+  }
+
+  /** Locate the whole-stream row one file's measured plan anchor renders at. */
+  function visualRowOf(
+    stream: ReturnType<typeof streamFor>,
+    sectionIndex: number,
+    stableKey: string,
+  ) {
+    const bounds = stream.sectionGeometry[sectionIndex]!.rowBoundsByStableKey.get(stableKey);
+    expect(bounds).toBeDefined();
+    return stream.fileSectionLayouts[sectionIndex]!.bodyTop + bounds!.top;
+  }
+
+  test("resolves the stop the clicked source row shows", () => {
+    const stream = streamFor([createContextWrappedFile("alpha", "alpha.ts")], "stack");
+
+    expect(
+      findLineCursorAtVisualRow({
+        ...stream,
+        visualRow: visualRowOf(stream, 0, "line:0:new:2"),
+      }),
+    ).toEqual({
+      fileId: "alpha",
+      hunkIndex: 0,
+      stableKey: "line:0:new:2",
+      target: { side: "new", line: 2 },
+    });
+  });
+
+  test("picks the side of a split row the pointer landed in", () => {
+    const file = createTestDiffFile({
+      id: "alpha",
+      path: "alpha.ts",
+      before: lines("a", "b", "c"),
+      after: lines("A", "B", "C"),
+      context: 0,
+    });
+    const stream = streamFor([file], "split");
+    const visualRow = visualRowOf(stream, 0, "line:0:new:2");
+
+    expect(
+      findLineCursorAtVisualRow({ ...stream, preferredSide: "old", visualRow })?.target,
+    ).toEqual({ side: "old", line: 2 });
+    expect(
+      findLineCursorAtVisualRow({ ...stream, preferredSide: "new", visualRow })?.target,
+    ).toEqual({ side: "new", line: 2 });
+  });
+
+  test("resolves rows in later files through their own section offset", () => {
+    const files = [
+      createContextWrappedFile("alpha", "alpha.ts"),
+      createContextWrappedFile("beta", "beta.ts"),
+    ];
+    const stream = streamFor(files, "stack");
+
+    expect(
+      findLineCursorAtVisualRow({
+        ...stream,
+        visualRow: visualRowOf(stream, 1, "line:0:new:2"),
+      })?.fileId,
+    ).toBe("beta");
+  });
+
+  test("gives no stop for a row the stream never stops on", () => {
+    const stream = streamFor([createContextWrappedFile("alpha", "alpha.ts")], "stack");
+
+    expect(
+      findLineCursorAtVisualRow({
+        ...stream,
+        visualRow: visualRowOf(stream, 0, "meta:hunk-header:0"),
+      }),
+    ).toBeNull();
+  });
+
+  test("gives no stop for a row outside every file body", () => {
+    const files = [
+      createContextWrappedFile("alpha", "alpha.ts"),
+      createContextWrappedFile("beta", "beta.ts"),
+    ];
+    const stream = streamFor(files, "stack");
+    const betaSection = stream.fileSectionLayouts[1]!;
+
+    // The in-stream file header and the separator above it sit between the two file bodies.
+    expect(findLineCursorAtVisualRow({ ...stream, visualRow: betaSection.headerTop })).toBeNull();
+    expect(findLineCursorAtVisualRow({ ...stream, visualRow: -1 })).toBeNull();
+    expect(
+      findLineCursorAtVisualRow({ ...stream, visualRow: betaSection.sectionBottom }),
+    ).toBeNull();
+  });
+
+  test("gives no stop when the review stream is empty", () => {
+    expect(
+      findLineCursorAtVisualRow({ fileSectionLayouts: [], sectionGeometry: [], visualRow: 0 }),
+    ).toBeNull();
   });
 });
 

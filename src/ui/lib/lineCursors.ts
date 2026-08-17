@@ -14,6 +14,7 @@ import {
   lineStableKeyTarget,
 } from "../diff/reviewRenderPlan";
 import type { VerticalBounds } from "./diffSpatial";
+import { findFileSectionAtOffset, type FileSectionLayout } from "./fileSectionLayout";
 
 export interface LineCursor {
   fileId: string;
@@ -103,6 +104,54 @@ export function buildLineCursors(
     const geometry = sectionGeometry[index];
     return geometry ? fileLineCursors(file, geometry) : [];
   });
+}
+
+/**
+ * Resolve the navigable line one whole-stream row shows.
+ *
+ * Rows the stream renders but never stops on (file and hunk headers, collapsed gaps, note cards)
+ * resolve to null, so pointer interaction over them leaves the current line where it is.
+ */
+export function findLineCursorAtVisualRow({
+  fileSectionLayouts,
+  preferredSide,
+  sectionGeometry,
+  visualRow,
+}: {
+  fileSectionLayouts: FileSectionLayout[];
+  /** Split rows carry one stop per side; the pane the pointer landed in picks between them. */
+  preferredSide?: "old" | "new";
+  sectionGeometry: DiffSectionGeometry[];
+  visualRow: number;
+}): LineCursor | null {
+  const section = findFileSectionAtOffset(fileSectionLayouts, visualRow);
+  // findFileSectionAtOffset clamps to the end sections, so re-check the body extent by hand.
+  if (
+    !section ||
+    visualRow < section.bodyTop ||
+    visualRow >= section.bodyTop + section.bodyHeight
+  ) {
+    return null;
+  }
+
+  const geometry = sectionGeometry[section.sectionIndex];
+  if (!geometry) {
+    return null;
+  }
+
+  const bodyRow = visualRow - section.bodyTop;
+  const bounds = geometry.rowBounds.find(
+    (candidate) =>
+      candidate.height > 0 &&
+      bodyRow >= candidate.top &&
+      bodyRow < candidate.top + candidate.height,
+  );
+  if (!bounds) {
+    return null;
+  }
+
+  const cursors = rowLineCursors(section.fileId, bounds);
+  return cursors.find((cursor) => cursor.target.side === preferredSide) ?? cursors[0] ?? null;
 }
 
 /** Find the first cursor in one hunk, then anywhere in its file. */

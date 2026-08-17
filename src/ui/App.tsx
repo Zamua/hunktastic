@@ -64,6 +64,7 @@ import type { ReviewProducer } from "../app/review/producer";
 import type { HunkSessionBrokerClient } from "../session/broker/brokerClient";
 import type { ReloadedSessionResult, ReloadSessionOptions } from "../session/types";
 import { MenuBar } from "./components/chrome/MenuBar";
+import { MenuScrim } from "./components/chrome/MenuScrim";
 import { ConfirmDialog, confirmDialogHeight } from "./components/chrome/ConfirmDialog";
 import { ExtensionDialog } from "./components/chrome/ExtensionDialog";
 import { ExtensionToast } from "./components/chrome/ExtensionToast";
@@ -1230,6 +1231,9 @@ export function App({
     0,
     terminal.height - (showMenuBar ? 1 : 0) - (extensionToast ? 1 : 0) - (statusBarVisible ? 1 : 0),
   );
+  // The first row the menu overlays own: the bar keeps row 0 when it shows, so
+  // its titles stay clickable while a menu is open.
+  const menuOverlayTop = showMenuBar ? 1 : 0;
   const failedFilesReplacement = sessionPanes.some(
     (pane) =>
       paneOpenState.open.includes(pane.key) &&
@@ -2225,7 +2229,6 @@ export function App({
     const vertical = planned.pane.placement === "left" || planned.pane.placement === "right";
     const spec = extensionPaneSize(planned.pane.registered.pane, planned.pane.placement);
     const currentSize = vertical ? planned.bounds.width : planned.bounds.height;
-    closeMenu();
     setPaneResize({
       key: planned.pane.key,
       registered: planned.pane.registered,
@@ -2391,6 +2394,7 @@ export function App({
           terminalWidth={terminal.width}
           theme={activeTheme}
           topTitle={topTitle}
+          onDismissMenu={closeMenu}
           onHoverMenu={(menuId) => {
             if (activeMenuId) {
               openMenu(menuId);
@@ -2416,7 +2420,6 @@ export function App({
         }}
         onMouseUp={(event) => {
           endPaneResize(event);
-          closeMenu();
           cancelCopySelectionRef.current?.();
         }}
       >
@@ -2494,6 +2497,7 @@ export function App({
             onLineCursorsChange={setLineCursors}
             currentLinePaintRequested={currentLinePaintRequested}
             onCurrentLinePaintChange={onCurrentLinePaintChange}
+            onSelectLineCursor={review.anchorLineCursor}
             onViewportLineCursorChange={review.anchorLineCursor}
           />
         </box>
@@ -2517,10 +2521,17 @@ export function App({
           }
           terminalWidth={terminal.width}
           theme={activeTheme}
-          onCloseMenu={closeMenu}
           onFilterInput={review.setFilter}
           onFilterSubmit={focusFiles}
           onExitMode={exitKeyboardMode}
+        />
+      ) : null}
+
+      {activeMenuId ? (
+        <MenuScrim
+          top={menuOverlayTop}
+          height={Math.max(0, terminal.height - menuOverlayTop)}
+          onDismiss={closeMenu}
         />
       ) : null}
 
@@ -2532,7 +2543,7 @@ export function App({
             activeMenuItemIndex={activeMenuItemIndex}
             activeMenuSpec={activeMenuSpec}
             activeMenuWidth={activeMenuWidth}
-            top={showMenuBar ? 1 : 0}
+            top={menuOverlayTop}
             terminalWidth={terminal.width}
             theme={baseTheme}
             onHoverItem={setActiveMenuItemIndex}
