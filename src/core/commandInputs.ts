@@ -12,6 +12,7 @@ import type {
   ExtensionVcsShowInput,
   ExtensionVcsStashShowInput,
 } from "../extension-api/types";
+import type { DiffEngineId } from "./changeset";
 
 export type LayoutMode = "auto" | "split" | "stack";
 export type CursorLine = "row" | "number" | "off";
@@ -20,6 +21,9 @@ export type VcsMode = string;
 
 export interface CommonOptions {
   mode?: LayoutMode;
+  engine?: DiffEngineId;
+  /** difftastic binary path; user config and `HUNKT_DIFFT_PATH` only, never repo config. */
+  difftPath?: string;
   cursorLine?: CursorLine;
   vcs?: VcsMode;
   theme?: string;

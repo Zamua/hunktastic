@@ -5,6 +5,7 @@ import type {
   CliInput,
   CommonOptions,
   CursorLine,
+  DiffEngineId,
   ExtensionManageCommandInput,
   HelpCommandInput,
   LayoutMode,
@@ -49,7 +50,7 @@ import { resolveCliVersion } from "../core/version";
 export interface CliReferenceOption {
   readonly flag: string;
   readonly description: string;
-  readonly parse?: "layout" | "cursorLine" | "positiveInt" | "tabWidth" | "collect";
+  readonly parse?: "layout" | "cursorLine" | "engine" | "positiveInt" | "tabWidth" | "collect";
   readonly defaultValue?: string;
   /** Default applied directly by Commander (as opposed to a config-resolved default). */
   readonly commanderDefault?: string;
@@ -70,6 +71,7 @@ export interface CliReferenceCommand {
 /** Review flags registered on every full-screen review command. */
 export const COMMON_REVIEW_OPTIONS = [
   { flag: "--mode <mode>", description: "layout mode: auto, split, stack", parse: "layout" },
+  { flag: "--engine <engine>", description: "diff engine: pierre, difftastic", parse: "engine" },
   {
     flag: "--cursor-line <style>",
     description: "current-line marker: row, number, off",
@@ -251,6 +253,15 @@ function parseLayoutMode(value: string): LayoutMode {
   throw new Error(`Invalid layout mode: ${value}`);
 }
 
+/** Validate one requested diff engine from CLI input. */
+function parseEngine(value: string): DiffEngineId {
+  if (value === "pierre" || value === "difftastic") {
+    return value;
+  }
+
+  throw new Error(`Invalid diff engine: ${value}`);
+}
+
 /** Validate one requested current-line style from CLI input. */
 function parseCursorLine(value: string): CursorLine {
   if (value === "row" || value === "number" || value === "off") {
@@ -317,6 +328,7 @@ function collectRepeatedValue(value: string, previous: string[] = []) {
 function buildCommonOptions(
   options: {
     mode?: LayoutMode;
+    engine?: DiffEngineId;
     cursorLine?: CursorLine;
     theme?: string;
     agentContext?: string;
@@ -332,6 +344,7 @@ function buildCommonOptions(
 ): CommonOptions {
   return {
     mode: options.mode,
+    engine: options.engine,
     cursorLine: options.cursorLine,
     theme: options.theme,
     agentContext: options.agentContext,
@@ -367,6 +380,8 @@ function applyReferenceOption(command: Command, option: CliReferenceOption) {
   const commanderOption = new Option(option.flag, option.description);
   if (option.parse === "layout") {
     commanderOption.argParser(parseLayoutMode);
+  } else if (option.parse === "engine") {
+    commanderOption.argParser(parseEngine);
   } else if (option.parse === "cursorLine") {
     commanderOption.argParser(parseCursorLine);
   } else if (option.parse === "positiveInt") {
@@ -462,6 +477,7 @@ function renderCliHelp() {
     "",
     "Common review options:",
     "  --mode <mode>                           layout mode: auto, split, stack",
+    "  --engine <engine>                       diff engine: pierre, difftastic",
     "  --watch                                 auto-reload when the current diff input changes",
     "  --agent-context <path>                  JSON sidecar with agent rationale",
     "  --pager                                 use pager-style chrome",

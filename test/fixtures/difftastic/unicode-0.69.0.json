@@ -1,0 +1,1 @@
+{"aligned_lines":[[0,0],[1,1],[2,2],[3,3]],"chunks":[[{"lhs":{"line_number":1,"changes":[{"start":35,"end":38,"content":"old","highlight":"normal"}]},"rhs":{"line_number":1,"changes":[{"start":35,"end":38,"content":"neo","highlight":"normal"}]}}]],"language":"JavaScript","path":"test/fixtures/difftastic/unicode-after.js","status":"changed"}

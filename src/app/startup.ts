@@ -3,6 +3,7 @@ import { createExtensionApplyNotices, createUnknownVcsNotice } from "../extensio
 import type { loadStartupExtensions } from "../extensions/startup";
 import { resolveConfiguredCliInput } from "../core/config";
 import { HunkUserError } from "../core/errors";
+import { combineBootstrapStartupNotices } from "../core/startupNotice";
 import type { loadAppBootstrap } from "../core/changesetLoaders";
 import { looksLikePatchInput } from "../core/pager";
 import { detectTerminalThemeModeFromBackground } from "../core/theme/detection";
@@ -367,20 +368,14 @@ export async function prepareStartupPlan(
     loadBundledExtensions().issues,
   );
 
+  // Notices the loader attached (e.g. difftastic fallbacks) merge with config notices.
   bootstrap.startupNotices = startupExtensions.mergeStartupNotices(
-    // Keep the resolved array identity when extensions contributed no theme notices.
-    sessionThemes.notices.length > 0 ||
-      applied.issues.length > 0 ||
-      bundledNotices.length > 0 ||
-      unknownVcsNotices.length > 0
-      ? [
-          ...(configured.startupNotices ?? []),
-          ...sessionThemes.notices,
-          ...createExtensionApplyNotices(applied.issues),
-          ...bundledNotices,
-          ...unknownVcsNotices,
-        ]
-      : configured.startupNotices,
+    combineBootstrapStartupNotices(configured.startupNotices, bootstrap.startupNotices, [
+      ...sessionThemes.notices,
+      ...createExtensionApplyNotices(applied.issues),
+      ...bundledNotices,
+      ...unknownVcsNotices,
+    ]),
     extensionResult,
   );
   controllingTerminal ??= usesPipedPatchInputImpl(cliInput) ? openControllingTerminalImpl() : null;

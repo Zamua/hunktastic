@@ -1,0 +1,1 @@
+{"aligned_lines":[[0,0],[1,1]],"chunks":[[{"lhs":{"line_number":0,"changes":[{"start":14,"end":24,"content":"computeSum","highlight":"normal"}]},"rhs":{"line_number":0,"changes":[{"start":14,"end":28,"content":"computeAverage","highlight":"normal"}]}}]],"language":"JavaScript","path":"test/fixtures/difftastic/novel-identifier-after.js","status":"changed"}

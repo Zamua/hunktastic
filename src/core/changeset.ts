@@ -18,6 +18,33 @@ export interface SidecarContext {
   files: AgentFileContext[];
 }
 
+/** Diff engine that computed a file's hunks. */
+export type DiffEngineId = "pierre" | "difftastic";
+
+/** Structural diffs are the point of this fork, so they are on unless asked otherwise. */
+export const DEFAULT_DIFF_ENGINE: DiffEngineId = "difftastic";
+
+/** One intraline novelty range: 0-based, end-exclusive column offsets into the line text. */
+export type ColumnSpan = [number, number];
+
+/**
+ * Per-line intraline novelty columns, index-aligned with the flat
+ * `FileDiffMetadata.additionLines` / `deletionLines` arrays. Sparse: only
+ * novel lines carry entries; a novel line with no token spans carries `[]`.
+ *
+ * `*WordLines` carry difftastic's second novelty tier (`NovelWord`): the
+ * sub-ranges of the same line's novel columns that actually differ from the
+ * opposite side. Same index space and same sparseness as the arrays above, so a
+ * novel line whose atom has no changed word carries `[]`. Absent altogether when
+ * the producer resolved no word tier.
+ */
+export interface DiffLineNoveltySpans {
+  additionLines: Array<ColumnSpan[] | undefined>;
+  deletionLines: Array<ColumnSpan[] | undefined>;
+  additionWordLines?: Array<ColumnSpan[] | undefined>;
+  deletionWordLines?: Array<ColumnSpan[] | undefined>;
+}
+
 export interface DiffFile {
   id: string;
   path: string;
@@ -29,6 +56,10 @@ export interface DiffFile {
     deletions: number;
   };
   metadata: FileDiffMetadata;
+  /** Engine that produced `metadata`; absent means the Pierre baseline. */
+  engine?: DiffEngineId;
+  /** Intraline novelty columns attached when `engine` is `"difftastic"`. */
+  noveltySpans?: DiffLineNoveltySpans;
   lineMoveKinds?: DiffLineMoveKinds;
   agent: AgentFileContext | null;
   isUntracked?: boolean;

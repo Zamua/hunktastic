@@ -12,7 +12,10 @@ import { resolve as resolvePath } from "node:path";
 import { findSidecarFileContext, loadSidecarContext } from "./sidecar";
 import { createSkippedBinaryMetadata, isProbablyBinaryFile } from "./binary";
 import { buildDiffFile, type BuildDiffFileOptions, type DiffFileSourceContext } from "./diffFile";
+import { applyDifftasticEngine } from "./engine/difftastic";
+import type { StartupNotice } from "./startupNotice";
 import { createFileSourceFetcher, type FileSourceSpec } from "./fileSource";
+import { logSourceDiagnostic } from "../lib/sourceText";
 import { changesetFromPatch } from "./changesetFromPatch";
 
 import { DEFAULT_TAB_WIDTH } from "./tabWidth";
@@ -46,11 +49,61 @@ export interface LoadAppBootstrapOptions {
   customThemes?: readonly NamedCustomThemeConfig[];
   /** Complete adapter catalog composed by the app for this session. */
   vcsCatalog?: VcsCatalog;
+  /** Receives one line per engine fallback detail; defaults to the debug-gated log channel. */
+  onEngineDiagnostic?: (message: string) => void;
+}
+
+/** Per-file fallback detail is log-only (the UI shows one aggregate notice); HUNKT_DEBUG gates it so the TUI stays clean. */
+function logEngineDiagnostic(message: string) {
+  if (process.env.HUNKT_DEBUG === "1") {
+    logSourceDiagnostic(message);
+  }
 }
 
 /** Return the final path segment for display-oriented labels. */
 function basename(path: string) {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+/** Shown when difftastic is configured for an input kind that carries no file contents. */
+export const DIFFT_PATCH_INPUT_NOTICE: StartupNotice = {
+  key: "difftastic:patch-input",
+  message: "difftastic engine needs file contents; patch and pager input use pierre",
+};
+
+/**
+ * Overlay difftastic hunks onto the parsed changeset when the engine is
+ * configured. Patch and pager inputs have no file bodies to diff, so they
+ * stay on Pierre with one notice.
+ */
+async function applyConfiguredEngine(
+  changeset: Changeset,
+  input: CliInput,
+  cwd: string,
+  onDiagnostic: (message: string) => void,
+): Promise<readonly StartupNotice[] | undefined> {
+  if (input.options.engine !== "difftastic") {
+    return undefined;
+  }
+
+  if (input.kind === "patch") {
+    return [DIFFT_PATCH_INPUT_NOTICE];
+  }
+
+  const directPaths =
+    input.kind === "diff" || input.kind === "difftool"
+      ? { old: resolvePath(cwd, input.left), new: resolvePath(cwd, input.right) }
+      : undefined;
+  const result = await applyDifftasticEngine(changeset, {
+    difftPath: input.options.difftPath,
+    directPaths,
+  });
+  for (const fallback of result.fallbacks) {
+    onDiagnostic(
+      `difftastic fell back to pierre for ${fallback.path}: ${fallback.reason}: ${fallback.detail}`,
+    );
+  }
+  return result.notices.length > 0 ? result.notices : undefined;
 }
 
 interface ResolvedFileSourceSpecs {
@@ -275,7 +328,12 @@ async function loadPatchChangeset(
 /** Resolve CLI input into the fully loaded app bootstrap state. */
 export async function loadAppBootstrap(
   input: CliInput,
-  { cwd = process.cwd(), customThemes, vcsCatalog }: LoadAppBootstrapOptions = {},
+  {
+    cwd = process.cwd(),
+    customThemes,
+    vcsCatalog,
+    onEngineDiagnostic = logEngineDiagnostic,
+  }: LoadAppBootstrapOptions = {},
 ): Promise<AppBootstrap> {
   // Capture before loading content so watch mode can detect mutations that race initial loading.
   let initialWatchSignature: string | undefined;
@@ -318,6 +376,8 @@ export async function loadAppBootstrap(
       break;
   }
 
+  const engineNotices = await applyConfiguredEngine(changeset, input, cwd, onEngineDiagnostic);
+
   changeset = {
     ...changeset,
     files: orderDiffFiles(changeset.files, sidecar),
@@ -339,5 +399,6 @@ export async function loadAppBootstrap(
     initialShowAgentNotes: input.options.agentNotes ?? false,
     initialCopyDecorations: input.options.copyDecorations ?? false,
     initialCursorLine: input.options.cursorLine ?? "row",
+    startupNotices: engineNotices,
   };
 }

@@ -1,0 +1,1 @@
+const total = computeAverage(values);

@@ -32,11 +32,15 @@ export type {
  */
 export type {
   Changeset,
+  ColumnSpan,
+  DiffEngineId,
   DiffFile,
   DiffLineMoveKind,
   DiffLineMoveKinds,
+  DiffLineNoveltySpans,
   SidecarContext,
 } from "./changeset";
+export { DEFAULT_DIFF_ENGINE } from "./changeset";
 export type {
   CliInput,
   CommonOptions,

@@ -662,3 +662,22 @@ Two facts settle it, both checked against `f65c335e`:
 
 A leaf declaration in `notes/types.ts` therefore matches upstream's existing shape and is
 the only one of the two options that actually breaks cycle 2.
+
+### Path and line-reference corrections (verified against `f65c335e`)
+
+Fourteen of the plan's file:line references were checked mechanically. Two need correcting;
+the rest are exact.
+
+- **`src/ui/diff/staticDiffPager.ts` does not exist.** The file is `src/ui/staticDiffPager.ts`,
+  one level up. Our delta on it is small and entirely phases 4 and 7: thread `span.bold` and
+  `span.underline` through `colorText`, `serializeSpans`, and `serializeSpansFixedWidth`, plus
+  one `hunk pager` -> `hunkt pager` string.
+- **`rawOffsetToSanitizedOffset` is at `lineHighlightPaint.ts:92`, not `:64`;
+  `snapToClusterBoundary` is at `:68`.** Both are module-private, so phase 4 must export them
+  before `overlayCellNoveltySpans` can call them.
+
+Confirmed exactly as written: every `src/core/review/navigation.ts` and `state.ts` symbol,
+`rowStyle.ts:200`/`:228`, `changesetLoaders.ts:276`, `commandCatalog.ts:67`,
+`extension-api/types.ts:24`, and `LineHighlightSpanStyle = { bg: string; fg?: string }`
+(`lineHighlightPaint.ts:418`). That last one is the evidence for keeping our own renderer
+rather than routing novelty through `registerLineHighlighter`.

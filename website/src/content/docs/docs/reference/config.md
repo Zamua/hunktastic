@@ -30,13 +30,33 @@ Choose responsive, side-by-side, or stacked diff layout.
 
 ---
 
+**`engine`**
+
+Select the diff engine. `difftastic` computes structural hunks and falls back to `pierre` per file when it cannot.
+
+- **Type:** string
+- **Accepted:** `pierre` or `difftastic`
+- **Built-in default:** `difftastic`
+
+---
+
+**`difft_path`**
+
+Locate the difftastic binary for the `difftastic` engine. Honored from user config and `HUNKT_DIFFT_PATH` only; a repo config value is ignored with a notice.
+
+- **Type:** string
+- **Accepted:** a difftastic executable path or command name
+- **Built-in default:** `difft`
+
+---
+
 **`cursor_line`**
 
 Mark the current line as a full-row highlight or on its line number. `off` restores plain `j`/`k` scrolling.
 
 - **Type:** string
 - **Accepted:** `row`, `number`, or `off`
-- **Built-in default:** `row`
+- **Built-in default:** `off`
 
 ---
 
