@@ -25,7 +25,10 @@ on:
         type: string
   push:
     tags:
+      # The fork releases through GitHub assets, brew, and nix; -ht.* tags must not
+      # start upstream's npm pipeline. Manual dispatch stays available.
       - "v*"
+      - "!v*-ht.*"
 
 env:
   SKIP_INSTALL_SIMPLE_GIT_HOOKS: "1"
