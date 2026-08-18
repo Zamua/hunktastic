@@ -63,6 +63,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install difftastic
+        # The default engine shells out to difft; without it every TUI frame carries a
+        # fallback notice that breaks PTY snapshot assertions. Pinned to the version the
+        # recorded fixtures were captured with.
+        run: |
+          curl -sSfL https://github.com/Wilfred/difftastic/releases/download/0.69.0/difft-x86_64-unknown-linux-gnu.tar.gz | sudo tar xz -C /usr/local/bin difft
+          difft --version
+
       - name: Format check
         run: bun run format:check
 
@@ -214,6 +222,14 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Install difftastic
+        # The default engine shells out to difft; without it every TUI frame carries a
+        # fallback notice that breaks PTY snapshot assertions. Pinned to the version the
+        # recorded fixtures were captured with.
+        run: |
+          curl -sSfL https://github.com/Wilfred/difftastic/releases/download/0.69.0/difft-x86_64-unknown-linux-gnu.tar.gz | sudo tar xz -C /usr/local/bin difft
+          difft --version
 
       - name: Build binary
         run: bun run build:bin
