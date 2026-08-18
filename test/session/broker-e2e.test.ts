@@ -1,5 +1,5 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,8 +7,12 @@ import { cleanupTestConfigHomes, createTestConfigHome } from "../helpers/config-
 
 const repoRoot = process.cwd();
 const sourceEntrypoint = join(repoRoot, "src/main.tsx");
-// Spawned hunk processes must assert built-in defaults, not the developer's ambient user config.
+// Spawned hunk processes must assert a known config, not the developer's ambient user config.
+// cursor_line rides pinned on: line-exact reveals resolve through line-cursor stops, which
+// the fork ships off by default.
 const testConfigHome = createTestConfigHome();
+mkdirSync(join(testConfigHome, "hunkt"), { recursive: true });
+writeFileSync(join(testConfigHome, "hunkt", "config.toml"), 'cursor_line = "row"\n');
 
 afterAll(cleanupTestConfigHomes);
 const tempDirs: string[] = [];
